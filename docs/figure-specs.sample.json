@@ -1,0 +1,1477 @@
+{
+  "$meta": {
+    "name": "动刻 骨架动作规格 — 10 个打样（PRD R10 打样评审用）",
+    "version": "2.3.0",
+    "date": "2026-10-22",
+    "designer": "颜好看",
+    "targetFile": "DongKe/DesignSystem/Figures/figure-specs.json",
+    "consumer": "ExerciseFigureView.swift（唯一渲染器）+ PoseInterpolator（纯函数，可单测）",
+    "scope": "动作库锁定 18 个 catalogId（plan-schema 白名单）。本文件交付其中 10 个打样 + `_generic`，覆盖蹲/推/撑/单腿/桥/拉/举/跳/核心/静力十类形态。剩余 8 个（mountain_climber / high_knees / side_plank / calf_raise / bird_dog / superman / crunch / russian_twist）按同一规格补齐，是续做不是重设计。",
+    "acceptance": "PRD R10：验收标准是辨识度，不是美观度——能一眼看出「这是深蹲不是硬拉」即达标。",
+    "authoringDecisions": {
+      "1-lineWidth": "画布边长 2.2%（160pt 画布约 3.5pt）。缩略图低于 2.5pt 时渲染器自动加粗到 2.5pt。",
+      "2-jointRadius": "1.6%，用 surfaceRaised 挖空形成线稿感。必须小于线宽×1.2，否则连成「糖葫芦」。",
+      "3-torsoFill": "**不做躯干填充**。填充会让关节与连线不再区分、深色下成色块显沉重，且读者会读成「人体」而非「骨架」，反而降低辨识度。改用 shoulder→hip 线加粗 1.4 倍表达躯干。",
+      "4-view": "默认侧视（面朝右）。18 个动作里只有 jumping_jack、high_knees 需要正面（正面才读得出「腿打开/抬起」），side_plank 用侧视但视角偏低。",
+      "5-groundLine": "需要，但只在「脚或身体承重」时出现，且区分三种：floor（全宽水平线）、wall（垂直线，靠墙静蹲必需，否则会被读成半蹲）、dumbbell（腕部道具）。用 props 字段声明，不靠渲染器猜。",
+      "6-props": "道具是辨识度的一部分，不是装饰。哑铃划船没有哑铃会被读成徒手俯身；靠墙静蹲没有墙会被读成半蹲；臀桥没有地面线会被读成仰卧抬腿。",
+      "7-bilateral": "**8 关节不够用。** 10 个打样里有 4 个（弓步蹲、开合跳、死虫、以及哑铃划船的支撑手遮挡关系）必须能同时画出近侧与远侧肢体。因此本文件按 12 关节交付（躯干 4 点 + 双侧上下肢各 4 点）。详见 UIUX.md §6.2。",
+      "8-autofit": "**坐标允许超出 0..1。** 死虫这类「平躺双臂过头 + 双腿前伸」的动作，总跨度约 1.11，物理上装不进单位正方形。所以渲染器必须做 autofit：对同一动作的全部帧取并集 bbox，等比缩放并居中到 0.06...0.94 绘制区，最小缩放 0.6。这是本规格对渲染器的唯一新增要求，约 5 行代码。副作用：不同动作之间视觉尺寸略有差异（死虫会比深蹲小一圈），这是解剖正确性的代价，接受。",
+      "9-farLimb": "远侧肢体 opacity 0.55，表达前后遮挡关系。这是 12 关节方案能读的关键，不加会变成一团线。"
+    },
+    "status": "**现行交付**（team-lead 最终冻结：自绘 12 关节骨架、18 动作 × 3 帧、不使用第三方素材）。素材方案已否决（包两次下载失败 + CC BY-SA 与 FairPlay 需法务），本文件不再是存档而是实施依据。",
+    "renderInterfaceContract": "UI 层只认 ExerciseFigureView(catalogId:size:playsAnimation:)。3 帧、2.4s 循环、帧间 120ms 交叉淡入、列表内静态首帧、同屏只播 1 个、单色 textPrimary、custom_ 前缀走降级态——这七条在骨架与线稿两种素材下完全一致，所以页面代码不随裁决改动。"
+  },
+  "renderRules": {
+    "coordinateSpace": "作者空间：归一化单位正方形，原点左上，y 向下。允许超出 0..1（由 autofit 处理）。",
+    "autofit": {
+      "enabled": true,
+      "targetBox": [
+        0.06,
+        0.94
+      ],
+      "mode": "union-bbox-of-all-frames, uniform scale, centered",
+      "minScale": 0.6
+    },
+    "joints": [
+      "head",
+      "neck",
+      "shoulder",
+      "hip",
+      "elbowNear",
+      "wristNear",
+      "elbowFar",
+      "wristFar",
+      "kneeNear",
+      "ankleNear",
+      "kneeFar",
+      "ankleFar"
+    ],
+    "links": [
+      [
+        "neck",
+        "head"
+      ],
+      [
+        "neck",
+        "shoulder"
+      ],
+      [
+        "shoulder",
+        "hip"
+      ],
+      [
+        "shoulder",
+        "elbowNear"
+      ],
+      [
+        "elbowNear",
+        "wristNear"
+      ],
+      [
+        "shoulder",
+        "elbowFar"
+      ],
+      [
+        "elbowFar",
+        "wristFar"
+      ],
+      [
+        "hip",
+        "kneeNear"
+      ],
+      [
+        "kneeNear",
+        "ankleNear"
+      ],
+      [
+        "hip",
+        "kneeFar"
+      ],
+      [
+        "kneeFar",
+        "ankleFar"
+      ]
+    ],
+    "fallback8Joints": "若渲染器只支持 8 关节：删除所有 *Far 关节与对应 4 条连线即可退化，深蹲 / 跪姿俯卧撑 / 平板支撑 / 臀桥 / 肩推 / 靠墙静蹲 这 6 个仍可用；弓步蹲 / 开合跳 / 死虫 / 哑铃划船 4 个无法达标。",
+    "segmentLengths": {
+      "note": "同动作各帧必须一致（容差 ±15%），否则插值会出现「橡皮筋」。以下为打样采用的基准值（归一化单位）。",
+      "torso": 0.26,
+      "thigh": 0.24,
+      "shin": 0.21,
+      "upperArm": 0.15,
+      "forearm": 0.13,
+      "neck": 0.06
+    },
+    "propsRendering": {
+      "floor": "水平 1pt 实线（separator），画在绘制区底部，全宽",
+      "wall": "垂直 1pt 实线（separator），x 由 spec.wallX 指定",
+      "dumbbell": "画在 wrist 位置：2 个半径 0.012 的实心圆 + 1 条短横线（textPrimary）"
+    }
+  },
+  "specs": [
+    {
+      "catalogId": "squat",
+      "name": "深蹲",
+      "view": "side",
+      "loopSeconds": 2.0,
+      "props": [
+        "floor"
+      ],
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：站直，脚与肩同宽",
+          "points": {
+            "head": [
+              0.47,
+              0.1
+            ],
+            "neck": [
+              0.48,
+              0.16
+            ],
+            "shoulder": [
+              0.48,
+              0.22
+            ],
+            "hip": [
+              0.5,
+              0.48
+            ],
+            "elbowNear": [
+              0.42,
+              0.35
+            ],
+            "wristNear": [
+              0.4,
+              0.47
+            ],
+            "kneeNear": [
+              0.5,
+              0.72
+            ],
+            "ankleNear": [
+              0.5,
+              0.94
+            ],
+            "elbowFar": [
+              0.44,
+              0.36
+            ],
+            "wristFar": [
+              0.42,
+              0.48
+            ],
+            "kneeFar": [
+              0.47,
+              0.72
+            ],
+            "ankleFar": [
+              0.46,
+              0.94
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：屁股向后坐，大腿到平行",
+          "points": {
+            "head": [
+              0.4,
+              0.29
+            ],
+            "neck": [
+              0.41,
+              0.35
+            ],
+            "shoulder": [
+              0.42,
+              0.41
+            ],
+            "hip": [
+              0.5,
+              0.65
+            ],
+            "elbowNear": [
+              0.56,
+              0.36
+            ],
+            "wristNear": [
+              0.68,
+              0.32
+            ],
+            "kneeNear": [
+              0.68,
+              0.82
+            ],
+            "ankleNear": [
+              0.5,
+              0.94
+            ],
+            "elbowFar": [
+              0.55,
+              0.37
+            ],
+            "wristFar": [
+              0.66,
+              0.33
+            ],
+            "kneeFar": [
+              0.65,
+              0.82
+            ],
+            "ankleFar": [
+              0.46,
+              0.94
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "push_up",
+      "name": "跪姿俯卧撑",
+      "view": "side",
+      "loopSeconds": 2.0,
+      "props": [
+        "floor"
+      ],
+      "note": "catalogId 为 push_up；零基础默认显示跪姿版本，标准俯卧撑作为同 id 的变体（P1）。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：手在肩正下方，膝着地",
+          "points": {
+            "head": [
+              0.08,
+              0.6
+            ],
+            "neck": [
+              0.15,
+              0.62
+            ],
+            "shoulder": [
+              0.21,
+              0.64
+            ],
+            "hip": [
+              0.46,
+              0.7
+            ],
+            "elbowNear": [
+              0.21,
+              0.79
+            ],
+            "wristNear": [
+              0.21,
+              0.92
+            ],
+            "kneeNear": [
+              0.64,
+              0.88
+            ],
+            "ankleNear": [
+              0.82,
+              0.8
+            ],
+            "elbowFar": [
+              0.18,
+              0.79
+            ],
+            "wristFar": [
+              0.18,
+              0.92
+            ],
+            "kneeFar": [
+              0.62,
+              0.89
+            ],
+            "ankleFar": [
+              0.8,
+              0.81
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：胸口下沉，肘向后不向外张",
+          "points": {
+            "head": [
+              0.09,
+              0.76
+            ],
+            "neck": [
+              0.16,
+              0.78
+            ],
+            "shoulder": [
+              0.21,
+              0.8
+            ],
+            "hip": [
+              0.46,
+              0.84
+            ],
+            "elbowNear": [
+              0.08,
+              0.85
+            ],
+            "wristNear": [
+              0.21,
+              0.92
+            ],
+            "kneeNear": [
+              0.66,
+              0.91
+            ],
+            "ankleNear": [
+              0.84,
+              0.83
+            ],
+            "elbowFar": [
+              0.06,
+              0.86
+            ],
+            "wristFar": [
+              0.18,
+              0.92
+            ],
+            "kneeFar": [
+              0.64,
+              0.92
+            ],
+            "ankleFar": [
+              0.82,
+              0.84
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "plank",
+      "name": "平板支撑",
+      "view": "side",
+      "loopSeconds": 3.5,
+      "props": [
+        "floor"
+      ],
+      "staticHold": true,
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "静力支撑：臀不塌也不翘",
+          "points": {
+            "head": [
+              0.07,
+              0.62
+            ],
+            "neck": [
+              0.14,
+              0.64
+            ],
+            "shoulder": [
+              0.2,
+              0.66
+            ],
+            "hip": [
+              0.45,
+              0.72
+            ],
+            "elbowNear": [
+              0.2,
+              0.79
+            ],
+            "wristNear": [
+              0.2,
+              0.92
+            ],
+            "kneeNear": [
+              0.68,
+              0.78
+            ],
+            "ankleNear": [
+              0.88,
+              0.83
+            ],
+            "elbowFar": [
+              0.17,
+              0.79
+            ],
+            "wristFar": [
+              0.17,
+              0.92
+            ],
+            "kneeFar": [
+              0.66,
+              0.79
+            ],
+            "ankleFar": [
+              0.86,
+              0.84
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "静力支撑（呼吸微起伏）",
+          "points": {
+            "head": [
+              0.07,
+              0.625
+            ],
+            "neck": [
+              0.14,
+              0.645
+            ],
+            "shoulder": [
+              0.2,
+              0.665
+            ],
+            "hip": [
+              0.45,
+              0.735
+            ],
+            "elbowNear": [
+              0.2,
+              0.79
+            ],
+            "wristNear": [
+              0.2,
+              0.92
+            ],
+            "kneeNear": [
+              0.68,
+              0.795
+            ],
+            "ankleNear": [
+              0.88,
+              0.845
+            ],
+            "elbowFar": [
+              0.17,
+              0.79
+            ],
+            "wristFar": [
+              0.17,
+              0.92
+            ],
+            "kneeFar": [
+              0.66,
+              0.805
+            ],
+            "ankleFar": [
+              0.86,
+              0.855
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "lunge",
+      "name": "弓步蹲",
+      "view": "side",
+      "loopSeconds": 2.4,
+      "props": [
+        "floor"
+      ],
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：前后分腿站直",
+          "points": {
+            "head": [
+              0.43,
+              0.1
+            ],
+            "neck": [
+              0.44,
+              0.16
+            ],
+            "shoulder": [
+              0.44,
+              0.22
+            ],
+            "hip": [
+              0.47,
+              0.48
+            ],
+            "elbowNear": [
+              0.38,
+              0.35
+            ],
+            "wristNear": [
+              0.36,
+              0.47
+            ],
+            "kneeNear": [
+              0.58,
+              0.7
+            ],
+            "ankleNear": [
+              0.6,
+              0.91
+            ],
+            "elbowFar": [
+              0.4,
+              0.36
+            ],
+            "wristFar": [
+              0.38,
+              0.48
+            ],
+            "kneeFar": [
+              0.36,
+              0.7
+            ],
+            "ankleFar": [
+              0.34,
+              0.91
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：前腿大腿近水平，后膝接近地面",
+          "points": {
+            "head": [
+              0.43,
+              0.34
+            ],
+            "neck": [
+              0.44,
+              0.4
+            ],
+            "shoulder": [
+              0.44,
+              0.46
+            ],
+            "hip": [
+              0.42,
+              0.72
+            ],
+            "elbowNear": [
+              0.36,
+              0.57
+            ],
+            "wristNear": [
+              0.34,
+              0.69
+            ],
+            "kneeNear": [
+              0.66,
+              0.72
+            ],
+            "ankleNear": [
+              0.66,
+              0.93
+            ],
+            "elbowFar": [
+              0.46,
+              0.58
+            ],
+            "wristFar": [
+              0.48,
+              0.7
+            ],
+            "kneeFar": [
+              0.22,
+              0.82
+            ],
+            "ankleFar": [
+              0.04,
+              0.9
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "glute_bridge",
+      "name": "臀桥",
+      "view": "side",
+      "loopSeconds": 2.2,
+      "props": [
+        "floor"
+      ],
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：仰卧屈膝，脚掌踩地",
+          "points": {
+            "head": [
+              0.16,
+              0.86
+            ],
+            "neck": [
+              0.23,
+              0.87
+            ],
+            "shoulder": [
+              0.28,
+              0.88
+            ],
+            "hip": [
+              0.52,
+              0.9
+            ],
+            "elbowNear": [
+              0.42,
+              0.9
+            ],
+            "wristNear": [
+              0.55,
+              0.91
+            ],
+            "kneeNear": [
+              0.7,
+              0.72
+            ],
+            "ankleNear": [
+              0.74,
+              0.92
+            ],
+            "elbowFar": [
+              0.4,
+              0.91
+            ],
+            "wristFar": [
+              0.53,
+              0.92
+            ],
+            "kneeFar": [
+              0.68,
+              0.73
+            ],
+            "ankleFar": [
+              0.72,
+              0.92
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：臀发力顶起，肩与膝成一线",
+          "points": {
+            "head": [
+              0.16,
+              0.84
+            ],
+            "neck": [
+              0.23,
+              0.86
+            ],
+            "shoulder": [
+              0.28,
+              0.88
+            ],
+            "hip": [
+              0.52,
+              0.76
+            ],
+            "elbowNear": [
+              0.42,
+              0.87
+            ],
+            "wristNear": [
+              0.55,
+              0.88
+            ],
+            "kneeNear": [
+              0.72,
+              0.7
+            ],
+            "ankleNear": [
+              0.74,
+              0.92
+            ],
+            "elbowFar": [
+              0.4,
+              0.88
+            ],
+            "wristFar": [
+              0.53,
+              0.89
+            ],
+            "kneeFar": [
+              0.7,
+              0.71
+            ],
+            "ankleFar": [
+              0.72,
+              0.92
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "dumbbell_row",
+      "name": "哑铃划船",
+      "view": "side",
+      "loopSeconds": 2.0,
+      "props": [
+        "floor",
+        "dumbbell"
+      ],
+      "note": "哑铃必须画出来（wristNear 位置），否则与徒手俯身看起来一样。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：俯身，手臂自然下垂",
+          "points": {
+            "head": [
+              0.29,
+              0.28
+            ],
+            "neck": [
+              0.33,
+              0.32
+            ],
+            "shoulder": [
+              0.37,
+              0.36
+            ],
+            "hip": [
+              0.58,
+              0.48
+            ],
+            "elbowNear": [
+              0.38,
+              0.5
+            ],
+            "wristNear": [
+              0.38,
+              0.63
+            ],
+            "kneeNear": [
+              0.58,
+              0.72
+            ],
+            "ankleNear": [
+              0.58,
+              0.93
+            ],
+            "elbowFar": [
+              0.34,
+              0.5
+            ],
+            "wristFar": [
+              0.34,
+              0.63
+            ],
+            "kneeFar": [
+              0.55,
+              0.72
+            ],
+            "ankleFar": [
+              0.55,
+              0.93
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：肘向后上方拉，手到腰侧",
+          "points": {
+            "head": [
+              0.29,
+              0.28
+            ],
+            "neck": [
+              0.33,
+              0.32
+            ],
+            "shoulder": [
+              0.37,
+              0.36
+            ],
+            "hip": [
+              0.58,
+              0.48
+            ],
+            "elbowNear": [
+              0.51,
+              0.41
+            ],
+            "wristNear": [
+              0.42,
+              0.49
+            ],
+            "kneeNear": [
+              0.58,
+              0.72
+            ],
+            "ankleNear": [
+              0.58,
+              0.93
+            ],
+            "elbowFar": [
+              0.34,
+              0.5
+            ],
+            "wristFar": [
+              0.34,
+              0.63
+            ],
+            "kneeFar": [
+              0.55,
+              0.72
+            ],
+            "ankleFar": [
+              0.55,
+              0.93
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "shoulder_press",
+      "name": "哑铃肩推",
+      "view": "side",
+      "loopSeconds": 2.2,
+      "props": [
+        "floor",
+        "dumbbell"
+      ],
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：哑铃在肩高，肘朝下",
+          "points": {
+            "head": [
+              0.47,
+              0.16
+            ],
+            "neck": [
+              0.48,
+              0.22
+            ],
+            "shoulder": [
+              0.48,
+              0.28
+            ],
+            "hip": [
+              0.5,
+              0.54
+            ],
+            "elbowNear": [
+              0.36,
+              0.4
+            ],
+            "wristNear": [
+              0.42,
+              0.3
+            ],
+            "kneeNear": [
+              0.5,
+              0.75
+            ],
+            "ankleNear": [
+              0.5,
+              0.94
+            ],
+            "elbowFar": [
+              0.6,
+              0.4
+            ],
+            "wristFar": [
+              0.54,
+              0.3
+            ],
+            "kneeFar": [
+              0.47,
+              0.75
+            ],
+            "ankleFar": [
+              0.47,
+              0.94
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：推到手臂接近伸直",
+          "points": {
+            "head": [
+              0.47,
+              0.16
+            ],
+            "neck": [
+              0.48,
+              0.22
+            ],
+            "shoulder": [
+              0.48,
+              0.28
+            ],
+            "hip": [
+              0.5,
+              0.54
+            ],
+            "elbowNear": [
+              0.5,
+              0.16
+            ],
+            "wristNear": [
+              0.51,
+              0.04
+            ],
+            "kneeNear": [
+              0.5,
+              0.75
+            ],
+            "ankleNear": [
+              0.5,
+              0.94
+            ],
+            "elbowFar": [
+              0.5,
+              0.16
+            ],
+            "wristFar": [
+              0.49,
+              0.04
+            ],
+            "kneeFar": [
+              0.47,
+              0.75
+            ],
+            "ankleFar": [
+              0.47,
+              0.94
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "jumping_jack",
+      "name": "开合跳",
+      "view": "front",
+      "loopSeconds": 1.2,
+      "props": [
+        "floor"
+      ],
+      "note": "必须正面视角：侧视下「腿打开」与「腿并拢」完全重合，会退化成「举手跳」。这是 18 个动作里 2 个需要 front 的之一。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：并腿站立，手臂自然下垂",
+          "points": {
+            "head": [
+              0.5,
+              0.1
+            ],
+            "neck": [
+              0.5,
+              0.16
+            ],
+            "shoulder": [
+              0.5,
+              0.22
+            ],
+            "hip": [
+              0.5,
+              0.5
+            ],
+            "elbowNear": [
+              0.37,
+              0.32
+            ],
+            "wristNear": [
+              0.3,
+              0.43
+            ],
+            "kneeNear": [
+              0.42,
+              0.72
+            ],
+            "ankleNear": [
+              0.4,
+              0.92
+            ],
+            "elbowFar": [
+              0.63,
+              0.32
+            ],
+            "wristFar": [
+              0.7,
+              0.43
+            ],
+            "kneeFar": [
+              0.58,
+              0.72
+            ],
+            "ankleFar": [
+              0.6,
+              0.92
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：腿打开，双臂过头",
+          "points": {
+            "head": [
+              0.5,
+              0.1
+            ],
+            "neck": [
+              0.5,
+              0.16
+            ],
+            "shoulder": [
+              0.5,
+              0.22
+            ],
+            "hip": [
+              0.5,
+              0.5
+            ],
+            "elbowNear": [
+              0.38,
+              0.12
+            ],
+            "wristNear": [
+              0.47,
+              0.04
+            ],
+            "kneeNear": [
+              0.38,
+              0.72
+            ],
+            "ankleNear": [
+              0.28,
+              0.92
+            ],
+            "elbowFar": [
+              0.62,
+              0.12
+            ],
+            "wristFar": [
+              0.53,
+              0.04
+            ],
+            "kneeFar": [
+              0.62,
+              0.72
+            ],
+            "ankleFar": [
+              0.72,
+              0.92
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "dead_bug",
+      "name": "死虫",
+      "view": "side",
+      "loopSeconds": 2.6,
+      "props": [
+        "floor"
+      ],
+      "note": "平躺 + 双臂过头 + 双腿前伸，总跨度约 1.11，必须靠 autofit 缩放。这也是「8 关节不够用」的典型例子：要同时表达对侧伸展。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "起始位：仰卧，四肢指向天花板",
+          "points": {
+            "head": [
+              0.11,
+              0.86
+            ],
+            "neck": [
+              0.18,
+              0.86
+            ],
+            "shoulder": [
+              0.24,
+              0.86
+            ],
+            "hip": [
+              0.5,
+              0.86
+            ],
+            "elbowNear": [
+              0.26,
+              0.72
+            ],
+            "wristNear": [
+              0.28,
+              0.6
+            ],
+            "kneeNear": [
+              0.5,
+              0.62
+            ],
+            "ankleNear": [
+              0.71,
+              0.62
+            ],
+            "elbowFar": [
+              0.22,
+              0.72
+            ],
+            "wristFar": [
+              0.24,
+              0.6
+            ],
+            "kneeFar": [
+              0.53,
+              0.62
+            ],
+            "ankleFar": [
+              0.74,
+              0.62
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "关键位：一臂过头同时对侧腿前伸，腰不离地",
+          "points": {
+            "head": [
+              0.11,
+              0.86
+            ],
+            "neck": [
+              0.18,
+              0.86
+            ],
+            "shoulder": [
+              0.24,
+              0.86
+            ],
+            "hip": [
+              0.5,
+              0.86
+            ],
+            "elbowNear": [
+              0.11,
+              0.85
+            ],
+            "wristNear": [
+              -0.02,
+              0.84
+            ],
+            "kneeNear": [
+              0.74,
+              0.85
+            ],
+            "ankleNear": [
+              0.95,
+              0.85
+            ],
+            "elbowFar": [
+              0.22,
+              0.72
+            ],
+            "wristFar": [
+              0.24,
+              0.6
+            ],
+            "kneeFar": [
+              0.53,
+              0.62
+            ],
+            "ankleFar": [
+              0.74,
+              0.62
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "wall_sit",
+      "name": "靠墙静蹲",
+      "view": "side",
+      "loopSeconds": 3.5,
+      "props": [
+        "wall",
+        "floor"
+      ],
+      "wallX": 0.42,
+      "staticHold": true,
+      "note": "墙线是必需的：没有墙会被读成半蹲或深蹲。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "静力：背贴墙，大腿近水平",
+          "points": {
+            "head": [
+              0.53,
+              0.3
+            ],
+            "neck": [
+              0.54,
+              0.36
+            ],
+            "shoulder": [
+              0.55,
+              0.42
+            ],
+            "hip": [
+              0.5,
+              0.66
+            ],
+            "elbowNear": [
+              0.6,
+              0.55
+            ],
+            "wristNear": [
+              0.66,
+              0.66
+            ],
+            "kneeNear": [
+              0.74,
+              0.7
+            ],
+            "ankleNear": [
+              0.72,
+              0.91
+            ],
+            "elbowFar": [
+              0.58,
+              0.56
+            ],
+            "wristFar": [
+              0.64,
+              0.67
+            ],
+            "kneeFar": [
+              0.72,
+              0.71
+            ],
+            "ankleFar": [
+              0.7,
+              0.91
+            ]
+          }
+        },
+        {
+          "phase": 0.5,
+          "label": "静力（呼吸微起伏）",
+          "points": {
+            "head": [
+              0.53,
+              0.305
+            ],
+            "neck": [
+              0.54,
+              0.365
+            ],
+            "shoulder": [
+              0.55,
+              0.425
+            ],
+            "hip": [
+              0.5,
+              0.665
+            ],
+            "elbowNear": [
+              0.6,
+              0.555
+            ],
+            "wristNear": [
+              0.66,
+              0.665
+            ],
+            "kneeNear": [
+              0.74,
+              0.705
+            ],
+            "ankleNear": [
+              0.72,
+              0.915
+            ],
+            "elbowFar": [
+              0.58,
+              0.565
+            ],
+            "wristFar": [
+              0.64,
+              0.675
+            ],
+            "kneeFar": [
+              0.72,
+              0.715
+            ],
+            "ankleFar": [
+              0.7,
+              0.915
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "catalogId": "_generic",
+      "name": "通用占位（库外动作降级用）",
+      "view": "side",
+      "loopSeconds": 2.0,
+      "props": [
+        "floor"
+      ],
+      "isPlaceholder": true,
+      "note": "只画静态首帧，不循环。渲染时整体降为 textTertiary，见 UIUX §6.3。",
+      "poses": [
+        {
+          "phase": 0.0,
+          "label": "中性站姿",
+          "points": {
+            "head": [
+              0.47,
+              0.1
+            ],
+            "neck": [
+              0.48,
+              0.16
+            ],
+            "shoulder": [
+              0.48,
+              0.22
+            ],
+            "hip": [
+              0.5,
+              0.48
+            ],
+            "elbowNear": [
+              0.44,
+              0.35
+            ],
+            "wristNear": [
+              0.43,
+              0.47
+            ],
+            "kneeNear": [
+              0.5,
+              0.72
+            ],
+            "ankleNear": [
+              0.5,
+              0.94
+            ],
+            "elbowFar": [
+              0.46,
+              0.36
+            ],
+            "wristFar": [
+              0.45,
+              0.48
+            ],
+            "kneeFar": [
+              0.47,
+              0.72
+            ],
+            "ankleFar": [
+              0.47,
+              0.94
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "coverageMap": {
+    "note": "18 个 catalogId 的骨架可行性判定。这是回答「这几个决定如何影响辨识度」的完整答案。",
+    "total": 18,
+    "needsBilateral12Joints": [
+      "lunge",
+      "jumping_jack",
+      "dead_bug",
+      "mountain_climber",
+      "high_knees",
+      "bird_dog",
+      "superman"
+    ],
+    "worksWith8JointsOnly": [
+      "squat",
+      "push_up",
+      "plank",
+      "glute_bridge",
+      "dumbbell_row",
+      "shoulder_press",
+      "wall_sit",
+      "side_plank",
+      "calf_raise",
+      "crunch",
+      "russian_twist"
+    ],
+    "needsFrontView": [
+      "jumping_jack",
+      "high_knees"
+    ],
+    "needsProps": {
+      "dumbbell": [
+        "dumbbell_row",
+        "shoulder_press"
+      ],
+      "wall": [
+        "wall_sit"
+      ],
+      "floor": [
+        "squat",
+        "push_up",
+        "plank",
+        "lunge",
+        "glute_bridge",
+        "dumbbell_row",
+        "shoulder_press",
+        "jumping_jack",
+        "dead_bug",
+        "wall_sit",
+        "mountain_climber",
+        "high_knees",
+        "side_plank",
+        "calf_raise",
+        "bird_dog",
+        "superman",
+        "crunch",
+        "russian_twist"
+      ]
+    },
+    "conclusion": "11 个动作 8 关节即可；7 个必须 12 关节（双侧肢体）；2 个必须正面视角。因此 12 关节 + view 字段是让 18 个动作全部达到辨识度标准的必要条件。"
+  },
+  "deliveryPlan": {
+    "batch0": {
+      "count": 10,
+      "status": "done",
+      "content": "本文件的 10 个打样，覆盖蹲/推/撑/单腿/桥/拉/举/跳/核心/静力十类形态",
+      "catalogIds": [
+        "squat",
+        "push_up",
+        "plank",
+        "lunge",
+        "glute_bridge",
+        "dumbbell_row",
+        "shoulder_press",
+        "jumping_jack",
+        "dead_bug",
+        "wall_sit"
+      ]
+    },
+    "batch1": {
+      "count": 8,
+      "status": "pending-review",
+      "content": "剩余 8 个，全部为已打样形态的同类复制；其中 mountain_climber / high_knees / bird_dog / superman 沿用 12 关节与已知朝向",
+      "catalogIds": [
+        "mountain_climber",
+        "high_knees",
+        "side_plank",
+        "calf_raise",
+        "bird_dog",
+        "superman",
+        "crunch",
+        "russian_twist"
+      ]
+    },
+    "rule": "打样未通过评审前不批量生产（PRD R10 缓解措施）。单动作约 10 分钟，剩余 8 个约 1.5 小时。"
+  }
+}

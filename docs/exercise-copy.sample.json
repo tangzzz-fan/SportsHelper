@@ -1,0 +1,284 @@
+{
+  "$meta": {
+    "name": "动刻 动作卡文案 — 10 个打样（cues + commonMistakes + 低阶替代）",
+    "version": "2.1.0",
+    "date": "2026-10-22",
+    "designer": "颜好看",
+    "targetFile": "Resources/exercises.json（架构拥有，本文件为可合并的文案草稿）",
+    "why": "FROZEN-BASELINE 决策 6 与 SPEC F7 要求每个动作有「3–5 条要点 + 2–3 条常见错误 + 1 条低阶替代」，三块文字是动作图示的另一半，不是附属说明。低阶替代同时是「做不动」的降阶动作来源（PRD F8 的三选项只管这一组，换动作走动作卡里的这个入口）。",
+    "usage": [
+      "字段 `cues`: [String]，3–5 条，每条 ≤16 字，动词或名词短语开头，能直接照做。",
+      "字段 `commonMistakes`: [String]，2–3 条，每条 ≤14 字，写「错在哪」不写「要怎样」（怎么对已在 cues 里）。",
+      "字段 `regression`: {name, catalogId, note}，1 条。catalogId 为库内白名单时可直接跳转该动作，库外留空串并只显示文字。",
+      "三套文字同时进 AIPromptBuilder 白名单提示词（PRD R3），让 AI 生成计划时也用它，保证库内外口径一致。",
+      "文案纪律：不用感叹号、不用 emoji、不写「注意」「一定要」这类空强调，只写可观察的物理事实。",
+      "视角规则：凡涉及角度或相对位置的要点，必须把视角写出来（「从侧面看，膝盖不超过脚尖」而不是「膝盖不超过脚尖」）。图是侧视的，用户在身体上看不到「侧面」，只能靠文字把图对到身体上。"
+    ],
+    "layout": "骨架 + cues + commonMistakes 在动作卡里必须同屏可读、不折叠；训练页只放 cues（正向要点），常见错误留在动作卡，理由是运动中读「别塌背」会让人边做边怀疑自己。iPhone SE 3 逐区高度预算见 UIUX.md §6.5。"
+  },
+  "exercises": [
+    {
+      "catalogId": "squat",
+      "name": "深蹲",
+      "muscles": [
+        "股四头肌",
+        "臀大肌",
+        "核心"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "脚与肩同宽，脚尖略外开",
+        "屁股先往后坐，不是往下跪",
+        "膝盖对脚尖，不要内扣",
+        "大腿到平行就够，不用更低"
+      ],
+      "commonMistakes": [
+        "膝盖内扣",
+        "背拱起来",
+        "重心跑到脚尖、脚跟离地"
+      ],
+      "regression": {
+        "name": "靠墙静蹲",
+        "catalogId": "wall_sit",
+        "note": "背贴墙不占地方，膝盖压力比自由深蹲小"
+      }
+    },
+    {
+      "catalogId": "push_up",
+      "name": "跪姿俯卧撑",
+      "muscles": [
+        "胸大肌",
+        "肱三头肌",
+        "核心"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "手在肩正下方，略宽于肩",
+        "膝着地，小腿抬起交叉",
+        "身体从头到膝一条直线",
+        "肘向后 45 度，不要外张"
+      ],
+      "commonMistakes": [
+        "塌腰或撅臀",
+        "肘部外张接近 90 度",
+        "只做半程就起"
+      ],
+      "regression": {
+        "name": "手撑床沿的俯卧撑",
+        "catalogId": "",
+        "note": "手抬高，撑起的重量就少一截；床沿高度比地面好找"
+      }
+    },
+    {
+      "catalogId": "plank",
+      "name": "平板支撑",
+      "muscles": [
+        "核心",
+        "肩"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "肘在肩正下方",
+        "收腹夹臀，腰不要塌",
+        "头别抬，看地面一掌远",
+        "呼吸不要憋"
+      ],
+      "commonMistakes": [
+        "塌腰",
+        "撅臀太高",
+        "憋气或一直抬头"
+      ],
+      "regression": {
+        "name": "跪姿平板",
+        "catalogId": "",
+        "note": "膝盖着地，减掉一截自重，腰更容易不塌"
+      }
+    },
+    {
+      "catalogId": "lunge",
+      "name": "弓步蹲",
+      "muscles": [
+        "股四头肌",
+        "臀大肌"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "前后脚拉开约一脚半",
+        "前膝对脚尖，不要内扣",
+        "后膝往地面落，不往前滑",
+        "上身保持直立"
+      ],
+      "commonMistakes": [
+        "前膝内扣",
+        "上身过度前倾",
+        "两脚太近，前膝冲出脚尖太多"
+      ],
+      "regression": {
+        "name": "扶椅子的弓步蹲",
+        "catalogId": "",
+        "note": "一手扶椅背借力，平衡不稳时先做这个"
+      }
+    },
+    {
+      "catalogId": "glute_bridge",
+      "name": "臀桥",
+      "muscles": [
+        "臀大肌",
+        "腿后侧"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "脚跟离臀约一拳，脚掌踩实",
+        "用臀发力顶起，不是用腰",
+        "顶到肩髋膝成一线就停",
+        "顶点停一秒再慢慢下"
+      ],
+      "commonMistakes": [
+        "用腰发力顶成反弓",
+        "顶太高导致腰椎代偿",
+        "脚跟放太远，只练到腿后"
+      ],
+      "regression": {
+        "name": "小幅度臀桥",
+        "catalogId": "",
+        "note": "只顶起一半，腰不容易代偿"
+      }
+    },
+    {
+      "catalogId": "dumbbell_row",
+      "name": "哑铃划船",
+      "muscles": [
+        "背阔肌",
+        "菱形肌",
+        "肱二头肌"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "俯身约 45 度，背挺直",
+        "手垂在肩正下方",
+        "肘往腰后拉，别耸肩",
+        "下放时慢慢放到手臂伸直"
+      ],
+      "commonMistakes": [
+        "弓背",
+        "用腰甩重量",
+        "耸肩代偿"
+      ],
+      "regression": {
+        "name": "徒手俯身夹背",
+        "catalogId": "",
+        "note": "不拿哑铃，只做夹背的动作，先把背的感觉找到"
+      }
+    },
+    {
+      "catalogId": "shoulder_press",
+      "name": "哑铃肩推",
+      "muscles": [
+        "三角肌",
+        "肱三头肌"
+      ],
+      "equipment": "dumbbell",
+      "cues": [
+        "哑铃在肩两侧，肘略在前",
+        "推到手臂接近伸直，别锁死",
+        "收腹，别塌腰后仰",
+        "下放到耳侧高度"
+      ],
+      "commonMistakes": [
+        "塌腰后仰借力",
+        "顶到关节锁死",
+        "两只哑铃撞在一起"
+      ],
+      "regression": {
+        "name": "坐姿哑铃肩推",
+        "catalogId": "",
+        "note": "坐有靠背的椅子，腰不用自己撑"
+      }
+    },
+    {
+      "catalogId": "jumping_jack",
+      "name": "开合跳",
+      "muscles": [
+        "全身",
+        "心肺"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "跳开时脚略宽于肩",
+        "双臂过头，掌心相对",
+        "落地轻，膝盖微屈缓冲",
+        "累了改成交替踏步"
+      ],
+      "commonMistakes": [
+        "落地脚掌砸地",
+        "膝盖内扣",
+        "手臂不过头"
+      ],
+      "regression": {
+        "name": "交替踏步",
+        "catalogId": "",
+        "note": "去掉跳跃落地，膝盖和楼下都轻松"
+      }
+    },
+    {
+      "catalogId": "dead_bug",
+      "name": "死虫",
+      "muscles": [
+        "核心",
+        "腹横肌"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "仰卧，腰贴地不悬空",
+        "起始时膝和肘都是 90 度",
+        "一臂过头同时对侧腿前伸",
+        "腰一离地就把幅度减小"
+      ],
+      "commonMistakes": [
+        "腰拱起离地",
+        "动作太快靠惯性",
+        "憋气"
+      ],
+      "regression": {
+        "name": "只伸腿的死虫",
+        "catalogId": "",
+        "note": "手不动，只做对侧腿，腰更容易贴地"
+      }
+    },
+    {
+      "catalogId": "wall_sit",
+      "name": "靠墙静蹲",
+      "muscles": [
+        "股四头肌"
+      ],
+      "equipment": "bodyweight",
+      "cues": [
+        "背贴墙，脚往前一步",
+        "下滑到大腿接近水平",
+        "膝盖对脚尖，不要内扣",
+        "均匀呼吸，撑到时间"
+      ],
+      "commonMistakes": [
+        "蹲太深，膝盖小于 90 度",
+        "膝盖内扣",
+        "憋气"
+      ],
+      "regression": {
+        "name": "浅一点的靠墙静蹲",
+        "catalogId": "",
+        "note": "下滑到大腿 120 度就停，别硬撑到 90 度"
+      }
+    }
+  ],
+  "remainingCatalogNames": {
+    "note": "批次 1 待做的 8 个动作中文名，供 exercises.json 先占位（骨架规格后补，未补时走降级态）。",
+    "mountain_climber": "登山跑",
+    "high_knees": "高抬腿",
+    "side_plank": "侧平板支撑",
+    "calf_raise": "提踵",
+    "bird_dog": "鸟狗式",
+    "superman": "超人式",
+    "crunch": "卷腹",
+    "russian_twist": "俄罗斯转体"
+  }
+}

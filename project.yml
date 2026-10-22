@@ -1,0 +1,59 @@
+name: DongKe
+options:
+  bundleIdPrefix: app.dongke
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+targets:
+  DongKeCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: DongKeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.core
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+  DongKe:
+    type: application
+    platform: iOS
+    sources:
+      - path: DongKe
+    dependencies:
+      - target: DongKeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+  DongKeCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: DongKeCoreTests
+    dependencies:
+      - target: DongKeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.core.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  DongKe:
+    build:
+      targets:
+        DongKe: all
+        DongKeCore: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DongKeCoreTests

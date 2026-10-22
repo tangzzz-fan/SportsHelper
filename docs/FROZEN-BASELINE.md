@@ -1,0 +1,34 @@
+# FROZEN-BASELINE — 动刻 MVP
+
+> 生效：2026-10-22 方案门
+> 效力：与 `PRD.md` / `ARCHITECTURE.md` / `UIUX.md` / `design-tokens.json` 冲突处，**以本表 + SPEC.md 为准**。三份文档保留推演过程，不作为开发依据。
+
+## 1. 冻结决策（12 条）
+
+| # | 决策 | 锁定值 | 被覆盖的旧说法 |
+|---|------|--------|----------------|
+| 1 | 平台 | iOS 18.0+，iPhone 竖屏 | PRD 的 iOS 16 |
+| 2 | 技术栈 | SwiftUI + SwiftData + Swift 6，零第三方依赖 | — |
+| 3 | 计划来源 | 粘贴文本 / 粘贴 JSON / 直连 AI（BYOK）三条并列 | PM 建议「直连 AI 降 P1」 |
+| 4 | 直连 AI 形态 | OpenAI 兼容 `POST {base}/chat/completions`，非流式，Key 存 Keychain | — |
+| 5 | 动作库 | **18 个**（plan-schema catalogId 白名单） | PRD 的 60 个、架构的 40 个 |
+| 6 | 动作图示 | **自绘参数化骨架（12 关节）+ 3 关键帧 + 要点/常见错误**；不使用第三方素材 | 架构 D-20 的 workout-guide 线稿 |
+| 7 | 久坐提醒 | **移出 MVP，列 P1**；通知只有训练日提醒 | PRD v1.1 的久坐 P0、架构 §9.6 |
+| 8 | 通知排程 | 每个训练日 1 条 `UNCalendarNotificationTrigger(repeats: true)`，单计划 **≤7 条**；不做 48 小时滚动窗口 | 架构 v1.1 的 48h 滚动 + 50 条久坐额度 |
+| 9 | 通知权限时机 | 引导第 5 屏选择提醒时间后请求；拒绝不阻塞 | PRD 的「设置页才请求」 |
+| 10 | 引导问卷 | **5 屏 / 10 字段**；伤病字段进第 5 屏 | PRD v1.1 的 7 屏 |
+| 11 | 主色 | 深青绿 `#0E7C66`（深色 `#34B39A`）；浅色为主 + 深色完整 | PRD v1.2 的赭石 `#B4451C` |
+| 12 | 打卡模型 | 三态 `done / downgraded / skipped` + `skipReason` + `plannedValue / actualValue` | 二态 `isSkipped` |
+
+## 2. 本期不做（P1 及以后）
+
+饮食/蛋白质、久坐提醒、视频教学、跳过并顺延、60 动作库、账号/云同步/后端、社交/支付、Watch/HealthKit/Live Activity/AlarmKit、iPad/横屏。
+
+## 3. 门禁状态
+
+| 门 | 状态 | 证据 |
+|----|------|------|
+| P0-1 无 emoji 图标 | 通过（文档层） | 全量正则扫描 CLEAN |
+| P0-2 无紫→粉渐变 | 通过 | design-tokens v2 全站 0 gradient |
+| P0-3 无 AI 模板味 | 通过 | 文案规范 + 反例清单 |
+| 方案门 | 待用户确认 | 本文件 + SPEC.md |

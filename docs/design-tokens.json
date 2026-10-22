@@ -1,258 +1,1188 @@
 {
   "$meta": {
-    "name": "动刻 Dongke — Design Tokens",
-    "version": "1.0.0",
+    "name": "动刻 DongKe — Design Tokens",
+    "version": "4.2.0",
+    "status": "aligned with team-lead 最终冻结（2026-10-22）＋ SPEC.md；主色深青绿、图示自绘 12 关节骨架、动作库 18、久坐 P1、通知 ≤7、完成总结三数并列。PRD / ARCHITECTURE / UIUX 自本条冻结起只作存档依据，开发唯一依据是 FROZEN-BASELINE.md + SPEC.md。",
     "designer": "颜好看",
     "date": "2026-10-22",
-    "platform": "ios",
+    "platform": "iOS 18.0+ / SwiftUI / iPhone 竖屏 / 简体中文",
     "register": "product",
-    "designAxes": { "variance": 4, "motion": 4, "density": 5 },
-    "format": "DTCG-like. 每个 token 的 value 为字符串，或 { light, dark } 双模值。",
-    "rules": [
-      "所有颜色必须通过 color.* 语义 token 引用，禁止在组件里写裸 hex。",
-      "单位：尺寸类 token 一律为 pt（iOS 逻辑像素）。",
-      "间距只允许 4 的整数倍（4/8/12/16/20/24/32/40/48/64/80）。",
-      "字号在 iOS 上必须随 Dynamic Type 缩放（timer 除外，定点并封顶）。"
+    "designAxes": {
+      "variance": 4,
+      "motion": 3,
+      "density": 5
+    },
+    "authority": {
+      "order": [
+        "FROZEN-BASELINE.md",
+        "SPEC.md",
+        "PRD.md",
+        "ARCHITECTURE.md",
+        "UIUX.md",
+        "本文件（取值实现）"
+      ],
+      "note": "最终冻结（team-lead）：主色深青绿；动作图示为自绘 12 关节参数化骨架，18 动作 × 3 帧，不使用第三方素材（素材包两次下载失败 + CC BY-SA 与 FairPlay 需法务）；关于页不做 CC 署名区；动作库 18；久坐 P1；通知 ≤7；SPEC 补降阶率。此后 PRD / ARCHITECTURE / UIUX 只作存档，开发唯一依据为 FROZEN-BASELINE.md + SPEC.md。"
+    },
+    "hardRules": [
+      "本文件是颜色、尺寸、动效取值的唯一出处。UIUX.md 与任何 Swift 视图不得出现字面量 hex、字面量字号、Image(systemName:) 字面量。",
+      "Swift 侧对应 DesignSystem/Theme.swift、Typography.swift、Spacing.swift、Icons.swift；token key 与常量名一一对应，不另起别名、不做二次包装。",
+      "深色模式不单独出配色，靠环境 colorScheme 解析同一 token 的 dark 值。",
+      "间距只用 4/8/12/16/24/32，不允许中间值。",
+      "字号只由系统文本样式派生以保证 Dynamic Type。唯一例外是倒计时 88pt（SPEC 的仪表感要求），它必须在 Typography.swift 内单点封装并封顶 dynamicTypeSize。",
+      "字体只允许系统 SF Pro / PingFang SC / 系统等宽（.system(design: .monospaced)），零打包字体，UIAppFonts 为空（ARCH §14.4）。",
+      "图标只走 SF Symbols，经 Icons.swift 单一入口；不使用 emoji 作为图标或装饰。",
+      "动作库锁定 18 个 catalogId（plan-schema 白名单），全部有骨架动画；库外动作走降级态。",
+      "每屏可见 accent ≤2 处，且每屏只允许 1 个语义色族（见 color.accentBudget）。"
+    ],
+    "changeLog": [
+      {
+        "version": "4.2.0",
+        "change": "动作图示按 team-lead 最终冻结回滚为自绘 12 关节骨架（12 关节 / autofit / 骨段容差 ±15% / 线宽 2.2% / 关节 1.6% / 躯干 1.4 倍 / 远侧 0.55 / props 四件全部生效）；关于页不做 CC 署名区；authority 改为「冻结 + SPEC 为开发唯一依据」",
+        "reason": "素材包两次下载失败（HTTP2 framing / 40MB 只到 6.3MB），且 CC BY-SA 与 App Store FairPlay 需法务确认，MVP 不引入外部变量"
+      },
+      {
+        "version": "4.1.0",
+        "change": "字体改为零打包（ARCH v1.2 §14.4）：倒计时与训练主数字改用系统等宽 + .monospacedDigit()，删掉 B612 Mono Bold 与 OFL / 子集化 / UIAppFonts 全部前置；主色维持深青绿并补三方一致证据（PRD v1.5 §9.3 + SPEC §8 + FROZEN 决策 11）；标注 SPEC §4 字体行待回写",
+        "reason": "架构 v1.2 取消打包字体；主色在 ARCH v1.2 §14.3 仍写旧候选色，属该文档单点未同步，已上报等待裁决，设计侧不擅自改动"
+      },
+      {
+        "version": "4.0.0",
+        "change": "主色定稿为深青绿 #0E7C66 / #34B39A（SPEC §8 与 FROZEN-BASELINE 决策 11，覆盖 PRD v1.2 的旧候选色）；圆角改为 SPEC 的 4/6/10/14/20；动效改为 80/150/200/240/300；新增 borderStrong（表单边框需 ≥3:1）、aiGenerated 独立色相（accent 变绿后不得再兼作 AI 标识）；对比度全量重算并逐对落表",
+        "reason": "FROZEN-BASELINE + SPEC 升级为最高效力文档"
+      },
+      {
+        "version": "3.0.0",
+        "change": "主色改旧候选色；warning 移入金黄族；figure 关节 8 扩 12；动作库 60 校正 18",
+        "reason": "PRD v1.2 变更记录（现已由 FROZEN-BASELINE 覆盖主色与图示）"
+      },
+      {
+        "version": "2.0.0",
+        "change": "按架构冻结契约重写 token 命名与字号/间距体系",
+        "reason": "与 ARCHITECTURE §14.3 对齐"
+      },
+      {
+        "version": "1.0.0",
+        "change": "首版",
+        "reason": "初稿"
+      }
     ]
   },
-
   "color": {
-    "bg":            { "type": "color", "value": { "light": "#F1F3F2", "dark": "#0F1211" }, "note": "页面底色。冷中性偏绿灰，刻意避开暖米色（奶油感）。" },
-    "surface":       { "type": "color", "value": { "light": "#FFFFFF", "dark": "#161A19" }, "note": "卡片/容器。" },
-    "surface-raised": { "type": "color", "value": { "light": "#FFFFFF", "dark": "#1E2423" }, "note": "浮起层（sheet 内卡片、选中项）。深色下靠亮度递进表达层级。" },
-    "surface-sunken": { "type": "color", "value": { "light": "#E9ECEA", "dark": "#0A0D0C" }, "note": "凹陷区：输入框底、进度槽、分段控件轨道。" },
-
-    "fg":            { "type": "color", "value": { "light": "#14181A", "dark": "#E8EDEB" }, "note": "主文本。近黑墨带绿底调，非纯黑。" },
-    "fg-2":          { "type": "color", "value": { "light": "#333E40", "dark": "#BFC9C6" }, "note": "次级文本。" },
-    "muted":         { "type": "color", "value": { "light": "#4E5A5E", "dark": "#93A09D" }, "note": "副文本 / 说明。对 bg 对比 ≥ 5.1:1。" },
-    "meta":          { "type": "color", "value": { "light": "#5F6B6E", "dark": "#7C8886" }, "note": "三级文本 / 元数据（最小允许文本色）。对比 ≥ 4.5:1，禁止再调浅用于文字。" },
-
-    "border":        { "type": "color", "value": { "light": "#DDE2E0", "dark": "#2A322F" }, "note": "默认 1pt 边框。" },
-    "border-strong": { "type": "color", "value": { "light": "#C3CAC7", "dark": "#3A4340" }, "note": "可聚焦控件边框 / 输入框悬停。" },
-    "hairline":      { "type": "color", "value": { "light": "#E8ECEA", "dark": "#202624" }, "note": "行分隔线，仅 1pt，仅装饰，不可当文本色。" },
-
-    "accent":        { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "唯一强调色（赭石/烧陶）。每屏可见使用 ≤ 2 处。" },
-    "accent-hover":  { "type": "color", "value": { "light": "#9C3A16", "dark": "#E47C46" } },
-    "accent-active": { "type": "color", "value": { "light": "#86320F", "dark": "#C05C28" } },
-    "accent-on":     { "type": "color", "value": { "light": "#FFFFFF", "dark": "#14100D" }, "note": "accent 底上的前景。浅色 5.5:1 / 深色 5.3:1。" },
-    "accent-soft":   { "type": "color", "value": { "light": "#FBEDE6", "dark": "#2B1A13" }, "note": "accent 8% 底：选中 chip、进度条轨道高亮。" },
-    "accent-on-soft": { "type": "color", "value": { "light": "#8C3512", "dark": "#E8875C" }, "note": "accent-soft 底上的文字，6.3:1。" },
-
-    "success":       { "type": "color", "value": { "light": "#15703A", "dark": "#4FB477" }, "note": "仅用于「已完成/达标」，不用于品牌表达。" },
-    "success-soft":  { "type": "color", "value": { "light": "#E6F2EA", "dark": "#12241A" } },
-    "warn":          { "type": "color", "value": { "light": "#8A6100", "dark": "#E0B341" }, "note": "与 accent 刻意拉开色相（金 vs 赭）+ 明度，避免混淆。" },
-    "warn-soft":     { "type": "color", "value": { "light": "#F7F0DD", "dark": "#2A2213" } },
-    "danger":        { "type": "color", "value": { "light": "#B01F2E", "dark": "#F0736F" }, "note": "删除 / 失败 / 中断。不与 accent 混用在同一视觉块。" },
-    "danger-soft":   { "type": "color", "value": { "light": "#FAE9EA", "dark": "#2C1416" } },
-
-    "ring-track":    { "type": "color", "value": { "light": "#E1E6E3", "dark": "#242B29" }, "note": "倒计时环 / 进度环的底槽。" },
-    "ring-progress": { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "= accent。环是唯一允许「大面积彩色」的地方，因为它承载状态。" },
-    "focus-ring":    { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "2pt 外环 + 2pt 偏移（offset）。" },
-    "scrim":         { "type": "color", "value": { "light": "rgba(10,12,11,0.55)", "dark": "rgba(0,0,0,0.70)" }, "note": "遮罩。仅用于真实模态，不做装饰性毛玻璃。" },
-    "selected-tint": { "type": "color", "value": { "light": "rgba(180,69,28,0.06)", "dark": "rgba(217,106,50,0.10)" }, "note": "列表选中行背景。" }
-  },
-
-  "typography": {
-    "family": {
-      "display": { "type": "fontFamily", "value": "SF Pro Display", "note": "标题与大字。iOS 内置，字距收紧。不另装字体。" },
-      "body":    { "type": "fontFamily", "value": "SF Pro Text", "note": "UI 正文与标签（< 20pt）。" },
-      "cjk":     { "type": "fontFamily", "value": "PingFang SC", "note": "中文唯一正文字族，回退顺序 PingFang SC → system-ui。" },
-      "timer":   { "type": "fontFamily", "value": "B612 Mono", "note": "唯一打包字体（OFL / Google Fonts，仅 Bold 700）。B612 为驾驶舱仪表设计——本产品「仪表感」的签名。仅用于倒计时与训练中主数字。" },
-      "code":    { "type": "fontFamily", "value": "SF Mono", "note": "计划粘贴框内容、AI Key 展示。" }
+    "_note": "30 个语义色 × 明暗双值。浅色为主 + 深色完整（SPEC §2 主题裁决）。中性色占 70-90%，accent 5-10%，语义色 0-5%。名按用途命名，不按色相命名。",
+    "bg": {
+      "type": "color",
+      "value": {
+        "light": "#F5F7F6",
+        "dark": "#0C1210"
+      },
+      "note": "页面底色。可见的浅灰白，带极轻绿调，不是米色/奶油色。"
     },
-    "weight": {
-      "regular":  { "type": "number", "value": 400 },
-      "medium":   { "type": "number", "value": 500 },
-      "semibold": { "type": "number", "value": 600 },
-      "bold":     { "type": "number", "value": 700, "note": "仅限 timer 与 streak 大数字。" }
+    "surface": {
+      "type": "color",
+      "value": {
+        "light": "#FFFFFF",
+        "dark": "#141B18"
+      },
+      "note": "卡片、列表行、内容容器的默认底。"
     },
-    "size": {
-      "xs":     { "type": "dimension", "value": 12, "note": "元数据、单位、ALL CAPS 标签" },
-      "sm":     { "type": "dimension", "value": 14, "note": "辅助说明、表格次级" },
-      "base":   { "type": "dimension", "value": 16, "note": "正文基准（中文正文最小 16）" },
-      "md":     { "type": "dimension", "value": 20, "note": "卡片标题、按钮文字（训练中）" },
-      "lg":     { "type": "dimension", "value": 24, "note": "页面标题" },
-      "xl":     { "type": "dimension", "value": 32, "note": "关键数字、章节数字" },
-      "2xl":    { "type": "dimension", "value": 40, "note": "总结页主数字" },
-      "3xl":    { "type": "dimension", "value": 56, "note": "仅总结页 PR 大数字" },
-      "timer":  { "type": "dimension", "value": 88, "note": "休息倒计时。定点不缩放，最大封顶 96。" }
+    "surfaceRaised": {
+      "type": "color",
+      "value": {
+        "light": "#FFFFFF",
+        "dark": "#1B2320"
+      },
+      "note": "浮起层：Sheet、ActionSheet、弹层。深色靠亮度递进而非阴影。"
     },
-    "lineHeight": {
-      "timer":   { "type": "number", "value": 1.0 },
-      "display": { "type": "number", "value": 1.12 },
-      "title":   { "type": "number", "value": 1.28 },
-      "body":    { "type": "number", "value": 1.55, "note": "中文正文必须 ≥ 1.5" },
-      "label":   { "type": "number", "value": 1.35 }
+    "surfaceSunken": {
+      "type": "color",
+      "value": {
+        "light": "#EDF1EF",
+        "dark": "#0A0F0D"
+      },
+      "note": "输入框底、进度轨道、分段槽、占位图底、骨架缩略底。"
     },
-    "tracking": {
-      "display": { "type": "dimension", "value": "-0.02em", "note": "≥ 32pt 标题" },
-      "title":   { "type": "dimension", "value": "-0.01em" },
-      "body":    { "type": "dimension", "value": "0" },
-      "caps":    { "type": "dimension", "value": "0.08em", "note": "ALL CAPS 必填（『第 6 天』『组』这类标签）" },
-      "timer":   { "type": "dimension", "value": "-0.01em", "note": "B612 Mono 等宽，负字距收拢观感" }
+    "textPrimary": {
+      "type": "color",
+      "value": {
+        "light": "#14201D",
+        "dark": "#E4EBE8"
+      },
+      "note": "主文本、骨架线稿色。近黑带绿调，非纯黑；深色非纯白。"
+    },
+    "textSecondary": {
+      "type": "color",
+      "value": {
+        "light": "#4A5A55",
+        "dark": "#A9B8B3"
+      },
+      "note": "次级文本、行内第二行、常见错误条目。"
+    },
+    "textTertiary": {
+      "type": "color",
+      "value": {
+        "light": "#616F6A",
+        "dark": "#7E8D88"
+      },
+      "note": "元数据、单位、时间戳、TabBar 未选中。已实测 ≥4.5:1，可做正文最小字号。"
+    },
+    "separator": {
+      "type": "color",
+      "value": {
+        "light": "#DCE3E0",
+        "dark": "#253330"
+      },
+      "note": "1pt 分隔线与装饰边框。不用于文本，不承担「可交互控件边界」职责。"
+    },
+    "borderStrong": {
+      "type": "color",
+      "value": {
+        "light": "#7E8D88",
+        "dark": "#62716B"
+      },
+      "note": "输入框、开关、可点框的边界。WCAG 1.4.11 要求非文本控件 ≥3:1，separator 不够，必须用这条。实测浅 3.47/3.22/3.04、深 3.41/3.69/3.13。"
+    },
+    "accent": {
+      "type": "color",
+      "value": {
+        "light": "#0E7C66",
+        "dark": "#34B39A"
+      },
+      "note": "深青绿（SPEC §8 锁定）。主 CTA、TabBar 选中、组进度当前位、倒计时环。唯一品牌色，每屏可见 ≤2 处。"
+    },
+    "accentPressed": {
+      "type": "color",
+      "value": {
+        "light": "#0A5F4E",
+        "dark": "#5CCBB4"
+      },
+      "note": "按下态 / 倒计时最后 5 秒。"
+    },
+    "accentSoft": {
+      "type": "color",
+      "value": {
+        "light": "#E6F2EF",
+        "dark": "#12332C"
+      },
+      "note": "选中行底、accent 淡底。此底上写文字必须用 textPrimary（accent 自身在此底上仅 4.47:1，不够）。"
+    },
+    "accentOn": {
+      "type": "color",
+      "value": {
+        "light": "#FFFFFF",
+        "dark": "#06231E"
+      },
+      "note": "accent 底上的前景。浅色白字 5.13:1；深色必须用近黑字 6.36:1——深色 accent 是亮青绿，白字只有 2.61:1，不可用。"
+    },
+    "success": {
+      "type": "color",
+      "value": {
+        "light": "#17803F",
+        "dark": "#3FA968"
+      },
+      "note": "仅用于「完成 / 达标」：组勾选、完成率达标、连续天数。永不作按钮底色。"
+    },
+    "successSoft": {
+      "type": "color",
+      "value": {
+        "light": "#E7F3EB",
+        "dark": "#0E2418"
+      }
+    },
+    "warning": {
+      "type": "color",
+      "value": {
+        "light": "#9A5D08",
+        "dark": "#D89B3A"
+      },
+      "note": "琥珀（SPEC §8 锁定）。PlanReview 字段级 issue、需确认、数据写入失败。必须与 exclamationmark 图标或文字同现，不可只靠颜色传达。"
+    },
+    "warningSoft": {
+      "type": "color",
+      "value": {
+        "light": "#FBF2E0",
+        "dark": "#2A2213"
+      },
+      "note": "issue 行底色 / 顶部汇总条底色。"
+    },
+    "danger": {
+      "type": "color",
+      "value": {
+        "light": "#B01F2E",
+        "dark": "#E9666F"
+      },
+      "note": "删除、解析失败、Key 被拒、身体不适跳过。不得与 accent 同时出现在一个组件里。"
+    },
+    "dangerSoft": {
+      "type": "color",
+      "value": {
+        "light": "#FAE9EA",
+        "dark": "#2C1416"
+      }
+    },
+    "aiGenerated": {
+      "type": "color",
+      "value": {
+        "light": "#1F6F8B",
+        "dark": "#54A8C4"
+      },
+      "note": "AI 生成内容标识专用的青蓝。**不再复用 success**：accent 本身已是青绿，若 AI 标识也用绿，用户无法区分「AI 生成」与「练完了」。仅作徽标文字 + 1pt 描边。"
+    },
+    "aiGeneratedSoft": {
+      "type": "color",
+      "value": {
+        "light": "#E8F1F4",
+        "dark": "#0F2830"
+      }
+    },
+    "chartPrimary": {
+      "type": "color",
+      "value": {
+        "light": "#0E7C66",
+        "dark": "#34B39A"
+      },
+      "note": "Swift Charts 主序列（完成率柱）。"
+    },
+    "chartSecondary": {
+      "type": "color",
+      "value": {
+        "light": "#9A5D08",
+        "dark": "#D89B3A"
+      },
+      "note": "第二序列（降阶组数叠加）。降阶与跳过必须在图上分开，否则 100% 会掩盖「每组都减半」。"
+    },
+    "chartGrid": {
+      "type": "color",
+      "value": {
+        "light": "#E4E9E7",
+        "dark": "#1E2825"
+      },
+      "note": "仅横向网格线，不画纵向。"
+    },
+    "ringTrack": {
+      "type": "color",
+      "value": {
+        "light": "#DCE3E0",
+        "dark": "#253330"
+      },
+      "note": "倒计时环底槽。"
+    },
+    "focusRing": {
+      "type": "color",
+      "value": {
+        "light": "#0E7C66",
+        "dark": "#34B39A"
+      },
+      "note": "2pt 外环 + 2pt offset。仅键盘/指针焦点与 VoiceOver 焦点用。"
+    },
+    "scrim": {
+      "type": "color",
+      "value": {
+        "light": "rgba(8,16,14,0.52)",
+        "dark": "rgba(0,0,0,0.72)"
+      },
+      "note": "仅真模态遮罩，不做装饰性毛玻璃。"
+    },
+    "disabledFill": {
+      "type": "color",
+      "value": {
+        "light": "#EDF1EF",
+        "dark": "#1A2220"
+      }
+    },
+    "disabledText": {
+      "type": "color",
+      "value": {
+        "light": "#8E9B96",
+        "dark": "#7B8A85"
+      },
+      "note": "禁用态文本。浅色 2.88:1 属 WCAG 1.4.3 明文豁免（disabled control），但禁用态必须在视觉上可辨「不可点」，不能靠低对比承担信息。"
+    },
+    "overlayBorder": {
+      "type": "color",
+      "value": {
+        "light": "rgba(20,32,29,0.08)",
+        "dark": "rgba(228,235,232,0.08)"
+      },
+      "note": "图片/骨架叠在任意底色上的内描边，保证边界可见。"
+    },
+    "accentBudget": {
+      "type": "string",
+      "value": "每屏 ≤2 处可见 accent，且每屏只允许 1 个语义色族。分配：引导=accent（主按钮 + 进度条）；今日=accent（开始训练 + TabBar 选中）；训练执行=accent（完成本组 + 组进度当前位）；休息计时=accent（环 + 提前开始）；完成总结=success 1（完成率数字）+ accent 1（收下）；计划导入=accent 2；计划校对=warning（issue）+ accent（保存）；动作库=accent 1；动作详情=accent 1；记录=chartPrimary + chartSecondary；设置=accent。本期无久坐提醒，不需为其分配。"
+    },
+    "semanticSeparation": {
+      "type": "string",
+      "value": "accent 与 warning 的亮度接近（1.04:1），色相相差约 40 度——所以两者永远不会被用来区分「同一件事的两个状态」。warning 一律带 exclamationmark 图标；accent 一律不带图标做状态标识。success 与 aiGenerated 也是两个独立色相（绿 vs 青蓝），分别表示「练完了」与「这段文字是 AI 写的」。"
     }
   },
-
+  "typography": {
+    "_note": "字号全部由系统文本样式派生。唯一自定尺寸是倒计时 88pt。零打包字体（ARCH §14.4）：倒计时与训练主数字都用系统等宽 + .monospacedDigit()，不依赖具体字族。",
+    "fontPolicy": {
+      "type": "string",
+      "value": "零打包字体。全部走系统字体：SF Pro / PingFang SC / 系统等宽（.system(design: .monospaced) + .monospacedDigit()）。UIAppFonts 保持为空，仓库无字体文件，无 OFL 授权与子集化工作。",
+      "authority": "ARCHITECTURE v1.2 §14.4（现行）。**SPEC §4 的字体行仍写着「B612 Mono Bold + OFL 打包」，与 §14.4 相反，需架构或 lead 回写 SPEC**——否则开发照 SPEC 做会打包字体。",
+      "designPosition": "取消打包不影响设计：倒计时 88pt 的「仪表感」由字号、字重、等宽数字、环的等速消耗共同建立，不依赖具体字族。B612 Mono 与 SF Mono 在 88pt 上的差别，远小于「88pt 与 34pt」的差别。",
+      "optionalSwap": "若将来重新允许打包，唯一允许的替换点是 typography.style.timer 与 typography.style.workoutNumber 两处（只换字族，尺寸 / relativeTo / monospacedDigit / 封顶 dynamicTypeSize 全部不动）。第三处出现即门禁失败。"
+    },
+    "style": {
+      "pageTitle": {
+        "type": "textStyle",
+        "value": ".title2",
+        "weight": "semibold",
+        "tracking": "-0.01em",
+        "lineHeight": "1.25",
+        "usage": "页面主标题"
+      },
+      "actionTitle": {
+        "type": "textStyle",
+        "value": ".title",
+        "weight": "semibold",
+        "tracking": "-0.01em",
+        "lineHeight": "1.2",
+        "usage": "训练页动作名、总结页主结论、引导页问句"
+      },
+      "setCounter": {
+        "type": "textStyle",
+        "value": ".title3",
+        "weight": "semibold",
+        "tracking": "0",
+        "lineHeight": "1.3",
+        "usage": "「第 2 组 / 共 4 组」。必须允许换行"
+      },
+      "setTarget": {
+        "type": "textStyle",
+        "value": ".title3",
+        "weight": "regular",
+        "tracking": "0",
+        "lineHeight": "1.3",
+        "usage": "「目标 12 次 / 30 秒 / 每侧 10 次」。必须允许换行"
+      },
+      "sectionTitle": {
+        "type": "textStyle",
+        "value": ".headline",
+        "weight": "semibold",
+        "tracking": "0",
+        "lineHeight": "1.35",
+        "usage": "分组标题、动作卡「要点」「常见错误」标题"
+      },
+      "body": {
+        "type": "textStyle",
+        "value": ".body",
+        "weight": "regular",
+        "tracking": "0",
+        "lineHeight": "1.5",
+        "usage": "正文、cues 与 commonMistakes 条目"
+      },
+      "buttonLabel": {
+        "type": "textStyle",
+        "value": ".body",
+        "weight": "semibold",
+        "tracking": "0",
+        "lineHeight": "1.2",
+        "usage": "按钮文字"
+      },
+      "secondary": {
+        "type": "textStyle",
+        "value": ".subheadline",
+        "weight": "regular",
+        "tracking": "0",
+        "lineHeight": "1.45",
+        "usage": "辅助说明、行内第二行"
+      },
+      "meta": {
+        "type": "textStyle",
+        "value": ".footnote",
+        "weight": "regular",
+        "tracking": "0",
+        "lineHeight": "1.4",
+        "usage": "元数据、单位、时间戳；AX 大字号下 cues 的降级字号"
+      },
+      "capsLabel": {
+        "type": "textStyle",
+        "value": ".caption2",
+        "weight": "medium",
+        "tracking": "0.08em",
+        "lineHeight": "1.2",
+        "usage": "仅英文小标签与 AI 徽标。中文不用（全大写对中文无意义）"
+      },
+      "bigNumber": {
+        "type": "textStyle",
+        "value": ".largeTitle",
+        "weight": "semibold",
+        "design": "monospaced",
+        "tracking": "-0.02em",
+        "lineHeight": "1.05",
+        "usage": "完成率、连续天数、总时长。必须 .monospacedDigit()"
+      },
+      "workoutNumber": {
+        "type": "textStyle",
+        "value": ".title",
+        "design": "monospaced",
+        "relativeTo": ".title",
+        "tracking": "0",
+        "lineHeight": "1.1",
+        "usage": "训练页主数字：目标次数 / 计时剩余秒。系统等宽 + .monospacedDigit()，不打包字体"
+      },
+      "timer": {
+        "type": "textStyle",
+        "value": ".custom(size: 88, relativeTo: .largeTitle)",
+        "design": "monospaced",
+        "tracking": "-0.01em",
+        "lineHeight": "1.0",
+        "usage": "休息倒计时唯一用法。系统等宽 + .monospacedDigit() + .dynamicTypeSize(...accessibility2) 封顶 + .minimumScaleFactor(0.7)。全项目唯一自定字号。VoiceOver 见 a11y.timerVoiceOver。"
+      },
+      "monoInline": {
+        "type": "textStyle",
+        "value": ".footnote",
+        "design": "monospaced",
+        "usage": "粘贴框内容、API Key 末四位、HH:mm"
+      }
+    },
+    "dynamicType": {
+      "type": "string",
+      "value": "全量支持至 AX5。验收线：AX3（xxxLarge）下训练页「第 2 组 / 共 4 组」「目标 12 次」「完成第 2 组 · 12 次」三项均不得截断、不得缩字、不得折叠。实现规则见 layout.noTruncateRules。"
+    },
+    "typeScale": {
+      "type": "string",
+      "value": "系统 12 档文本样式即我们的全部字号：largeTitle 34 / title 28 / title2 22 / title3 20 / headline 17 / body 17 / callout 16 / subheadline 15 / footnote 13 / caption 12 / caption2 11。不自造 14/18/24 这类中间档——它们在 Dynamic Type 下无法映射。"
+    }
+  },
   "spacing": {
-    "4":  { "type": "dimension", "value": 4,  "note": "图标与文字之间（最小）" },
-    "8":  { "type": "dimension", "value": 8,  "note": "同组元素 / 触控最小间隙" },
-    "12": { "type": "dimension", "value": 12 },
-    "16": { "type": "dimension", "value": 16, "note": "卡片内边距 / 屏幕左右边距" },
-    "20": { "type": "dimension", "value": 20 },
-    "24": { "type": "dimension", "value": 24, "note": "模块间距" },
-    "32": { "type": "dimension", "value": 32, "note": "区块间距" },
-    "40": { "type": "dimension", "value": 40 },
-    "48": { "type": "dimension", "value": 48, "note": "大区块" },
-    "64": { "type": "dimension", "value": 64 },
-    "80": { "type": "dimension", "value": 80, "note": "仅引导页大留白" }
+    "_note": "只允许这 6 级，来自 SPEC 的 4/8/12/16/24/32。",
+    "4": {
+      "type": "dimension",
+      "value": 4,
+      "usage": "图标与文字、cues 编号与文字"
+    },
+    "8": {
+      "type": "dimension",
+      "value": 8,
+      "usage": "同组元素、触控最小间隙"
+    },
+    "12": {
+      "type": "dimension",
+      "value": 12,
+      "usage": "列表行内纵向、按钮图标间距"
+    },
+    "16": {
+      "type": "dimension",
+      "value": 16,
+      "usage": "卡片内边距、屏幕左右边距、默认块间距"
+    },
+    "24": {
+      "type": "dimension",
+      "value": 24,
+      "usage": "模块间距、分组之间、训练页三按钮间隙"
+    },
+    "32": {
+      "type": "dimension",
+      "value": 32,
+      "usage": "区块间距、页面顶部留白上限"
+    }
   },
-
   "size": {
-    "hairline":     { "type": "dimension", "value": 1 },
-    "touchMin":     { "type": "dimension", "value": 44, "note": "WCAG 2.5.5 下限" },
-    "touchSession": { "type": "dimension", "value": 56, "note": "训练中所有可点区域下限（出汗/单手）" },
-    "touchPrimary": { "type": "dimension", "value": 64, "note": "训练中主操作按钮高度（记录一组）" },
-    "buttonHeight": { "type": "dimension", "value": 50, "note": "常规页主按钮" },
-    "inputHeight":  { "type": "dimension", "value": 50 },
-    "iconSm":       { "type": "dimension", "value": 16, "note": "行内，随文字 500 字重" },
-    "iconMd":       { "type": "dimension", "value": 20, "note": "按钮内" },
-    "iconLg":       { "type": "dimension", "value": 24, "note": "TabBar / 独立图标" },
-    "tabBarHeight": { "type": "dimension", "value": 49, "note": "iOS 标准，加 safe-area-inset-bottom" },
-    "navBarHeight": { "type": "dimension", "value": 44 },
-    "ringStroke":   { "type": "dimension", "value": 8, "note": "倒计时环线宽；小尺寸环用 6" },
-    "illustration": { "type": "dimension", "value": 240, "note": "动作示意图方形画布（详情页 280，训练中 200）" }
+    "hairline": {
+      "type": "dimension",
+      "value": 1
+    },
+    "touchMin": {
+      "type": "dimension",
+      "value": 44,
+      "note": "SPEC 全局下限"
+    },
+    "touchSession": {
+      "type": "dimension",
+      "value": 56,
+      "note": "训练页所有可点区下限（躺姿 / 出汗 / 单手）"
+    },
+    "touchPrimary": {
+      "type": "dimension",
+      "value": 64,
+      "note": "训练页主按钮「完成第 2 组」"
+    },
+    "buttonHeight": {
+      "type": "dimension",
+      "value": 50
+    },
+    "inputHeight": {
+      "type": "dimension",
+      "value": 50
+    },
+    "rowMin": {
+      "type": "dimension",
+      "value": 56
+    },
+    "iconSm": {
+      "type": "dimension",
+      "value": 16
+    },
+    "iconMd": {
+      "type": "dimension",
+      "value": 20
+    },
+    "iconLg": {
+      "type": "dimension",
+      "value": 24
+    },
+    "tabBarHeight": {
+      "type": "dimension",
+      "value": 49
+    },
+    "navBarHeight": {
+      "type": "dimension",
+      "value": 44
+    },
+    "figureWorkout": {
+      "type": "dimension",
+      "value": 160,
+      "note": "训练页骨架。160 不是 200——SE 3 上 200 会挤掉 cues，见 UIUX §8-P3 高度预算表"
+    },
+    "figureWorkoutMin": {
+      "type": "dimension",
+      "value": 120,
+      "note": "AX 大字号下骨架下限，再小则辨识度不达标"
+    },
+    "figureCard": {
+      "type": "dimension",
+      "value": 120,
+      "note": "动作卡 Sheet 内骨架"
+    },
+    "figureLibrary": {
+      "type": "dimension",
+      "value": 44,
+      "note": "动作库列表缩略，静态首帧"
+    },
+    "figureHistory": {
+      "type": "dimension",
+      "value": 48,
+      "note": "记录列表缩略，静态首帧"
+    },
+    "ringStroke": {
+      "type": "dimension",
+      "value": 8
+    },
+    "setDot": {
+      "type": "dimension",
+      "value": 8,
+      "note": "组进度方块 8×8，圆角 2"
+    }
   },
-
   "radius": {
-    "xs":   { "type": "dimension", "value": 4,  "note": "标签 / badge" },
-    "sm":   { "type": "dimension", "value": 6,  "note": "输入框 / 小 chip" },
-    "md":   { "type": "dimension", "value": 10, "note": "按钮 / 动作缩略卡" },
-    "lg":   { "type": "dimension", "value": 14, "note": "卡片上限。仪表感要求克制，禁止 ≥ 20 的卡片" },
-    "xl":   { "type": "dimension", "value": 20, "note": "仅 bottom sheet 顶部" },
-    "pill": { "type": "dimension", "value": 999, "note": "Stepper 按钮 / 状态药丸 / 音频式圆按钮" }
+    "_note": "SPEC §8 锁定 4/6/10/14/20。卡片禁止 ≥20。",
+    "xs": {
+      "type": "dimension",
+      "value": 4,
+      "usage": "组进度方块、小色块、徽标"
+    },
+    "sm": {
+      "type": "dimension",
+      "value": 6,
+      "usage": "输入框、chip、分段控件槽"
+    },
+    "md": {
+      "type": "dimension",
+      "value": 10,
+      "usage": "按钮、列表卡片、动作卡行"
+    },
+    "lg": {
+      "type": "dimension",
+      "value": 14,
+      "usage": "卡片上限。≥20 的卡片即过度圆润，属 AI 模板特征"
+    },
+    "sheet": {
+      "type": "dimension",
+      "value": 20,
+      "usage": "仅 bottom sheet 顶部两角"
+    },
+    "capsule": {
+      "type": "dimension",
+      "value": 999,
+      "usage": "圆形图标按钮、状态药丸、进度条、环端帽"
+    }
   },
-
-  "shadow": {
-    "none":     { "type": "boxShadow", "value": "none" },
-    "card":     { "type": "boxShadow", "value": { "light": "0 1px 2px rgba(16,20,18,0.04), 0 2px 8px rgba(16,20,18,0.04)", "dark": "none" }, "note": "深色下用 surface-raised 亮度差代替阴影" },
-    "float":    { "type": "boxShadow", "value": { "light": "0 8px 24px rgba(16,20,18,0.10)", "dark": "none" } },
-    "sheet":    { "type": "boxShadow", "value": { "light": "0 -8px 32px rgba(16,20,18,0.10)", "dark": "none" } },
-    "stickyAction": { "type": "boxShadow", "value": { "light": "0 -1px 0 #DDE2E0", "dark": "0 -1px 0 #2A322F" }, "note": "训练页底部固定操作条：用 1pt 上行线，不用投影" }
-  },
-
   "motion": {
+    "_note": "SPEC §8 锁定 80/150/200/240/300 与 cubic-bezier(0.2,0,0,1)，禁止弹跳。",
     "duration": {
-      "instant": { "type": "duration", "value": 80,  "note": "按下反馈" },
-      "fast":    { "type": "duration", "value": 150, "note": "收值：hover/选中/勾选" },
-      "base":    { "type": "duration", "value": 200, "note": "元素进入" },
-      "enter":   { "type": "duration", "value": 240 },
-      "exit":    { "type": "duration", "value": 160 },
-      "screen":  { "type": "duration", "value": 300, "note": "页面/Sheet 转场，用 iOS 原生 push" }
+      "micro": {
+        "type": "duration",
+        "value": 80,
+        "usage": "按下态颜色变化、组进度点变色"
+      },
+      "fast": {
+        "type": "duration",
+        "value": 150,
+        "usage": "收敛默认值：勾选、开关、显隐、字段 focus"
+      },
+      "base": {
+        "type": "duration",
+        "value": 200,
+        "usage": "行插入、Toast 弹出、校验错误出现"
+      },
+      "sheet": {
+        "type": "duration",
+        "value": 240,
+        "usage": "Sheet 呈现 / 关闭"
+      },
+      "screen": {
+        "type": "duration",
+        "value": 300,
+        "usage": "页面转场、issue 定位滚动"
+      }
     },
     "easing": {
-      "standard":   { "type": "cubicBezier", "value": [0.2, 0, 0, 1] },
-      "decelerate": { "type": "cubicBezier", "value": [0.05, 0.7, 0.1, 1] },
-      "accelerate": { "type": "cubicBezier", "value": [0.3, 0, 0.8, 0.15] },
-      "linear":     { "type": "cubicBezier", "value": [0, 0, 1, 1], "note": "仅倒计时环消耗，进度必须等速" }
+      "standard": {
+        "type": "cubicBezier",
+        "value": [
+          0.2,
+          0,
+          0,
+          1
+        ],
+        "usage": "唯一缓动。禁止任何 overshoot / 弹跳曲线"
+      },
+      "linear": {
+        "type": "cubicBezier",
+        "value": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "usage": "仅倒计时环消耗（进度必须等速）"
+      }
     },
-    "spring": { "type": "spring", "value": { "response": 0.32, "dampingFraction": 0.86 }, "note": "对应 SwiftUI .snappy" },
+    "figureLoop": {
+      "type": "duration",
+      "value": 2400,
+      "usage": "骨架 3 帧一个完整循环 2.4s，帧间 120ms 交叉淡入；TimelineView 上限 30fps。静力动作由 figure-specs.json 的 loopSeconds 覆盖为 3.5s"
+    },
     "haptic": {
-      "setLogged":   { "type": "string", "value": "impactLight" },
-      "restStart":   { "type": "string", "value": "impactMedium" },
-      "restEnd":     { "type": "string", "value": "notificationSuccess" },
-      "error":       { "type": "string", "value": "notificationError" },
-      "selection":   { "type": "string", "value": "selection" }
+      "setCompleted": {
+        "type": "string",
+        "value": "impactMedium",
+        "usage": "完成一组"
+      },
+      "halfReps": {
+        "type": "string",
+        "value": "impactLight",
+        "usage": "减半次数 / 休息加 30 秒"
+      },
+      "skip": {
+        "type": "string",
+        "value": "impactRigid",
+        "usage": "跳过本组"
+      },
+      "restTick": {
+        "type": "string",
+        "value": "selection",
+        "usage": "倒计时最后 5 秒每秒一次，设置可关"
+      },
+      "restFinished": {
+        "type": "string",
+        "value": "notificationSuccess",
+        "usage": "休息归零，配合提示音"
+      },
+      "error": {
+        "type": "string",
+        "value": "notificationError",
+        "usage": "保存失败 / 解析失败"
+      }
     },
-    "reducedMotion": { "type": "string", "value": "禁用所有位移/缩放/弹簧；环改为每 1s 跳步更新；转场改用 crossfade 150ms。倒计时数字仍实时更新（信息不可减）。" }
-  },
-
-  "component": {
-    "buttonPrimary": {
-      "bg": "color.accent", "fg": "color.accent-on",
-      "bgPressed": "color.accent-active", "bgDisabled": "color.surface-sunken",
-      "fgDisabled": "color.meta",
-      "height": "size.buttonHeight", "radius": "radius.md",
-      "paddingX": "spacing.20", "labelSize": "typography.size.base", "labelWeight": "typography.weight.semibold"
-    },
-    "buttonSecondary": {
-      "bg": "transparent", "fg": "color.fg", "border": "1pt color.border-strong",
-      "bgPressed": "color.surface-sunken", "height": "size.buttonHeight", "radius": "radius.md"
-    },
-    "buttonSessionPrimary": {
-      "bg": "color.accent", "fg": "color.accent-on",
-      "height": "size.touchPrimary", "radius": "radius.md",
-      "labelSize": "typography.size.md", "labelWeight": "typography.weight.semibold",
-      "note": "训练中『完成本组』。整行宽，贴拇指区。"
-    },
-    "stepperButton": {
-      "size": "size.touchSession", "radius": "radius.pill",
-      "bg": "color.surface-sunken", "fg": "color.fg", "border": "1pt color.border"
-    },
-    "card": {
-      "bg": "color.surface", "border": "1pt color.border", "radius": "radius.lg",
-      "shadow": "shadow.card", "padding": "spacing.16"
-    },
-    "cardSelected": {
-      "border": "1pt color.accent", "bg": "color.selected-tint"
-    },
-    "input": {
-      "bg": "color.surface", "border": "1pt color.border", "radius": "radius.sm",
-      "placeholder": "color.meta", "focusBorder": "1pt color.accent",
-      "focusRing": "2pt color.focus-ring, offset 2", "errorBorder": "1pt color.danger",
-      "errorText": "color.danger", "height": "size.inputHeight"
-    },
-    "listRow": {
-      "minHeight": "size.touchMin", "bg": "color.surface",
-      "separator": "1pt color.hairline", "paddingY": "spacing.12", "paddingX": "spacing.16"
-    },
-    "segmentedControl": {
-      "track": "color.surface-sunken", "thumb": "color.surface",
-      "labelActive": "color.fg", "labelIdle": "color.muted", "height": 36, "radius": "radius.sm"
-    },
-    "progressBar": {
-      "track": "color.surface-sunken", "fill": "color.accent", "height": 6, "radius": "radius.pill"
-    },
-    "timerRing": {
-      "track": "color.ring-track", "progress": "color.ring-progress",
-      "stroke": "size.ringStroke", "cap": "butt",
-      "note": "从 12 点方向顺时针递减；最后 5 秒环与数字转为 color.accent-active，并叠加一次 warn 色脉冲（reduced-motion 下不脉冲）。"
-    },
-    "tabBar": {
-      "bg": "color.surface", "border": "1pt color.hairline",
-      "iconActive": "color.accent", "iconIdle": "color.muted",
-      "labelActive": "color.accent", "labelIdle": "color.muted",
-      "height": "size.tabBarHeight", "tabs": 3
-    },
-    "bottomSheet": {
-      "bg": "color.surface-raised", "radiusTop": "radius.xl", "shadow": "shadow.sheet",
-      "scrim": "color.scrim", "grabber": "3×36 color.border-strong"
-    },
-    "toast": {
-      "bg": "color.fg", "fg": "color.bg", "radius": "radius.md",
-      "paddingX": "spacing.16", "paddingY": "spacing.12",
-      "note": "最多 1 行 + 一个撤销按钮；2.5s 自动消失；不阻塞操作。"
-    },
-    "illustrationFrame": {
-      "size": "size.illustration", "bg": "color.surface",
-      "strokeColor": "color.fg", "strokeWidth": 6,
-      "bgTint": "color.surface-sunken",
-      "note": "单色线稿人形，线宽在 240pt 画布上为 6pt（等比），统一两端圆头。"
+    "reducedMotion": {
+      "type": "string",
+      "value": "reduceMotion=true 时：骨架固定 poses[0] 不插值、不建 TimelineView；环改每 1s 跳步；Sheet 改 crossfade 150ms；行插入不做位移只做透明度。**倒计时数字与训练主数字必须继续逐秒更新**——冻结动画不等于冻结信息。"
     }
   },
-
+  "layout": {
+    "gutter": {
+      "type": "dimension",
+      "value": 16,
+      "note": "屏幕左右统一边距"
+    },
+    "maxContentWidth": {
+      "type": "dimension",
+      "value": 560
+    },
+    "noTruncateRules": {
+      "type": "string",
+      "value": "（1）训练页「第 2 组 / 共 4 组」「目标 12 次」「完成第 2 组 · 12 次」三项各自独立 Text、纵向 VStack 堆叠，禁止塞进同一 HStack 横向挤压——横向挤压是截断的根源。（2）每个加 .fixedSize(horizontal: false, vertical: true)，禁止 .lineLimit(1)，让它换行。（3）纵向空间不足时收缩顺序固定为：先缩骨架 160 降到 120，再把 cues 从 5 条收到 2 条并挂「全部要点」入口，最后才允许 minimumScaleFactor 0.85 缩字。（4）三项核心信息在任何字号下不得折叠、不得隐藏、不得缩字。"
+    },
+    "thumbZone": {
+      "type": "string",
+      "value": "主操作固定在屏幕底部 25%：训练页「完成第 2 组」、校对页「保存并使用」、导入页「解析」、总结页「收下」。顶部只放返回与只读信息。"
+    },
+    "safeArea": {
+      "type": "string",
+      "value": "底部固定操作条用 safeAreaInset(edge: .bottom)，内容区 padding(.bottom, 16)；有 TabBar 的页面操作条置于 TabBar 之上不重叠。"
+    },
+    "oneDecisionPerScreen": {
+      "type": "string",
+      "value": "任何一屏的可决策项 ≤4。训练页只有 3 个可点：完成本组 / 这组做不动 / 动作卡。引导每屏只有 1 组字段 + 下一步。"
+    }
+  },
+  "figure": {
+    "_note": "参数化骨架规格，**现行方案**（team-lead 最终冻结）。自绘 12 关节 + 3 关键帧，18 个动作全部有骨架；不使用第三方素材，因此无署名义务。渲染器唯一：DesignSystem/Figures/ExerciseFigureView.swift。设计交付是位姿数据（docs/figure-specs.sample.json，10 个打样 + `_generic`），不是插画。",
+    "renderInterface": {
+      "type": "string",
+      "value": "ExerciseFigureView(catalogId: String, size: CGFloat, playsAnimation: Bool)。UI 不感知内部实现——3 帧 / 2.4s 循环 / 帧间 120ms 交叉淡入 / 列表内静态首帧 / 同屏只播 1 个 / 单色 textPrimary / custom_ 前缀走降级态。"
+    },
+    "joints": {
+      "type": "array",
+      "value": [
+        "head",
+        "neck",
+        "shoulder",
+        "hip",
+        "elbowNear",
+        "wristNear",
+        "elbowFar",
+        "wristFar",
+        "kneeNear",
+        "ankleNear",
+        "kneeFar",
+        "ankleFar"
+      ],
+      "note": "12 关节 = 躯干 4 点 + 双侧上肢 / 下肢各 2 点。8 关节只能画侧视单侧骨架，18 个动作里有 7 个画不出来（弓步蹲画不出后腿、死虫画不出对侧伸展、开合跳画不出两腿分开、登山跑/高抬腿画不出左右交替、鸟狗式/超人式画不出对角）。扩展成本为零：FigurePose.points 是字典、links 在 spec 内、渲染器按数据迭代。8 关节作为兼容退化模式保留（只用 Near 侧 7 条线）。"
+    },
+    "links": {
+      "type": "array",
+      "value": [
+        [
+          "neck",
+          "head"
+        ],
+        [
+          "neck",
+          "shoulder"
+        ],
+        [
+          "shoulder",
+          "hip"
+        ],
+        [
+          "shoulder",
+          "elbowNear"
+        ],
+        [
+          "elbowNear",
+          "wristNear"
+        ],
+        [
+          "shoulder",
+          "elbowFar"
+        ],
+        [
+          "elbowFar",
+          "wristFar"
+        ],
+        [
+          "hip",
+          "kneeNear"
+        ],
+        [
+          "kneeNear",
+          "ankleNear"
+        ],
+        [
+          "hip",
+          "kneeFar"
+        ],
+        [
+          "kneeFar",
+          "ankleFar"
+        ]
+      ],
+      "note": "11 条连线，固定不逐动作改。"
+    },
+    "coordinateSpace": {
+      "type": "string",
+      "value": "归一化 0...1 单位正方形，原点左上、y 向下。允许超界（autofit 前），渲染前统一做并集缩放。"
+    },
+    "autofit": {
+      "type": "object",
+      "value": {
+        "enabled": true,
+        "targetBox": [
+          0.06,
+          0.94
+        ],
+        "minScale": 0.6
+      },
+      "note": "同一动作全部帧取并集 bbox，等比缩放并居中到 0.06–0.94。没有它，死虫这类横跨 1.11 的动作会被裁掉一截。最小缩放 0.6 防止极端动作缩成蚂蚁。约 5 行代码。"
+    },
+    "frameCount": {
+      "type": "string",
+      "value": "每个动作 3 帧（起始 / 最吃力点 / 回起始）；静力动作 2 帧且姿势近似，靠 loopSeconds 拉长。线稿方案同样是每动作 3 帧。"
+    },
+    "segmentLengths": {
+      "type": "object",
+      "value": {
+        "torso": 0.26,
+        "thigh": 0.24,
+        "shin": 0.21,
+        "upperArm": 0.15,
+        "forearm": 0.13,
+        "neck": 0.06,
+        "tolerance": 0.15
+      },
+      "note": "同动作各帧的骨段长度必须一致，容差 ±15%，否则插值会出现「橡皮筋」。"
+    },
+    "stroke": {
+      "lineWidth": {
+        "type": "number",
+        "value": 0.022,
+        "note": "相对画布边长比例。160pt 画布约 3.5pt；44pt 缩略约 1pt，渲染器自动加粗到最低 2.5pt。"
+      },
+      "lineCap": {
+        "type": "string",
+        "value": "round"
+      },
+      "lineJoin": {
+        "type": "string",
+        "value": "round"
+      },
+      "jointRadius": {
+        "type": "number",
+        "value": 0.016,
+        "note": "小于 lineWidth×1.2，避免「糖葫芦」。关节圆用 background 色挖空形成线稿感。"
+      },
+      "torsoWeight": {
+        "type": "number",
+        "value": 1.4,
+        "note": "shoulder 到 hip 的倍率。躯干比四肢粗一档，否则读不出哪个是身体。"
+      },
+      "farLimbOpacity": {
+        "type": "number",
+        "value": 0.55,
+        "note": "远侧肢体透明度，表达前后遮挡。这是 12 关节方案能读的前提。"
+      },
+      "color": {
+        "type": "string",
+        "value": "textPrimary",
+        "note": "骨架永远 textPrimary，不用 accent——它描述身体，不表达情绪。线稿方案设 Template Image 后同样自动取这条色。"
+      },
+      "jointColor": {
+        "type": "string",
+        "value": "surfaceRaised"
+      },
+      "torsoFill": {
+        "type": "string",
+        "value": "none",
+        "note": "**不做躯干填充**。填充后关节与线不再区分，且会让人读成「人体剪影」而不是「骨架」，反而降低辨识度。"
+      }
+    },
+    "props": {
+      "type": "object",
+      "value": {
+        "floor": "水平 1pt 实线，separator，画在 y=0.94 全宽",
+        "wall": "垂直 1pt 实线，separator，位置由 spec.wallX 指定（靠墙静蹲必需，否则会被读成半蹲）",
+        "dumbbell": "wrist 位置小哑铃：2 个 0.012 半径实心圆 + 1 条短横线，textPrimary（哑铃划船 / 肩推必需，否则读成徒手）",
+        "band": "wrist 到固定点 1pt 虚线，separator"
+      },
+      "note": "props 是辨识度的一部分，不是装饰。18 个动作里需要 props 的：dumbbell_row / shoulder_press（dumbbell）、wall_sit（wall + floor）、glute_bridge / dead_bug / bird_dog / superman / crunch / russian_twist（floor）。"
+    },
+    "view": {
+      "type": "string",
+      "value": "side（默认面朝右）| front。18 个动作里必须正面的是 jumping_jack、high_knees；side_plank 用 side 但视角偏低。"
+    },
+    "stateStyles": {
+      "animated": {
+        "type": "string",
+        "value": "训练页与动作详情：3 帧 2.4s 循环，帧间 120ms 交叉淡入，30fps，同屏仅 1 个。"
+      },
+      "staticFirst": {
+        "type": "string",
+        "value": "动作库列表、记录列表、校对页缩略：只画第 1 帧，不建 TimelineView（iPhone SE 3 验收）。"
+      },
+      "reducedMotion": {
+        "type": "string",
+        "value": "固定第 1 帧不播放，但保留 accessibilityLabel。倒计时数字照常更新。"
+      },
+      "placeholder": {
+        "type": "string",
+        "value": "库外动作：`_generic` 通用站位骨架（同一渲染器、同一线宽）+ 明确文案，不加虚线框、不转圈、不用灰色骨架屏。见 UIUX.md §6.4。"
+      }
+    },
+    "a11y": {
+      "type": "string",
+      "value": "accessibilityLabel 取 cues 首句；线条与关节 accessibilityHidden(true)，避免 VoiceOver 逐个读点。"
+    }
+  },
+  "component": {
+    "primaryButton": {
+      "bg": "accent",
+      "fg": "accentOn",
+      "bgPressed": "accentPressed",
+      "bgDisabled": "disabledFill",
+      "fgDisabled": "disabledText",
+      "height": "size.buttonHeight",
+      "radius": "radius.md",
+      "paddingX": "spacing.16",
+      "label": "typography.buttonLabel"
+    },
+    "sessionPrimaryButton": {
+      "bg": "accent",
+      "fg": "accentOn",
+      "height": "size.touchPrimary",
+      "radius": "radius.md",
+      "label": "typography.setCounter",
+      "width": "full",
+      "note": "训练页「完成第 2 组 · 12 次」。占满宽度、贴安全区，是整屏唯一强调色落点。"
+    },
+    "sessionSecondaryButton": {
+      "bg": "clear",
+      "fg": "textPrimary",
+      "border": "1pt borderStrong",
+      "bgPressed": "surfaceSunken",
+      "height": "size.touchSession",
+      "radius": "radius.md",
+      "note": "训练页「这组做不动」。常驻、不做隐藏菜单、不给二次确认。"
+    },
+    "textButton": {
+      "fg": "accent",
+      "height": "size.touchMin",
+      "note": "文字按钮也必须吃满 44pt 高度。"
+    },
+    "destructiveButton": {
+      "bg": "danger",
+      "fg": "accentOn",
+      "height": "size.buttonHeight",
+      "radius": "radius.md"
+    },
+    "card": {
+      "bg": "surface",
+      "border": "1pt separator",
+      "radius": "radius.md",
+      "padding": "spacing.16",
+      "shadow": "none",
+      "note": "浅色也不加阴影——1pt 边框 + 底色对比就够。深色更不加。"
+    },
+    "cardSelected": {
+      "border": "1pt accent",
+      "bg": "accentSoft",
+      "textOn": "textPrimary"
+    },
+    "input": {
+      "bg": "surface",
+      "border": "1pt borderStrong",
+      "radius": "radius.sm",
+      "placeholder": "textTertiary",
+      "focusBorder": "1pt accent",
+      "focusRing": "2pt focusRing, offset 2",
+      "errorBorder": "1pt danger",
+      "height": "size.inputHeight"
+    },
+    "listRow": {
+      "minHeight": "size.rowMin",
+      "paddingY": "spacing.12",
+      "paddingX": "spacing.16",
+      "separator": "1pt separator（内缩 16）",
+      "bg": "surface"
+    },
+    "issueRow": {
+      "bg": "warningSoft",
+      "border": "1pt warning（整行描边或字段虚下划线，不用左侧色条）",
+      "fieldUnderline": "1pt warning, dash 3/2",
+      "badge": "warning + exclamationmark 图标",
+      "note": "PlanReview 字段级 issue。禁止左侧 3pt 色条（AI 模板特征）。"
+    },
+    "segmentedControl": {
+      "track": "surfaceSunken",
+      "thumb": "surfaceRaised",
+      "labelActive": "textPrimary",
+      "labelIdle": "textSecondary",
+      "height": 36,
+      "radius": "radius.sm"
+    },
+    "progressBar": {
+      "track": "surfaceSunken",
+      "fill": "accent",
+      "height": 6,
+      "radius": "radius.capsule"
+    },
+    "stepDots": {
+      "type": "string",
+      "value": "引导进度：5 段，每段宽 24 × 高 4，间距 4，圆角 capsule。已过 = accent，当前 = accent，未到 = surfaceSunken。段数等于屏数，不用「1/5」文字重复表达同一信息。"
+    },
+    "progressRing": {
+      "track": "ringTrack",
+      "progress": "accent",
+      "stroke": "size.ringStroke",
+      "cap": "round",
+      "direction": "从 12 点顺时针递减",
+      "finalFiveSeconds": "progress 与数字切到 accentPressed，每秒 haptic.restTick（设置可关）"
+    },
+    "tabBar": {
+      "bg": "surfaceRaised",
+      "border": "1pt separator",
+      "iconActive": "accent",
+      "iconIdle": "textTertiary",
+      "labelActive": "accent",
+      "labelIdle": "textTertiary",
+      "height": "size.tabBarHeight",
+      "tabs": 3,
+      "note": "今日 / 计划 / 记录。设置不放 TabBar，藏今日页导航栏。"
+    },
+    "navBar": {
+      "bg": "bg",
+      "titleStyle": "typography.pageTitle",
+      "border": "无（滚动时才出现 1pt separator）"
+    },
+    "bottomSheet": {
+      "bg": "surfaceRaised",
+      "radiusTop": "radius.sheet",
+      "scrim": "scrim",
+      "grabber": "36 × 4, separator"
+    },
+    "bottomActionBar": {
+      "bg": "bg",
+      "topBorder": "1pt separator",
+      "paddingTop": "spacing.12",
+      "note": "1pt 上行线，不用投影。"
+    },
+    "toast": {
+      "bg": "textPrimary",
+      "fg": "bg",
+      "radius": "radius.md",
+      "paddingX": "spacing.16",
+      "paddingY": "spacing.12",
+      "note": "最多 1 行 + 1 个撤销；2.5s 消失；不阻塞操作、不盖住底部主按钮。"
+    },
+    "setProgressDots": {
+      "type": "string",
+      "value": "本动作的组进度：每组一个 8pt 方块（radius 4），已完成 = success，降阶完成 = success + 1pt warning 描边，跳过 = 只有 surfaceSunken + 1pt borderStrong，当前 = accent。间距 8。组数 >10 时改为文字「2/12」。"
+    },
+    "outcomeChip": {
+      "type": "string",
+      "value": "三态打卡的可视标签。「完成」= success 文字 + checkmark；「降阶」= warning 文字 + arrow.down.right；「跳过」= textSecondary 文字 + forward.end。chip 高 24，radius xs，无底色只有 1pt 边框，避免三种底色让列表变成调色板。"
+    },
+    "metricRow": {
+      "type": "string",
+      "value": "汇总页读数行：左标签 textSecondary .secondary，右值 textPrimary .body + monospacedDigit。行高 32，不画分隔线，靠 8pt 行距分组。"
+    },
+    "aiBadge": {
+      "bg": "aiGeneratedSoft",
+      "fg": "aiGenerated",
+      "border": "1pt aiGenerated",
+      "note": "内容为「AI 生成」四字，caption2 medium。只出现在计划来源标识与导入结果页眉。禁止用魔法棒图标代替文字。"
+    },
+    "cueItem": {
+      "type": "string",
+      "value": "编号 + 文字。编号用系统 monospaced 数字、accent 色；文字 .body（AX 大字号下降 .footnote）。行间距 8。cues 3–5 条全部展开，不折叠。"
+    },
+    "mistakeItem": {
+      "type": "string",
+      "value": "行首 xmark 图标（Icons.swift 常量）+ 文字，textSecondary。不用红色——常见错误不是错误状态，标红会让用户以为自己已经做错了。commonMistakes 2–3 条。"
+    },
+    "libraryRow": {
+      "type": "string",
+      "value": "动作库行：44pt 静态首帧 + 名称 .body + 肌群/器械 .footnote textTertiary + chevron.right。行高 ≥56。分组头用肌群名，吸顶。"
+    }
+  },
   "a11y": {
-    "contrastBody": { "type": "string", "value": "≥ 4.5:1（正文），≥ 3:1（≥ 24pt 或 ≥ 19pt 粗体）" },
+    "contrast": {
+      "type": "string",
+      "value": "正文 ≥4.5:1，大字（≥18pt semibold 或 ≥24pt）≥3:1，可交互控件边界 ≥3:1。逐对实测值见 contrastChecked，全部由 sRGB 相对亮度公式实算，不是估计。"
+    },
     "contrastChecked": [
-      { "pair": "fg on bg", "light": "15.1:1", "dark": "16.0:1" },
-      { "pair": "muted on bg", "light": "5.2:1", "dark": "6.4:1" },
-      { "pair": "meta on surface", "light": "5.1:1", "dark": "4.8:1" },
-      { "pair": "accent on bg", "light": "5.0:1", "dark": "5.4:1" },
-      { "pair": "accent-on on accent", "light": "5.5:1", "dark": "5.3:1" },
-      { "pair": "success on surface", "light": "5.6:1", "dark": "6.7:1" },
-      { "pair": "danger on surface", "light": "6.2:1", "dark": "6.1:1" }
+      {
+        "pair": "textPrimary on surface",
+        "light": "16.75:1",
+        "dark": "14.46:1"
+      },
+      {
+        "pair": "textPrimary on bg",
+        "light": "15.56:1",
+        "dark": "15.63:1"
+      },
+      {
+        "pair": "textSecondary on surface",
+        "light": "7.28:1",
+        "dark": "8.50:1"
+      },
+      {
+        "pair": "textTertiary on surface",
+        "light": "5.26:1",
+        "dark": "5.05:1"
+      },
+      {
+        "pair": "textTertiary on surfaceSunken",
+        "light": "4.62:1",
+        "dark": "5.57:1"
+      },
+      {
+        "pair": "accent on surface",
+        "light": "5.13:1",
+        "dark": "6.72:1"
+      },
+      {
+        "pair": "accent on surfaceSunken",
+        "light": "4.50:1",
+        "dark": "7.42:1"
+      },
+      {
+        "pair": "accentOn on accent",
+        "light": "5.13:1",
+        "dark": "6.36:1"
+      },
+      {
+        "pair": "textPrimary on accentSoft",
+        "light": "14.60:1",
+        "dark": "11.30:1"
+      },
+      {
+        "pair": "success on surface",
+        "light": "5.00:1",
+        "dark": "5.91:1"
+      },
+      {
+        "pair": "warning on surface",
+        "light": "5.33:1",
+        "dark": "7.23:1"
+      },
+      {
+        "pair": "danger on surface",
+        "light": "6.81:1",
+        "dark": "5.50:1"
+      },
+      {
+        "pair": "aiGenerated on surface",
+        "light": "5.67:1",
+        "dark": "6.48:1"
+      },
+      {
+        "pair": "borderStrong on surface",
+        "light": "3.47:1",
+        "dark": "3.41:1"
+      },
+      {
+        "pair": "borderStrong on bg",
+        "light": "3.22:1",
+        "dark": "3.69:1"
+      }
     ],
-    "dynamicType": { "type": "string", "value": "全量支持。字号 token 为 @Large 默认值；『今日/训练执行/总结』页必须通过 AX1（xxLarge）验证不截断。timer 例外：固定 + 最大 96。" },
-    "reduceMotion": { "type": "string", "value": "必须支持。" },
-    "voiceOver": { "type": "string", "value": "倒计时环的 accessibilityValue 每秒更新但仅按 10 秒粒度播报，避免噪音；训练中每组用 accessibilityLabel『第 2 组，12 次，已完成』。" }
+    "contrastCaveats": {
+      "type": "string",
+      "value": "（1）success 在 surfaceSunken 上浅色仅 4.39:1——所以 success 文本只允许放在 surface / bg 上，不得放在输入框底或轨道底。（2）accent 在 accentSoft 上浅色 4.47:1，差 0.03——所以 accentSoft 底上的文字一律用 textPrimary，不用 accent。（3）disabledText 浅色 2.88:1，属 WCAG 1.4.3 对禁用控件的明文豁免，但禁用态必须同时有「不可点」的形状/位置线索，不能只靠低对比。（4）倒计时大数字 88pt 属大字，≥3:1 即可，实测 5.13:1 有余量。"
+    },
+    "touchTarget": {
+      "type": "string",
+      "value": "常规 44pt，训练页 56pt，训练页主按钮 64pt，相邻可点区间隙 ≥8pt（训练页 ≥12pt）。图标按钮的可点区必须用 contentShape(Rectangle()) 撑到 44pt，不能只有图标本体。"
+    },
+    "voiceOver": {
+      "type": "string",
+      "value": "训练页整屏合并为一组，朗读顺序：第 2 组共 4 组、目标 12 次、动作名、cues 首条、完成按钮。组进度点合并为一个 adjustable element，值「已完成 1 组，共 4 组」。"
+    },
+    "timerVoiceOver": {
+      "type": "string",
+      "value": "倒计时是纯视觉信息，必须补读屏：accessibilityLabel(\"休息剩余\") + accessibilityValue(\"1 分 20 秒\")，按整 10 秒更新一次（每秒更新会让 VoiceOver 无法插话）。这条是架构写进验收的硬要求。"
+    },
+    "reduceMotion": {
+      "type": "string",
+      "value": "见 motion.reducedMotion。骨架静止、环跳步、Sheet crossfade；倒计时数字继续更新。"
+    },
+    "differentiateWithoutColor": {
+      "type": "string",
+      "value": "三态打卡、issue 行、图表序列都不能只靠颜色区分：三态各配不同 SF Symbol；issue 行带 exclamationmark + 文字说明；图表柱用不同填充（实心 / 斜线）并配图例。"
+    }
   }
 }
