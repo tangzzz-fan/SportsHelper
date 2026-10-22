@@ -1001,6 +1001,8 @@ FROZEN-BASELINE 决策 6 定的是**自绘参数化骨架**，不使用第三方
 
 对同一动作**全部 pose** 取坐标并集 bbox，等比缩放并居中到 0.06–0.94，最小缩放 0.6。参数来自 `renderRules.autofit`。
 
+第 3 帧是「回起始」，与第 1 帧姿态重合，因此补帧不改变 bbox——autofit 结果只在动作本身姿态变化时才变；静力动作 2 帧按同一并集规则算。
+
 ```swift
 static func fit(poses: [[String: CGPoint]], in rect: CGRect, minScale: CGFloat) -> CGAffineTransform
 ```
@@ -1027,7 +1029,7 @@ static func fit(poses: [[String: CGPoint]], in rect: CGRect, minScale: CGFloat) 
 ### 12.5 数据门禁：七项，跑在测试里
 
 1. `specs[].catalogId` 集合 == 18 个 catalogId + `_generic`（与 `plan-schema.json` 白名单完全相等）
-2. pose 数：普通动作恰 3，`_generic` 恰 1
+2. pose 数：动态动作恰 3（起始 / 最吃力点 / 回起始），`staticHold: true` 的静力动作恰 2（姿势近似），`_generic` 恰 1
 3. 每个 pose 的 `points` 恰有 12 个关节名，且都在 `renderRules.joints` 内
 4. 坐标全为有限数（拒绝 `nan` / `inf`）
 5. 同动作各 pose 同名骨段长度在基准值 ±15% 内
@@ -1222,7 +1224,7 @@ PRD §9.4 要求埋点，但本期没有自建后端，**没有任何上传通�
 | `ScheduleResolver`（本期退化形式） | weekday 命中返回该日、不命中返回 nil、跨月跨年、计划只有 1 个训练日、周日边界（Calendar 的 1=周日 vs 计划的 1=周一） |
 | `SessionRepository` 写入权限 | 对 `finished` / `abandoned` 的 session 调 undo 必须抛错；已完成 session 的 SetLog 不可被修改；一次"完成一组"的 save 是原子的（日志与计数同进同退） |
 | `FigureFrame` | elapsed 为 0、整周期、相位取模（1.2 周期 → 0.2）、负数 clamp、frameCount 为 1 与 3 |
-| `FigureSpec` 解码与门禁 | §12.5 七项逐条：`specs[].catalogId` 集合 == 18 + `_generic`、pose 数恰 3（`_generic` 恰 1）、关节名恰 12 个、坐标拒绝 `nan`/`inf`、骨长 ±15%、`view`/`props` 枚举与 `wallX` 存在性、`figureSpecId` 反查命中 |
+| `FigureSpec` 解码与门禁 | §12.5 七项逐条：`specs[].catalogId` 集合 == 18 + `_generic`、pose 数动态恰 3 / 静力恰 2（`_generic` 恰 1）、关节名恰 12 个、坐标拒绝 `nan`/`inf`、骨长 ±15%、`view`/`props` 枚举与 `wallX` 存在性、`figureSpecId` 反查命中 |
 | `FigureGeometry` | 12 关节 → 骨段连线表完整；`*Far` 关节判为远侧；躯干骨段加粗 1.4 倍；缺任一关节时不崩溃并返回空骨段 |
 | `FigureAutofit` | 全在框内 / 单点越界 / 跨度 1.11 的死虫 / 退化为单点（除零）/ 最小缩放 0.6 触发 / 多帧取并集而非逐帧 |
 | `Icons` 清单 | 白名单内每个 symbol 名称在 iOS 18.0 可用（编译期 `Image(systemName:)` 存在性靠真机验证，清单里标注可用版本） |

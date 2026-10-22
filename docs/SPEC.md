@@ -106,7 +106,7 @@
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-specs.json`（18 个动作各 3 关键帧 + 1 条 `_generic` 占位骨架）。
+**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-specs.json`（18 个动作各 3 帧，静力动作 2 帧；另 1 条 `_generic` 占位骨架）。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 

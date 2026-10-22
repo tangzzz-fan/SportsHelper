@@ -733,7 +733,7 @@
     "_note": "参数化骨架规格，**现行方案**（team-lead 最终冻结）。自绘 12 关节 + 3 关键帧，18 个动作全部有骨架；不使用第三方素材，因此无署名义务。渲染器唯一：DesignSystem/Figures/ExerciseFigureView.swift。设计交付是位姿数据（docs/figure-specs.sample.json，10 个打样 + 中立站立位姿），不是插画。",
     "renderInterface": {
       "type": "string",
-      "value": "ExerciseFigureView(catalogId: String, size: CGFloat, playsAnimation: Bool)。UI 不感知内部实现——3 帧 / 2.4s 循环 / 帧间 120ms 交叉淡入 / 列表内静态首帧 / 同屏只播 1 个 / 单色 textPrimary / custom_ 前缀走降级态。"
+      "value": "ExerciseFigureView(catalogId: String, size: CGFloat, playsAnimation: Bool)。UI 不感知内部实现——3 帧 / 2.4s 循环 / 帧间 120ms 交叉淡入 / 列表内静态首帧 / 同屏只播 1 个 / 单色 textPrimary / catalogId 不在 18 个白名单内或 spec 缺失时走降级态。"
     },
     "joints": {
       "type": "array",
