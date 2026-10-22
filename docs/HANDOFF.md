@@ -70,7 +70,10 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | 路径 | 说明 |
 |---|---|
 | `docs/` | 规范与样本。`FROZEN-BASELINE.md`、`SPEC.md` 是上位依据 |
-| `DongKeCore/` | Domain：模型、解析、排程、休息状态机、骨架插值。只 import Foundation |
+| `docs/specs/` | 本轮 spec。`2026-10-22-figure-and-glass.md` 是素材替换 + 玻璃界面的现行依据 |
+| `docs/design/` | 设计稿快照（`<日期>-<页面名>/index.html` + `brief.md` + `shots/`），只作实施依据，不参与文档对账 |
+| `.scratch/<feature>/issues/` | 本地 ticket 看板，一票一文件；`README.md` 是索引与当前前沿 |
+| `DongKeCore/` | Domain：模型、解析、排程、休息状态机、图示。只 import Foundation |
 | `DongKe/` | App 层：Features / Services / Data / App |
 | `DongKeCoreTests/` | Swift Testing，纯逻辑，不依赖模拟器 UI |
 | `.workbuddy/memory/` | 工作日志，**已纳入 git**，换机随仓库带走 |
