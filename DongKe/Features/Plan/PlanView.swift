@@ -2,13 +2,13 @@ import SwiftUI
 import DongKeCore
 
 struct PlanView: View {
-    private let state = AppState.shared
+    private let plan = SampleData.plan
 
     @Environment(\.colorScheme) private var colorScheme
 
     private var weeks: [(weekday: Weekday, day: PlanDay?)] {
         Weekday.allCases.map { weekday in
-            (weekday, state.plan.days.first(where: { $0.weekday == weekday }))
+            (weekday, plan.days.first(where: { $0.weekday == weekday }))
         }
     }
 
@@ -32,7 +32,7 @@ struct PlanView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
 
-                Text(state.plan.meta.title)
+                Text(plan.meta.title)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
@@ -53,7 +53,7 @@ struct PlanView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
 
-                Text("每周 \(state.plan.meta.daysPerWeek) 天 · 每次 \(state.plan.meta.sessionMinutes) 分钟 · 18 个动作")
+                Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · 18 个动作")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)

@@ -8,6 +8,8 @@ final class WorkoutSession: Identifiable {
     let plan: WorkoutPlan
     let dayIndex: Int
     let flow: WorkoutFlowModel
+    let startedAt = Date()
+    var store: SessionStore?
 
     private(set) var stepIndex = 0
     private(set) var logs: [SetLog] = []
@@ -16,9 +18,10 @@ final class WorkoutSession: Identifiable {
 
     var onFinish: (() -> Void)?
 
-    init(plan: WorkoutPlan, dayIndex: Int) {
+    init(plan: WorkoutPlan, dayIndex: Int, store: SessionStore? = nil) {
         self.plan = plan
         self.dayIndex = dayIndex
+        self.store = store
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
     }
 
@@ -98,6 +101,7 @@ final class WorkoutSession: Identifiable {
             actualValue: target.value,
             completedAt: now
         ))
+        persist()
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
     }
 
@@ -116,6 +120,7 @@ final class WorkoutSession: Identifiable {
             skipReason: .tooHard,
             completedAt: now
         ))
+        persist()
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
     }
 
@@ -153,7 +158,19 @@ final class WorkoutSession: Identifiable {
 
     func endWorkout() {
         rest = .idle
+        persist(finishedAt: Date())
         onFinish?()
+    }
+
+    private func persist(finishedAt: Date? = nil) {
+        store?.upsert(
+            id: id,
+            title: sessionTitle,
+            plannedSets: plannedSets,
+            completedSets: completedSets,
+            startedAt: startedAt,
+            finishedAt: finishedAt
+        )
     }
 
     private func beginRestIfNeeded(seconds: Int, kicker: String, now: Date) {

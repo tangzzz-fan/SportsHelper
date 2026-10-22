@@ -5,6 +5,7 @@ struct TodayView: View {
     var onStart: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(SessionStore.self) private var store
 
     private var plan: WorkoutPlan { SampleData.plan }
     private var today: PlanDay? {
@@ -99,11 +100,11 @@ struct TodayView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("2 / \(plan.meta.daysPerWeek)")
+                    Text("\(store.completedThisWeek) / \(plan.meta.daysPerWeek)")
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
                 }
-                ProgressBar(progress: 2.0 / Double(max(1, plan.meta.daysPerWeek)))
+                ProgressBar(progress: min(1, Double(store.completedThisWeek) / Double(max(1, plan.meta.daysPerWeek))))
             }
             .padding(.top, 12)
 
@@ -146,6 +147,7 @@ struct TodayView: View {
 struct ProgressBar: View {
     var progress: Double
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(SessionStore.self) private var store
 
     var body: some View {
         GeometryReader { proxy in

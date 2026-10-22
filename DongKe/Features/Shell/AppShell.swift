@@ -10,6 +10,7 @@ struct AppShell: View {
 
     @State private var tab: Tab = .today
     @State private var session: WorkoutSession?
+    @Environment(SessionStore.self) private var store
 
     init() {
         #if DEBUG
@@ -51,6 +52,20 @@ struct AppShell: View {
             TabIsland(selection: $tab)
                 .padding(.bottom, 24)
         }
+        .task {
+            #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_SEED_SESSION"] == "1", store.sessions.isEmpty {
+                store.upsert(
+                    id: UUID(),
+                    title: SampleData.plan.days.first(where: { !$0.isRestDay })?.title ?? "训练",
+                    plannedSets: 13,
+                    completedSets: 13,
+                    startedAt: Date(),
+                    finishedAt: Date()
+                )
+            }
+            #endif
+        }
         .fullScreenCover(item: $session) { active in
             WorkoutView(session: active) {
                 session = nil
@@ -59,7 +74,9 @@ struct AppShell: View {
     }
 
     private func startWorkout() {
-        session = WorkoutSession(plan: SampleData.plan, dayIndex: SampleData.trainingDayIndex(for: Date()))
+        let active = WorkoutSession(plan: SampleData.plan, dayIndex: SampleData.trainingDayIndex(for: Date()))
+        active.store = store
+        session = active
     }
 }
 

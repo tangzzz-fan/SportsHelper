@@ -2,7 +2,7 @@ import SwiftUI
 import DongKeCore
 
 struct HistoryView: View {
-    private let state = AppState.shared
+    @Environment(SessionStore.self) private var store
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -17,7 +17,7 @@ struct HistoryView: View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         return Weekday.allCases.map { weekday in
-            let matches = state.history.filter { SessionSummary in
+            let matches = store.sessions.filter { SessionSummary in
                 SampleData.weekday(for: SessionSummary.date) == weekday
             }
             guard let latest = matches.first else { return 0 }
@@ -53,18 +53,32 @@ struct HistoryView: View {
                     .padding(.top, 20)
                     .padding(.bottom, 8)
 
-                VStack(spacing: 0) {
-                    ForEach(Array(state.history.enumerated()), id: \.element.id) { index, item in
-                        historyRow(item)
-                        if index < state.history.count - 1 {
-                            Divider()
-                                .overlay(Color.primary.opacity(0.06))
-                                .padding(.leading, 16)
+                if store.sessions.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("还没有训练记录")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("完成一次训练后，这里会出现完成率与连续天数。")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .glassSurface(radius: Theme.Radius.glassCard)
+                    .padding(.horizontal, 16)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(store.sessions.enumerated()), id: \.element.id) { index, item in
+                            historyRow(item)
+                            if index < store.sessions.count - 1 {
+                                Divider()
+                                    .overlay(Color.primary.opacity(0.06))
+                                    .padding(.leading, 16)
+                            }
                         }
                     }
+                    .glassSurface(radius: Theme.Radius.glassCard)
+                    .padding(.horizontal, 16)
                 }
-                .glassSurface(radius: Theme.Radius.glassCard)
-                .padding(.horizontal, 16)
 
                 Spacer()
             }
@@ -74,8 +88,8 @@ struct HistoryView: View {
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline, spacing: 28) {
-                metric(value: "\(state.completedThisWeek) / \(state.weeklyTarget)", label: "本周")
-                metric(value: "\(state.streakDays) 天", label: "连续")
+                metric(value: "\(store.completedThisWeek) / \(SampleData.plan.meta.daysPerWeek)", label: "本周")
+                metric(value: "\(store.streakDays) 天", label: "连续")
                 Spacer()
             }
 
