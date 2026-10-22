@@ -9,9 +9,9 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI） |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | 215 条 Swift Testing，**215 绿 0 红**（`ios-run.sh test`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条 |
+| 测试 | 224 条 Swift Testing，**224 绿 0 红**（`ios-run.sh test`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,9 +35,9 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；测试跑完 215 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；测试跑完 224 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
-注意 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，真实结果看日志里的 `Test run with 215 tests`。
+注意 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，真实结果看日志里的 `Test run with 224 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -136,6 +136,8 @@ SIMCTL_CHILD_DK_PREVIEW=myexercise SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun si
 xcrun simctl spawn booted defaults write app.dongke.ios dk.alias.memo -dict "保加利亚分腿蹲" "squat"  # 预置别名记忆，验第三层
 SIMCTL_CHILD_DK_SEED_AI=1 xcrun simctl launch booted app.dongke.ios   # 预置 AI 接口与假 Key（验已配置态）
 SIMCTL_CHILD_DK_SEED_CHECKPOINT=1 xcrun simctl launch booted app.dongke.ios   # 预置一条断点，今日页出「上次训练没做完」
+SIMCTL_CHILD_DK_ERASE_ALL=1 xcrun simctl launch booted app.dongke.ios   # 走一遍「清空全部数据」（下次裸启动应回到引导）
+SIMCTL_CHILD_DK_PREVIEW=settings SIMCTL_CHILD_DK_SETTINGS_BOTTOM=1 xcrun simctl launch booted app.dongke.ios  # 设置页直接滚到底（关于 / 清空）
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 
@@ -176,6 +178,12 @@ xcrun simctl io booted screenshot /tmp/shot.png
 | 休息的 `endAt` 是绝对时间；通知与触觉都由状态机的 effects 驱动，不由 View 自己计时 | `RestTimerStateMachine` → `syncRestNotification` → `Haptics.restFinished` | 锁屏回来倒计时跳变、或归零没声音 |
 
 休息通知标识固定 `dk.rest.<sessionId>`（`RestNotificationBuilder.prefix`），排程前先清同前缀，绝不碰 `dk.plan.`。通知负载：训练提醒带 `dk.weekday`，休息通知带 `dk.dayIndex`，点击统一由 `NotificationRouter` 解成 `WorkoutDeepLink` 交给 AppShell。
+
+## 6.4 清空全部数据
+
+入口在设置页底部，走 `DataResetService.clearAll`：删五张表（SetLog / Session / Plan / Profile / UserExercise）→ 清 `dk.` 前缀的全部 UserDefaults → 删 Keychain 里的 AI Key → 取消 `dk.plan.` 与 `dk.rest.` 待触发通知。完成后 `AppShell.handleEraseAll` 重新 load 各 store 并弹回引导。
+
+验证方式（模拟器可复现）：`DK_COMPLETE_ONBOARDING=1` 建数据 → 杀进程 → `DK_ERASE_ALL=1` 跑一次 → 杀进程 → 裸启动应回到引导第一屏。注意 `simctl` 有两台 booted 模拟器时一律**写 UDID**，`booted` 会解析到另一台。
 
 ## 7. 换机后容易踩的三个坑
 

@@ -25,4 +25,13 @@ final class ReminderSettingsStore {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         UserDefaults.standard.set(data, forKey: key)
     }
+
+    func reload() {
+        if let data = UserDefaults.standard.data(forKey: key),
+           let decoded = try? JSONDecoder().decode(ReminderSettings.self, from: data) {
+            settings = decoded
+        } else {
+            settings = ReminderSettings()
+        }
+    }
 }

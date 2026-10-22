@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DongKeCore
 
 struct TodayView: View {
@@ -6,6 +7,7 @@ struct TodayView: View {
     var onStart: () -> Void
     var resumeHint: String?
     var onResume: () -> Void
+    var onEraseAll: () -> Void
 
     @State private var showSettings: Bool
     private let settingsStore = ReminderSettingsStore.shared
@@ -15,12 +17,14 @@ struct TodayView: View {
         plan: WorkoutPlan,
         onStart: @escaping () -> Void,
         resumeHint: String? = nil,
-        onResume: @escaping () -> Void = {}
+        onResume: @escaping () -> Void = {},
+        onEraseAll: @escaping () -> Void = {}
     ) {
         self.plan = plan
         self.onStart = onStart
         self.resumeHint = resumeHint
         self.onResume = onResume
+        self.onEraseAll = onEraseAll
         var initial = false
         #if DEBUG
         initial = ProcessInfo.processInfo.environment["DK_PREVIEW"] == "settings"
@@ -74,6 +78,12 @@ struct TodayView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 2)
 
+                if reminderHealth.needsAttention {
+                    reminderBanner(reminderHealth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                }
+
                 if let resumeHint {
                     resumeCard(resumeHint)
                         .padding(.horizontal, 16)
@@ -102,8 +112,12 @@ struct TodayView: View {
                 settingsStore: settingsStore,
                 plan: plan,
                 onRequestAuthorization: requestAuthorization,
-                onReschedule: rescheduleReminders
+                onReschedule: rescheduleReminders,
+                onEraseAll: onEraseAll
             )
+        }
+        .task {
+            await notifications.refreshStatus()
         }
     }
 
@@ -112,6 +126,52 @@ struct TodayView: View {
             await notifications.requestAuthorization()
             await notifications.reschedule(plan: plan, settings: settingsStore.settings)
         }
+    }
+
+    private func reminderBanner(_ health: ReminderHealth) -> some View {
+        HStack(spacing: 10) {
+            Text(health.message)
+                .font(.footnote)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button(health.actionTitle) {
+                handleReminderAction(health)
+            }
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Theme.accent(for: colorScheme))
+            .frame(minHeight: 44)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.primary.opacity(0.05),
+            in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+        )
+    }
+
+    private func handleReminderAction(_ health: ReminderHealth) {
+        switch health {
+        case .denied:
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(url)
+        case .incomplete:
+            rescheduleReminders()
+        case .disabled, .notDetermined:
+            showSettings = true
+        case .ok:
+            break
+        }
+    }
+
+    private var reminderHealth: ReminderHealth {
+        ReminderHealthEvaluator.evaluate(
+            settingsEnabled: settingsStore.settings.enabled,
+            authorization: notifications.reminderAuthorization,
+            scheduledCount: notifications.scheduledCount,
+            trainingDays: plan.days.filter { !$0.isRestDay }.count
+        )
     }
 
     private func rescheduleReminders() {

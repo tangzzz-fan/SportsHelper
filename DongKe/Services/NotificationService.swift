@@ -34,6 +34,17 @@ final class NotificationService: RestNotificationScheduling {
         }
     }
 
+    var reminderAuthorization: ReminderAuthorization {
+        switch status {
+        case .authorized: .authorized
+        case .provisional: .provisional
+        case .ephemeral: .ephemeral
+        case .denied: .denied
+        case .notDetermined: .notDetermined
+        @unknown default: .notDetermined
+        }
+    }
+
     func refreshStatus() async {
         let settings = await center.notificationSettings()
         status = settings.authorizationStatus
@@ -90,6 +101,18 @@ final class NotificationService: RestNotificationScheduling {
 
     func cancelRestEnd() {
         Task { await cancelRestEndNow() }
+    }
+
+    func removeAllOwned() async {
+        let identifiers = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix(prefix) || $0.hasPrefix(RestNotificationBuilder.prefix) }
+        guard identifiers.isEmpty == false else {
+            await refreshStatus()
+            return
+        }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        await refreshStatus()
     }
 
     private func scheduleRestEndNow(dayIndex: Int, sessionId: UUID, endsAt: Date, nextTitle: String) async {

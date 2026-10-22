@@ -17,6 +17,7 @@ struct AppShell: View {
     @State private var showingOnboarding = false
     @State private var resumeCandidate: WorkoutCheckpoint?
     private let checkpoints = WorkoutCheckpointStore()
+    @Environment(\.modelContext) private var modelContext
 
     init() {
         #if DEBUG
@@ -66,7 +67,8 @@ struct AppShell: View {
                         plan: activePlan,
                         onStart: startWorkout,
                         resumeHint: resumeHint,
-                        onResume: resumeWorkout
+                        onResume: resumeWorkout,
+                        onEraseAll: handleEraseAll
                     )
                 case .plan:
                     PlanView(plan: activePlan)
@@ -81,6 +83,9 @@ struct AppShell: View {
         }
         .task {
             #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_ERASE_ALL"] == "1" {
+                await DataResetService.clearAll(context: modelContext)
+            }
             if ProcessInfo.processInfo.environment["DK_REQUEST_PROVISIONAL"] == "1" {
                 await NotificationService.shared.requestProvisionalForTesting()
             }
@@ -218,8 +223,18 @@ struct AppShell: View {
         session = active
     }
 
-    private func refreshResumeCandidate() {
-        #if DEBUG
+    private func handleEraseAll() {
+        session = nil
+        resumeCandidate = nil
+        profileStore.load()
+        planStore.load()
+        store.reload()
+        ReminderSettingsStore.shared.reload()
+        AISettingsStore.shared.reloadFromDisk()
+        showingOnboarding = true
+    }
+
+    private func refreshResumeCandidate() {        #if DEBUG
         if ProcessInfo.processInfo.environment["DK_SEED_CHECKPOINT"] == "1", checkpoints.load() == nil {
             let plan = activePlan
             let dayIndex = plan.days.first(where: { !$0.isRestDay })?.dayIndex ?? 1

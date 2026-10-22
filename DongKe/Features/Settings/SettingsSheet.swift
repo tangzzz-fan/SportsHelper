@@ -6,20 +6,36 @@ struct SettingsSheet: View {
     let plan: WorkoutPlan
     var onRequestAuthorization: () -> Void
     var onReschedule: () -> Void
+    var onEraseAll: () -> Void = {}
 
     @Environment(NotificationService.self) private var notifications
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showEraseConfirm = false
+    @State private var isErasing = false
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    reminderCard
-                    statusCard
-                    AISettingsCard()
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        reminderCard
+                        statusCard
+                        AISettingsCard()
+                        aboutCard
+                        dangerCard
+                    }
+                    .padding(16)
                 }
-                .padding(16)
+                .onAppear {
+                    #if DEBUG
+                    if ProcessInfo.processInfo.environment["DK_SETTINGS_BOTTOM"] == "1" {
+                        proxy.scrollTo("settings.bottom", anchor: .bottom)
+                    }
+                    #endif
+                }
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("设置")
@@ -30,6 +46,74 @@ struct SettingsSheet: View {
                         .foregroundStyle(Theme.accent(for: colorScheme))
                 }
             }
+            .confirmationDialog(
+                "清空后训练记录、计划、档案、我的动作与 API Key 都会删除，无法恢复。",
+                isPresented: $showEraseConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("清空全部数据", role: .destructive, action: eraseAll)
+                Button("取消", role: .cancel) {}
+            }
+        }
+    }
+
+    private var aboutCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("关于")
+                    .font(.system(size: 16, weight: .medium))
+                Spacer()
+                Text(versionText)
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Text("动刻把 AI 写的计划变成每天按点提醒、逐组执行的日程。数据只存本机，不联网也能用；唯一的网络出口是你自己填的 AI 接口。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var dangerCard: some View {
+        Button {
+            showEraseConfirm = true
+        } label: {
+            HStack {
+                Text(isErasing ? "清空中…" : "清空全部数据")
+                    .font(.system(size: 16, weight: .medium))
+                Spacer()
+            }
+            .foregroundStyle(Theme.danger(for: colorScheme))
+            .frame(minHeight: 44)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableGlassStyle())
+        .glassSurface(radius: Theme.Radius.card)
+        .disabled(isErasing)
+        .id("settings.bottom")
+    }
+
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = info?["CFBundleVersion"] as? String ?? "1"
+        return "\(version) (\(build))"
+    }
+
+    private func eraseAll() {
+        guard isErasing == false else { return }
+        isErasing = true
+        Task {
+            await DataResetService.clearAll(context: modelContext)
+            isErasing = false
+            dismiss()
+            onEraseAll()
         }
     }
 

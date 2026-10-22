@@ -55,4 +55,10 @@ final class AISettingsStore {
         try? secrets.store(nil, for: keyAccount)
         hasKey = false
     }
+
+    func reloadFromDisk() {
+        baseURL = defaults.string(forKey: baseURLKey) ?? ""
+        model = defaults.string(forKey: modelKey) ?? AIConfiguration.defaultModel
+        hasKey = secrets.secret(for: keyAccount)?.isEmpty == false
+    }
 }
