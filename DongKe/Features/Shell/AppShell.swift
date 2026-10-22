@@ -26,7 +26,7 @@ struct AppShell: View {
             _tab = State(initialValue: .plan)
         case "history":
             _tab = State(initialValue: .history)
-        case "library", "import", "detail":
+        case "library", "import", "detail", "myexercise":
             _tab = State(initialValue: .plan)
         case "summary":
             let active = WorkoutSession(

@@ -4,6 +4,7 @@ public struct CompiledDraft: Equatable, Sendable {
     public var plan: WorkoutPlan
     public var assumptions: [String]
     public var unmappedNames: [String]
+    public var guessedItems: [String: GuessedRow]
 }
 
 public enum PlanDraftCompiler {
@@ -12,7 +13,11 @@ public enum PlanDraftCompiler {
     public static let defaultHoldSeconds = 30
     public static let defaultRestSeconds = 60
 
-    public static func compile(_ draft: PlanDraft, now: Date = Date()) -> CompiledDraft {
+    public static func compile(
+        _ draft: PlanDraft,
+        exercises: UserExerciseCatalog = .empty,
+        now: Date = Date()
+    ) -> CompiledDraft {
         var assumptions: [String] = []
 
         var assigned: [Weekday: [DraftItem]] = [:]
@@ -49,6 +54,8 @@ public enum PlanDraftCompiler {
         var missingDose = 0
         var missingRest = 0
         var unmapped: [String] = []
+        var guessedItems: [String: GuessedRow] = [:]
+        var filledFromMine: [String] = []
 
         var planDays: [PlanDay] = []
         for weekday in Weekday.allCases {
@@ -69,18 +76,29 @@ public enum PlanDraftCompiler {
             var prescriptions: [ExercisePrescription] = []
             for (offset, item) in items.enumerated() {
                 let entry = item.catalogId.flatMap { ExerciseLibrary.entry(for: $0) }
-                if item.catalogId == nil, unmapped.contains(item.rawName) == false {
+                let mine = item.catalogId == nil ? exercises.exercise(named: item.rawName) : nil
+                if item.catalogId == nil, mine == nil, unmapped.contains(item.rawName) == false {
                     unmapped.append(item.rawName)
                 }
+                if mine != nil, item.sets == nil || item.value == nil || item.restSec == nil,
+                   filledFromMine.contains(item.rawName) == false {
+                    filledFromMine.append(item.rawName)
+                }
 
-                let sets = item.sets ?? defaultSets
-                if item.sets == nil { missingSets += 1 }
+                let sets = item.sets ?? mine?.defaultSets ?? defaultSets
+                if item.sets == nil, mine == nil { missingSets += 1 }
 
                 let target: SetTarget
                 if let value = item.value {
                     target = SetTarget(
                         type: item.targetType ?? (entry?.isStatic == true ? .durationSec : .reps),
                         value: value,
+                        perSide: item.perSide
+                    )
+                } else if let mine {
+                    target = SetTarget(
+                        type: mine.isStatic ? .durationSec : .reps,
+                        value: mine.defaultValue,
                         perSide: item.perSide
                     )
                 } else {
@@ -90,16 +108,31 @@ public enum PlanDraftCompiler {
                         : SetTarget(type: .reps, value: defaultReps, perSide: item.perSide)
                 }
 
-                if item.restSec == nil { missingRest += 1 }
+                if item.restSec == nil, mine == nil { missingRest += 1 }
                 let equipment = entry?.equipment ?? .bodyweight
+                let itemId = "d\(weekday.rawValue)-i\(offset + 1)"
+
+                if let modifier = item.reviewModifier, let entry {
+                    guessedItems[itemId] = GuessedRow(
+                        originalName: item.rawName,
+                        catalogName: entry.name,
+                        kind: .approximate(modifier: modifier)
+                    )
+                } else if item.usedMemory, let entry {
+                    guessedItems[itemId] = GuessedRow(
+                        originalName: item.rawName,
+                        catalogName: entry.name,
+                        kind: .memory
+                    )
+                }
 
                 prescriptions.append(ExercisePrescription(
-                    itemId: "d\(weekday.rawValue)-i\(offset + 1)",
-                    catalogId: item.catalogId ?? "custom_\(sanitize(item.rawName))",
-                    name: entry?.name ?? item.rawName,
+                    itemId: itemId,
+                    catalogId: item.catalogId ?? mine?.id ?? CustomExerciseId.id(for: item.rawName),
+                    name: entry?.name ?? mine?.name ?? item.rawName,
                     sets: sets,
                     target: target,
-                    restSec: item.restSec ?? defaultRestSeconds,
+                    restSec: item.restSec ?? mine?.restSec ?? defaultRestSeconds,
                     load: Load(type: equipment == .dumbbell ? .dumbbell : .bodyweight, value: 0),
                     notes: item.assumptions.joined(separator: "；")
                 ))
@@ -136,6 +169,16 @@ public enum PlanDraftCompiler {
 
         for item in draft.days.flatMap(\.items) {
             assumptions.append(contentsOf: item.assumptions)
+            let entry = item.catalogId.flatMap { ExerciseLibrary.entry(for: $0) }
+            if let modifier = item.reviewModifier, let entry {
+                assumptions.append("「\(item.rawName)」按最接近的「\(entry.name)」计入，原文带「\(modifier)」，请确认是不是你要的动作")
+            }
+            if item.usedMemory, let entry {
+                assumptions.append("「\(item.rawName)」按你上次的选择记为「\(entry.name)」")
+            }
+        }
+        for name in filledFromMine {
+            assumptions.append("「\(name)」没写全剂量，按我的动作里的默认值补齐")
         }
         for name in unmapped {
             assumptions.append("「\(name)」不在动作库里，按自定义动作保留")
@@ -160,7 +203,8 @@ public enum PlanDraftCompiler {
         return CompiledDraft(
             plan: plan,
             assumptions: uniqued(assumptions),
-            unmappedNames: unmapped
+            unmappedNames: unmapped,
+            guessedItems: guessedItems
         )
     }
 
@@ -171,11 +215,5 @@ public enum PlanDraftCompiler {
             result.append(value)
         }
         return result
-    }
-
-    private static func sanitize(_ name: String) -> String {
-        let digits = name.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }
-        let cleaned = String(String.UnicodeScalarView(digits))
-        return cleaned.isEmpty ? "custom" : String(cleaned.prefix(20))
     }
 }

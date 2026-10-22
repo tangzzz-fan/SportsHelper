@@ -44,6 +44,10 @@ struct ExerciseFigureView: View {
         playback.isPlaying && store.playingFigureID == catalogId
     }
 
+    private var isPlaceholder: Bool {
+        figure.catalogId == "_generic"
+    }
+
     var body: some View {
         ZStack {
             if showsHalo {
@@ -63,7 +67,7 @@ struct ExerciseFigureView: View {
                 ForEach(Array(figure.frames.enumerated()), id: \.offset) { index, frame in
                     FigureShape(frame: frame, fit: fit)
                         .fill(Color.primary, style: FillStyle(eoFill: true))
-                        .opacity(index == playback.displayedIndex ? 1 : 0)
+                        .opacity(index == playback.displayedIndex ? (isPlaceholder ? 0.16 : 1) : 0)
                 }
             }
             .frame(width: figureSize.width, height: figureSize.height)

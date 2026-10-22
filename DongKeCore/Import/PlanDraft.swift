@@ -16,6 +16,8 @@ public struct DraftItem: Equatable, Sendable {
     public var restSec: Int?
     public var assumptions: [String]
     public var origin: String
+    public var reviewModifier: String?
+    public var usedMemory: Bool
 
     public init(
         rawName: String,
@@ -26,7 +28,9 @@ public struct DraftItem: Equatable, Sendable {
         perSide: Bool = false,
         restSec: Int? = nil,
         assumptions: [String] = [],
-        origin: String = ""
+        origin: String = "",
+        reviewModifier: String? = nil,
+        usedMemory: Bool = false
     ) {
         self.rawName = rawName
         self.catalogId = catalogId
@@ -37,6 +41,8 @@ public struct DraftItem: Equatable, Sendable {
         self.restSec = restSec
         self.assumptions = assumptions
         self.origin = origin
+        self.reviewModifier = reviewModifier
+        self.usedMemory = usedMemory
     }
 }
 

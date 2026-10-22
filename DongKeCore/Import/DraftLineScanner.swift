@@ -22,7 +22,7 @@ public enum DraftLineScanner {
 
     private static let cautionPrefixes = ["注意", "提示", "建议", "备注", "说明", "⚠"]
 
-    public static func scan(_ text: String) -> PlanDraft? {
+    public static func scan(_ text: String, memory: AliasMemory = .empty) -> PlanDraft? {
         var days: [DraftDay] = []
         var title: String?
         var cautions: [String] = []
@@ -49,7 +49,7 @@ public enum DraftLineScanner {
             if let weekday = weekday(in: line) {
                 var remainder = removingWeekdayToken(in: line)
                 let rounds = takeRounds(in: &remainder)
-                let parsed = items(from: remainder)
+                let parsed = items(from: remainder, memory: memory)
                 openDay(label: parsed.isEmpty ? labelText(from: line) : "", weekday: weekday)
                 days[days.count - 1].rounds = rounds
                 append(parsed)
@@ -60,7 +60,7 @@ public enum DraftLineScanner {
                 var remainder = line
                 if let rounds = takeRounds(in: &remainder) {
                     days[days.count - 1].rounds = rounds
-                    append(items(from: remainder))
+                    append(items(from: remainder, memory: memory))
                     continue
                 }
             }
@@ -74,7 +74,7 @@ public enum DraftLineScanner {
                     title = cleanedName(line)
                     continue
                 }
-                append(items(from: line))
+                append(items(from: line, memory: memory))
                 continue
             }
 
@@ -83,32 +83,44 @@ public enum DraftLineScanner {
                 continue
             }
 
-            append(items(from: line))
+            append(items(from: line, memory: memory))
         }
 
         guard days.contains(where: { !$0.items.isEmpty }) else { return nil }
         return PlanDraft(title: title, days: days, cautions: cautions, source: .lineScan)
     }
 
-    static func items(from line: String) -> [DraftItem] {
+    static func items(from line: String, memory: AliasMemory = .empty) -> [DraftItem] {
         let matches = aliasMatches(in: line)
         guard matches.count >= 2 else {
-            return parseItem(line, forcedId: matches.first?.id).map { [$0] } ?? []
+            return parseItem(line, forcedId: matches.first?.id, memory: memory).map { [$0] } ?? []
         }
 
         var result: [DraftItem] = []
         for (index, match) in matches.enumerated() {
-            let start = match.range.lowerBound
+            var start = match.range.lowerBound
             let end = index + 1 < matches.count ? matches[index + 1].range.lowerBound : line.endIndex
+            if index == 0, let head = trailingModifierStart(in: line[line.startIndex..<start]) {
+                start = head
+            }
             guard start < end else { continue }
-            if let item = parseItem(String(line[start..<end]), forcedId: match.id) {
+            if let item = parseItem(String(line[start..<end]), forcedId: match.id, memory: memory) {
                 result.append(item)
             }
         }
         return result
     }
 
-    static func parseItem(_ raw: String, forcedId: String? = nil) -> DraftItem? {
+    private static func trailingModifierStart(in head: Substring) -> String.Index? {
+        var best: String.Index?
+        for modifier in ExerciseAliasResolver.modifiers where head.hasSuffix(modifier) {
+            let candidate = head.index(head.endIndex, offsetBy: -modifier.count)
+            if best == nil || candidate < best! { best = candidate }
+        }
+        return best
+    }
+
+    static func parseItem(_ raw: String, forcedId: String? = nil, memory: AliasMemory = .empty) -> DraftItem? {
         var working = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !working.isEmpty else { return nil }
 
@@ -173,7 +185,10 @@ public enum DraftLineScanner {
         let name = cleanedName(working)
         guard !name.isEmpty else { return nil }
 
-        let resolved = forcedId ?? ExerciseAliasResolver.catalogId(for: name)
+        let hit = ExerciseAliasResolver.match(for: name, memory: memory)
+        let usedMemory = hit?.source == .memory
+        let resolved = usedMemory ? hit?.catalogId : (forcedId ?? hit?.catalogId)
+        let reviewModifier = forcedId == nil || hit?.catalogId == forcedId ? hit?.modifier : nil
         let hasDose = sets != nil || value != nil
 
         guard hasDose || resolved != nil else { return nil }
@@ -182,7 +197,8 @@ public enum DraftLineScanner {
             if value == nil, entry.isStatic {
                 assumptions.append("「\(entry.name)」没写时长，按 30 秒")
             }
-            if ExerciseAliasResolver.normalize(name).contains(ExerciseAliasResolver.normalize(entry.name)) == false {
+            if reviewModifier == nil, !usedMemory,
+               ExerciseAliasResolver.normalize(name).contains(ExerciseAliasResolver.normalize(entry.name)) == false {
                 assumptions.append("「\(name)」按「\(entry.name)」处理")
             }
         }
@@ -196,12 +212,19 @@ public enum DraftLineScanner {
             perSide: perSide,
             restSec: rest,
             assumptions: assumptions,
-            origin: origin
+            origin: origin,
+            reviewModifier: reviewModifier,
+            usedMemory: usedMemory
         )
     }
 
     static func cleanedName(_ raw: String) -> String {
         var result = raw
+        result = result.replacingOccurrences(
+            of: "(?i)\\d+\\s*(kg|kgs|lbs?|pounds?|公斤|千克|磅)",
+            with: " ",
+            options: .regularExpression
+        )
         for token in unitTokens {
             result = result.replacingOccurrences(of: token, with: " ")
         }
@@ -372,7 +395,7 @@ public enum DraftLineScanner {
 
     private static func aliasMatches(in line: String) -> [AliasMatch] {
         var found: [AliasMatch] = []
-        for (alias, id) in aliasTable {
+        for (alias, id) in ExerciseAliasResolver.aliases {
             var searchStart = line.startIndex
             while searchStart < line.endIndex,
                   let range = line.range(of: alias, options: [.caseInsensitive], range: searchStart..<line.endIndex) {
@@ -388,23 +411,6 @@ public enum DraftLineScanner {
         }
         return accepted.sorted { $0.range.lowerBound < $1.range.lowerBound }
     }
-
-    private static let aliasTable: [(String, String)] = [
-        ("靠墙静蹲", "wall_sit"), ("俄罗斯转体", "russian_twist"), ("侧平板支撑", "side_plank"),
-        ("侧平板", "side_plank"), ("平板支撑", "plank"), ("登山跑", "mountain_climber"),
-        ("高抬腿", "high_knees"), ("开合跳", "jumping_jack"), ("俯卧撑", "push_up"),
-        ("弓步蹲", "lunge"), ("箭步蹲", "lunge"), ("臀桥", "glute_bridge"),
-        ("哑铃划船", "dumbbell_row"), ("哑铃推举", "shoulder_press"), ("肩推", "shoulder_press"),
-        ("死虫", "dead_bug"), ("提踵", "calf_raise"), ("鸟狗", "bird_dog"),
-        ("超人", "superman"), ("卷腹", "crunch"), ("深蹲", "squat"), ("平板", "plank"),
-        ("push-up", "push_up"), ("push up", "push_up"), ("pushup", "push_up"),
-        ("squat", "squat"), ("plank", "plank"), ("lunge", "lunge"), ("crunch", "crunch"),
-        ("dead bug", "dead_bug"), ("bird dog", "bird_dog"), ("superman", "superman"),
-        ("calf raise", "calf_raise"), ("jumping jack", "jumping_jack"), ("high knees", "high_knees"),
-        ("mountain climber", "mountain_climber"), ("glute bridge", "glute_bridge"),
-        ("wall sit", "wall_sit"), ("russian twist", "russian_twist"), ("side plank", "side_plank"),
-        ("dumbbell row", "dumbbell_row"), ("shoulder press", "shoulder_press")
-    ]
 
     static func firstMatch(in text: String, pattern: String) -> (groups: [String], range: Range<String.Index>)? {
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }

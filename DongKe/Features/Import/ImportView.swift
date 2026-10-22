@@ -6,6 +6,7 @@ private struct PlanEditRow: Identifiable {
     var dayIndex: Int
     var itemId: String
     var name: String
+    var originalName: String
     var catalogId: String
     var isDuration: Bool
     var sets: Int
@@ -20,12 +21,14 @@ struct ImportView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(UserExerciseStore.self) private var userExercises
 
     @State private var text = ""
     @State private var draft: ParsedPlanDraft?
     @State private var showReview = false
     @State private var autoParsed = false
     @State private var copiedPrompt = false
+    private let memo = AliasMemoStore()
 
     private static let sampleText = """
     增肌计划 第一周
@@ -174,7 +177,7 @@ struct ImportView: View {
     }
 
     private func parse() {
-        let parsed = PlanImportService.parse(text)
+        let parsed = PlanImportService.parse(text, memory: memo.load(), exercises: userExercises.catalog)
         draft = parsed
         if parsed.plan != nil {
             showReview = true
@@ -194,7 +197,9 @@ struct PlanReviewView: View {
     var onSave: (WorkoutPlan) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(UserExerciseStore.self) private var userExercises
     @State private var editing: PlanEditRow?
+    private let memo = AliasMemoStore()
 
     init(draft: ParsedPlanDraft, plan: WorkoutPlan, onSave: @escaping (WorkoutPlan) -> Void) {
         self.draft = draft
@@ -252,21 +257,37 @@ struct PlanReviewView: View {
         .sheet(item: $editing) { row in
             EditRowSheet(
                 row: row,
-                onApply: { sets, value, rest, catalogId in
+                myExercises: userExercises.all,
+                onApply: { result in
+                    if let catalogId = result.catalogId,
+                       catalogId != row.catalogId || draft.guessedItems[row.itemId] != nil {
+                        memo.remember(row.originalName, catalogId: catalogId)
+                    }
+                    if result.saveAsMine {
+                        userExercises.add(UserExercise(
+                            name: row.originalName,
+                            group: result.group,
+                            equipment: UserExercise.inferEquipment(fromName: row.originalName),
+                            isStatic: row.isDuration,
+                            defaultSets: result.sets,
+                            defaultValue: result.value,
+                            restSec: result.rest
+                        ))
+                    }
                     plan = PlanEditing.updateItem(
                         in: plan,
                         dayIndex: row.dayIndex,
                         itemId: row.itemId,
-                        sets: sets,
-                        value: value,
-                        restSec: rest,
-                        catalogId: catalogId
+                        sets: result.sets,
+                        value: result.value,
+                        restSec: result.rest,
+                        catalogId: result.catalogId
                     )
                     editing = nil
                 },
                 onCancel: { editing = nil }
             )
-            .presentationDetents([.height(460)])
+            .presentationDetents([.height(560)])
             .presentationBackground(.regularMaterial)
         }
     }
@@ -343,10 +364,12 @@ struct PlanReviewView: View {
             VStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     Button {
+                        let original = draft.guessedItems[item.itemId]?.originalName ?? item.name
                         editing = PlanEditRow(
                             dayIndex: day.dayIndex,
                             itemId: item.itemId,
-                            name: item.name,
+                            name: original,
+                            originalName: original,
                             catalogId: item.catalogId,
                             isDuration: item.target.type == .durationSec,
                             sets: item.sets,
@@ -371,9 +394,10 @@ struct PlanReviewView: View {
     }
 
     private func itemRow(_ item: ExercisePrescription) -> some View {
-        HStack(spacing: 10) {
+        let guess = draft.guessedItems[item.itemId]
+        return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.name)
+                Text(guess?.originalName ?? item.name)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.primary)
                 Text(doseText(item))
@@ -382,7 +406,24 @@ struct PlanReviewView: View {
                     .monospacedDigit()
             }
             Spacer()
-            if ExerciseLibrary.entry(for: item.catalogId) == nil {
+            if let guess {
+                Text(guess.isMemory ? "上次记为\(guess.catalogName)" : "按\(guess.catalogName)计入")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(guess.isMemory ? Theme.accent(for: colorScheme) : .orange)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(
+                        (guess.isMemory ? Theme.accent(for: colorScheme) : Color.orange).opacity(0.12),
+                        in: Capsule()
+                    )
+            } else if userExercises.exercise(for: item.catalogId) != nil {
+                Text("我的动作")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Theme.accent(for: colorScheme).opacity(0.12), in: Capsule())
+            } else if ExerciseLibrary.entry(for: item.catalogId) == nil {
                 Text("不在库里")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.orange)
@@ -405,28 +446,46 @@ struct PlanReviewView: View {
     }
 }
 
+private struct EditRowResult {
+    var sets: Int
+    var value: Int
+    var rest: Int
+    var catalogId: String?
+    var saveAsMine: Bool
+    var group: ExerciseGroup
+}
+
 private struct EditRowSheet: View {
     let row: PlanEditRow
-    var onApply: (Int, Int, Int, String?) -> Void
+    let myExercises: [UserExercise]
+    var onApply: (EditRowResult) -> Void
     var onCancel: () -> Void
 
     @State private var sets: Int
     @State private var value: Int
     @State private var rest: Int
     @State private var catalogId: String?
+    @State private var saveAsMine = false
+    @State private var group: ExerciseGroup = .lower
 
     init(
         row: PlanEditRow,
-        onApply: @escaping (Int, Int, Int, String?) -> Void,
+        myExercises: [UserExercise],
+        onApply: @escaping (EditRowResult) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.row = row
+        self.myExercises = myExercises
         self.onApply = onApply
         self.onCancel = onCancel
         _sets = State(initialValue: row.sets)
         _value = State(initialValue: row.value)
         _rest = State(initialValue: row.restSec)
         _catalogId = State(initialValue: ExerciseLibrary.entry(for: row.catalogId) == nil ? nil : row.catalogId)
+    }
+
+    private var isKnown: Bool {
+        ExerciseLibrary.entry(for: row.catalogId) != nil || myExercises.contains { $0.id == row.catalogId }
     }
 
     var body: some View {
@@ -437,8 +496,17 @@ private struct EditRowSheet: View {
                 Text(row.name)
                     .font(.system(size: 16, weight: .semibold))
                 Spacer()
-                Button("应用") { onApply(sets, value, rest, catalogId) }
-                    .fontWeight(.semibold)
+                Button("应用") {
+                    onApply(EditRowResult(
+                        sets: sets,
+                        value: value,
+                        rest: rest,
+                        catalogId: catalogId,
+                        saveAsMine: saveAsMine,
+                        group: group
+                    ))
+                }
+                .fontWeight(.semibold)
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
@@ -447,6 +515,13 @@ private struct EditRowSheet: View {
                 Text("保留原名「\(row.name)」").tag(String?.none)
                 ForEach(ExerciseLibrary.all) { entry in
                     Text("\(entry.name)（\(entry.equipment.chineseName)）").tag(String?.some(entry.id))
+                }
+                if myExercises.isEmpty == false {
+                    Section("我的动作") {
+                        ForEach(myExercises) { exercise in
+                            Text(exercise.name).tag(String?.some(exercise.id))
+                        }
+                    }
                 }
             }
             .pickerStyle(.menu)
@@ -468,6 +543,22 @@ private struct EditRowSheet: View {
             Stepper("组间休息 \(rest) 秒", value: $rest, in: 0...600, step: 15)
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
+
+            if isKnown == false {
+                Toggle("存为我的动作", isOn: $saveAsMine)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+                if saveAsMine {
+                    Picker("归到", selection: $group) {
+                        ForEach(ExerciseGroup.allCases, id: \.self) { group in
+                            Text(group.title).tag(group)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+                }
+            }
 
             Spacer()
         }

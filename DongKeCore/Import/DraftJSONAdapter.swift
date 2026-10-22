@@ -16,7 +16,7 @@ public enum DraftJSONAdapter {
     private static let notesKeys = ["notes", "note", "comment", "tip", "备注", "说明", "注意"]
     private static let titleKeys = ["title", "planname", "计划名", "计划名称", "name"]
 
-    public static func draft(fromJSON text: String) -> PlanDraft? {
+    public static func draft(fromJSON text: String, memory: AliasMemory = .empty) -> PlanDraft? {
         guard let data = text.data(using: .utf8),
               let root = try? JSONSerialization.jsonObject(with: data) else { return nil }
 
@@ -24,13 +24,13 @@ public enum DraftJSONAdapter {
         let containers = dayContainers(in: root)
 
         if containers.isEmpty {
-            let items = collect(from: root, rounds: nil)
+            let items = collect(from: root, rounds: nil, memory: memory)
             guard !items.isEmpty else { return nil }
             days.append(DraftDay(order: 1, label: "训练", items: items))
         } else {
             for container in containers {
                 let label = dayLabel(in: container) ?? "训练 \(days.count + 1)"
-                let items = collect(from: container, rounds: nil)
+                let items = collect(from: container, rounds: nil, memory: memory)
                 guard !items.isEmpty else { continue }
                 days.append(DraftDay(
                     order: days.count + 1,
@@ -79,15 +79,15 @@ public enum DraftJSONAdapter {
         return []
     }
 
-    private static func collect(from node: Any, rounds: Int?) -> [DraftItem] {
+    private static func collect(from node: Any, rounds: Int?, memory: AliasMemory) -> [DraftItem] {
         var items: [DraftItem] = []
-        walk(node, rounds: rounds, into: &items)
+        walk(node, rounds: rounds, memory: memory, into: &items)
         return items
     }
 
-    private static func walk(_ node: Any, rounds: Int?, into items: inout [DraftItem]) {
+    private static func walk(_ node: Any, rounds: Int?, memory: AliasMemory, into items: inout [DraftItem]) {
         if let array = node as? [Any] {
-            for element in array { walk(element, rounds: rounds, into: &items) }
+            for element in array { walk(element, rounds: rounds, memory: memory, into: &items) }
             return
         }
         guard let dict = node as? [String: Any] else { return }
@@ -95,16 +95,16 @@ public enum DraftJSONAdapter {
         let localRounds = rounds ?? intValue(firstValue(in: normalized, keys: roundsKeys))
 
         if let name = nameValue(in: normalized), hasDose(normalized) {
-            items.append(makeItem(normalized, name: name, rounds: localRounds))
+            items.append(makeItem(normalized, name: name, rounds: localRounds, memory: memory))
             return
         }
 
         for value in dict.values {
-            walk(value, rounds: localRounds, into: &items)
+            walk(value, rounds: localRounds, memory: memory, into: &items)
         }
     }
 
-    private static func makeItem(_ dict: [String: Any], name: String, rounds: Int?) -> DraftItem {
+    private static func makeItem(_ dict: [String: Any], name: String, rounds: Int?, memory: AliasMemory) -> DraftItem {
         var assumptions: [String] = []
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -140,16 +140,20 @@ public enum DraftJSONAdapter {
             assumptions.append("这一项属于 \(rounds) 轮循环，组数按循环计算")
         }
 
+        let hit = ExerciseAliasResolver.match(for: trimmedName, memory: memory)
+
         return DraftItem(
             rawName: trimmedName,
-            catalogId: ExerciseAliasResolver.catalogId(for: trimmedName),
+            catalogId: hit?.catalogId,
             sets: sets,
             value: value,
             targetType: targetType,
             perSide: perSide,
             restSec: rest,
             assumptions: assumptions,
-            origin: trimmedName
+            origin: trimmedName,
+            reviewModifier: hit?.modifier,
+            usedMemory: hit?.source == .memory
         )
     }
 

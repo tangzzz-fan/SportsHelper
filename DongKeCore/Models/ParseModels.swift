@@ -26,6 +26,30 @@ public enum ParsePath: String, Codable, Sendable {
     case blank
 }
 
+public struct GuessedRow: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
+        case approximate(modifier: String)
+        case memory
+    }
+
+    public var originalName: String
+    public var catalogName: String
+    public var kind: Kind
+
+    public init(originalName: String, catalogName: String, kind: Kind) {
+        self.originalName = originalName
+        self.catalogName = catalogName
+        self.kind = kind
+    }
+
+    public var modifier: String? {
+        if case let .approximate(modifier) = kind { return modifier }
+        return nil
+    }
+
+    public var isMemory: Bool { kind == .memory }
+}
+
 public struct ParsedPlanDraft: Equatable, Sendable {
     public var plan: WorkoutPlan?
     public var issues: [ParseIssue]
@@ -33,6 +57,7 @@ public struct ParsedPlanDraft: Equatable, Sendable {
     public var path: ParsePath
     public var assumptions: [String]
     public var unmappedNames: [String]
+    public var guessedItems: [String: GuessedRow]
 
     public var needsReview: Bool {
         path != .strictJSON || !issues.isEmpty
@@ -48,7 +73,8 @@ public struct ParsedPlanDraft: Equatable, Sendable {
         rawText: String,
         path: ParsePath,
         assumptions: [String] = [],
-        unmappedNames: [String] = []
+        unmappedNames: [String] = [],
+        guessedItems: [String: GuessedRow] = [:]
     ) {
         self.plan = plan
         self.issues = issues
@@ -56,6 +82,7 @@ public struct ParsedPlanDraft: Equatable, Sendable {
         self.path = path
         self.assumptions = assumptions
         self.unmappedNames = unmappedNames
+        self.guessedItems = guessedItems
     }
 
     public static func empty(rawText: String) -> ParsedPlanDraft {

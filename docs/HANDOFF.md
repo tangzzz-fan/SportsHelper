@@ -97,6 +97,20 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 要加一种新格式，只加一个适配器产出 `PlanDraft`，编译器与页面都不用动。要给某个 agent 定契约，让它照
 `PlanPromptTemplate.text` 的 JSON 输出——那份示例由测试保证能被自己的解析器读懂。
 
+### 库外动作的三层处理（22–24）
+
+计划里出现库里没有的动作时，**不拦、不扔、不静默改写**，分三层：
+
+| 层 | 触发 | 结果 | 用户看到 |
+|---|---|---|---|
+| 猜 | 别名命中但原文带库内覆盖不到的限定词（杠铃 / 箱式 / 保加利亚 / 单腿 …） | 仍按最接近的动作计入 | 橙色「按深蹲计入」，标题保留原文名 |
+| 记 | 用户在校对页改过一次 | 写进 `dk.alias.memo`（UserDefaults） | 青色「上次记为深蹲」，下次导入不再问 |
+| 存 | 用户点「存为我的动作」 | SwiftData `UserExerciseEntity`，id 与计划里的 `custom_<slug>` 同一个 | 动作库多一个「我的动作」分区，青色「我的动作」徽标 |
+
+关键不变量：`CustomExerciseId.id(for: name)` 是唯一的 slug 生成处，`custom_` 前缀在计划、我的动作、图示兜底三处指的是同一个 id。修它之前先看 `UnknownExerciseTests`。
+
+`ExerciseAliasResolver.aliases` 是**唯一**别名表（行扫描的多动作切分也读它）；不要再另建一份，重复过两次都出过事。
+
 ## 6.1 截图自检钩子
 
 调试构建支持用环境变量直达某一屏（仅 `#if DEBUG`，发布构建无此分支）：
@@ -116,6 +130,9 @@ SIMCTL_CHILD_DK_RESET_PROFILE=1 xcrun simctl launch booted app.dongke.ios       
 SIMCTL_CHILD_DK_PREVIEW=summary xcrun simctl launch booted app.dongke.ios      # 完成总结（预置 4 组完成 + 1 组降阶）
 SIMCTL_CHILD_DK_PREVIEW=library | detail xcrun simctl launch booted app.dongke.ios  # 动作库 / 动作详情
 SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl launch booted app.dongke.ios  # 直接看校对页
+SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios   # 塞一个「我的动作」（农夫行走）
+SIMCTL_CHILD_DK_PREVIEW=myexercise SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios  # 我的动作详情
+xcrun simctl spawn booted defaults write app.dongke.ios dk.alias.memo -dict "保加利亚分腿蹲" "squat"  # 预置别名记忆，验第三层
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 

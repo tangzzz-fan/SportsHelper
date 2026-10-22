@@ -1,7 +1,7 @@
 import Foundation
 
 public enum DraftTableAdapter {
-    public static func draft(from text: String) -> PlanDraft? {
+    public static func draft(from text: String, memory: AliasMemory = .empty) -> PlanDraft? {
         var title: String?
         var days: [DraftDay] = []
         var header: [String]?
@@ -22,7 +22,7 @@ public enum DraftTableAdapter {
                     header = cells
                     continue
                 }
-                guard let header, let item = makeItem(cells: cells, header: header) else { continue }
+                guard let header, let item = makeItem(cells: cells, header: header, memory: memory) else { continue }
 
                 if openDayIndex == nil {
                     days.append(DraftDay(
@@ -83,7 +83,7 @@ public enum DraftTableAdapter {
         return label.isEmpty ? nil : label
     }
 
-    private static func makeItem(cells: [String], header: [String]) -> DraftItem? {
+    private static func makeItem(cells: [String], header: [String], memory: AliasMemory) -> DraftItem? {
         let nameIndex = column(in: header, keys: ["动作", "exercise", "movement", "名称", "训练"])
         let setsIndex = column(in: header, keys: ["组数", "set", "series", "组"])
         let repsIndex = column(in: header, keys: ["次数", "rep", "repetition", "times", "次"])
@@ -124,16 +124,20 @@ public enum DraftTableAdapter {
         let rest = cell(restIndex).flatMap { seconds(in: $0) }
         let perSide = rawName.contains("每侧") || rawName.contains("单侧")
 
+        let hit = ExerciseAliasResolver.match(for: rawName, memory: memory)
+
         return DraftItem(
             rawName: rawName,
-            catalogId: ExerciseAliasResolver.catalogId(for: rawName),
+            catalogId: hit?.catalogId,
             sets: sets,
             value: value,
             targetType: targetType,
             perSide: perSide,
             restSec: rest,
             assumptions: assumptions,
-            origin: cells.joined(separator: " | ")
+            origin: cells.joined(separator: " | "),
+            reviewModifier: hit?.modifier,
+            usedMemory: hit?.source == .memory
         )
     }
 

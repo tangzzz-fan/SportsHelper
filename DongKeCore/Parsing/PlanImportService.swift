@@ -3,7 +3,11 @@ import Foundation
 public enum PlanImportService {
     private static let maxBytes = 64 * 1024
 
-    public static func parse(_ text: String) -> ParsedPlanDraft {
+    public static func parse(
+        _ text: String,
+        memory: AliasMemory = .empty,
+        exercises: UserExerciseCatalog = .empty
+    ) -> ParsedPlanDraft {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return ParsedPlanDraft(
@@ -29,8 +33,8 @@ public enum PlanImportService {
             if let lenient = try? PlanDecoder.decodeLenient(trimmed) {
                 return draft(plan: lenient.plan, issues: lenient.issues, rawText: text, path: .lenientJSON)
             }
-            if let generic = PlanDraftParser.draft(fromJSON: trimmed) {
-                return compiled(generic, rawText: text, path: .lenientJSON)
+            if let generic = PlanDraftParser.draft(fromJSON: trimmed, memory: memory) {
+                return compiled(generic, rawText: text, path: .lenientJSON, exercises: exercises)
             }
             return ParsedPlanDraft(
                 plan: nil,
@@ -44,18 +48,24 @@ public enum PlanImportService {
             )
         }
 
-        return FreeTextPlanParser.parse(text)
+        return FreeTextPlanParser.parse(text, memory: memory, exercises: exercises)
     }
 
-    private static func compiled(_ draft: PlanDraft, rawText: String, path: ParsePath) -> ParsedPlanDraft {
-        let result = PlanDraftCompiler.compile(draft)
+    private static func compiled(
+        _ draft: PlanDraft,
+        rawText: String,
+        path: ParsePath,
+        exercises: UserExerciseCatalog
+    ) -> ParsedPlanDraft {
+        let result = PlanDraftCompiler.compile(draft, exercises: exercises)
         return ParsedPlanDraft(
             plan: result.plan,
             issues: PlanValidator.validate(result.plan),
             rawText: rawText,
             path: path,
             assumptions: result.assumptions,
-            unmappedNames: result.unmappedNames
+            unmappedNames: result.unmappedNames,
+            guessedItems: result.guessedItems
         )
     }
 

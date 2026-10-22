@@ -1,7 +1,28 @@
 import Foundation
 
+public struct ExerciseMatch: Equatable, Sendable {
+    public enum Source: String, Sendable {
+        case alias
+        case memory
+    }
+
+    public var catalogId: String
+    public var alias: String
+    public var modifier: String?
+    public var source: Source
+
+    public init(catalogId: String, alias: String, modifier: String? = nil, source: Source = .alias) {
+        self.catalogId = catalogId
+        self.alias = alias
+        self.modifier = modifier
+        self.source = source
+    }
+
+    public var needsReview: Bool { modifier != nil }
+}
+
 public enum ExerciseAliasResolver {
-    private static let table: [(alias: String, id: String)] = [
+    public static let aliases: [(alias: String, id: String)] = [
         ("靠墙静蹲", "wall_sit"), ("墙蹲", "wall_sit"), ("wall sit", "wall_sit"), ("wall squat", "wall_sit"),
         ("俄罗斯转体", "russian_twist"), ("转体", "russian_twist"), ("russian twist", "russian_twist"),
         ("侧平板支撑", "side_plank"), ("侧平板", "side_plank"), ("侧支撑", "side_plank"),
@@ -31,23 +52,38 @@ public enum ExerciseAliasResolver {
         ("深蹲", "squat"), ("徒手深蹲", "squat"), ("自重深蹲", "squat"), ("squat", "squat"), ("air squat", "squat")
     ]
 
-    public static func catalogId(for rawName: String) -> String? {
+    public static let modifiers: [String] = [
+        "保加利亚", "史密斯", "弹力带", "瑞士球", "波速球", "拉力器",
+        "杠铃", "哑铃", "壶铃", "绳索", "器械", "负重", "沙袋", "药球",
+        "箱式", "相扑", "上斜", "下斜", "窄距", "宽距", "高位", "低位",
+        "跳箱", "跳跃", "爆发", "离心", "暂停", "半程", "靠墙",
+        "单臂", "单腿", "单手"
+    ]
+
+    public static func match(for rawName: String, memory: AliasMemory = .empty) -> ExerciseMatch? {
         let name = normalize(rawName)
         guard !name.isEmpty else { return nil }
 
-        if let exact = table.first(where: { normalize($0.alias) == name }) {
-            return exact.id
+        if let remembered = memory.catalogId(for: rawName) {
+            return ExerciseMatch(
+                catalogId: remembered,
+                alias: rawName.trimmingCharacters(in: .whitespacesAndNewlines),
+                modifier: nil,
+                source: .memory
+            )
         }
 
-        let candidates = table
-            .map { (alias: normalize($0.alias), id: $0.id) }
-            .filter { pair in
-                guard !pair.alias.isEmpty else { return false }
-                return name.contains(pair.alias) && pair.alias.count >= minimumLength(pair.alias)
-            }
-            .sorted { $0.alias.count > $1.alias.count }
+        guard let hit = aliasHit(name) else { return nil }
+        return ExerciseMatch(
+            catalogId: hit.id,
+            alias: hit.alias,
+            modifier: uncoveredModifier(in: name, alias: normalize(hit.alias)),
+            source: .alias
+        )
+    }
 
-        return candidates.first?.id
+    public static func catalogId(for rawName: String) -> String? {
+        match(for: rawName)?.catalogId
     }
 
     public static func normalize(_ text: String) -> String {
@@ -57,6 +93,30 @@ public enum ExerciseAliasResolver {
                 || (scalar.value >= 0x4E00 && scalar.value <= 0x9FFF)
         }
         return String(String.UnicodeScalarView(stripped))
+    }
+
+    private static func aliasHit(_ name: String) -> (alias: String, id: String)? {
+        if let exact = aliases.first(where: { normalize($0.alias) == name }) {
+            return exact
+        }
+
+        let candidates = aliases
+            .filter { pair in
+                let alias = normalize(pair.alias)
+                guard !alias.isEmpty else { return false }
+                return name.contains(alias) && alias.count >= minimumLength(alias)
+            }
+            .sorted { normalize($0.alias).count > normalize($1.alias).count }
+
+        return candidates.first
+    }
+
+    private static func uncoveredModifier(in name: String, alias: String) -> String? {
+        for modifier in modifiers where name.contains(normalize(modifier)) {
+            if alias.contains(normalize(modifier)) { continue }
+            return modifier
+        }
+        return nil
     }
 
     private static func minimumLength(_ alias: String) -> Int {

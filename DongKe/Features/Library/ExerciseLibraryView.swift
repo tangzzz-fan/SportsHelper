@@ -5,6 +5,7 @@ struct ExerciseLibraryView: View {
     var onClose: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(UserExerciseStore.self) private var userExercises
     @State private var previewDetail = false
 
     init(onClose: @escaping () -> Void) {
@@ -29,9 +30,28 @@ struct ExerciseLibraryView: View {
                         }
                     }
             }
+        } else if let previewMine {
+            NavigationStack {
+                UserExerciseDetailView(exercise: previewMine)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("关闭", action: onClose)
+                                .foregroundStyle(Theme.accent(for: colorScheme))
+                        }
+                    }
+            }
         } else {
             libraryBody
         }
+    }
+
+    private var previewMine: UserExercise? {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["DK_PREVIEW"] == "myexercise" else { return nil }
+        return userExercises.all.first
+        #else
+        return nil
+        #endif
     }
 
     private var libraryBody: some View {
@@ -55,6 +75,34 @@ struct ExerciseLibraryView: View {
                                     .buttonStyle(.plain)
 
                                     if index < section.entries.count - 1 {
+                                        Divider()
+                                            .overlay(Color.primary.opacity(0.06))
+                                            .padding(.leading, 78)
+                                    }
+                                }
+                            }
+                            .glassSurface(radius: Theme.Radius.glassCard)
+                            .padding(.horizontal, 16)
+                        }
+                    }
+
+                    if userExercises.all.isEmpty == false {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("我的动作")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 20)
+
+                            VStack(spacing: 0) {
+                                ForEach(Array(userExercises.all.enumerated()), id: \.element.id) { index, exercise in
+                                    NavigationLink {
+                                        UserExerciseDetailView(exercise: exercise)
+                                    } label: {
+                                        userRow(exercise)
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    if index < userExercises.all.count - 1 {
                                         Divider()
                                             .overlay(Color.primary.opacity(0.06))
                                             .padding(.leading, 78)
@@ -106,6 +154,93 @@ struct ExerciseLibraryView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
+    }
+
+    private func userRow(_ exercise: UserExercise) -> some View {
+        HStack(spacing: 12) {
+            ExerciseFigureView(
+                catalogId: exercise.id,
+                figureSize: CGSize(width: 44, height: 52),
+                showsHalo: false
+            )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exercise.name)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.primary)
+                Text("\(exercise.defaultSets) 组 × \(exercise.defaultValue) \(exercise.doseUnit)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+}
+
+struct UserExerciseDetailView: View {
+    let exercise: UserExercise
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(UserExerciseStore.self) private var userExercises
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(spacing: 8) {
+                    ExerciseFigureView(
+                        catalogId: exercise.id,
+                        figureSize: CGSize(width: 190, height: 220)
+                    )
+                    Text(exercise.name)
+                        .font(.system(size: 24, weight: .semibold))
+                    Text("我的动作 · \(exercise.group.title)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("默认剂量")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text("\(exercise.defaultSets) 组 × \(exercise.defaultValue) \(exercise.doseUnit)，组间休息 \(exercise.restSec) 秒")
+                        .font(.system(size: 16, weight: .medium))
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .glassSurface(radius: Theme.Radius.card)
+                }
+
+                Text("这个动作不在内置动作库里，图示用通用示意代替，要点需要你自己把握。导入计划时遇到同名动作会直接指向它。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button(role: .destructive) {
+                    userExercises.remove(id: exercise.id)
+                    dismiss()
+                } label: {
+                    Text("从我的动作里删掉")
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(PressableGlassStyle())
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle(exercise.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

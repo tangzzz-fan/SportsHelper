@@ -14,7 +14,7 @@ struct PlanView: View {
         self.plan = plan
         #if DEBUG
         let preview = ProcessInfo.processInfo.environment["DK_PREVIEW"] ?? ""
-        _showLibrary = State(initialValue: preview == "library" || preview == "detail")
+        _showLibrary = State(initialValue: preview == "library" || preview == "detail" || preview == "myexercise")
         _showImport = State(initialValue: preview == "import")
         #endif
     }
