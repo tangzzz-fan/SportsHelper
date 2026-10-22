@@ -1,0 +1,258 @@
+{
+  "$meta": {
+    "name": "动刻 Dongke — Design Tokens",
+    "version": "1.0.0",
+    "designer": "颜好看",
+    "date": "2026-10-22",
+    "platform": "ios",
+    "register": "product",
+    "designAxes": { "variance": 4, "motion": 4, "density": 5 },
+    "format": "DTCG-like. 每个 token 的 value 为字符串，或 { light, dark } 双模值。",
+    "rules": [
+      "所有颜色必须通过 color.* 语义 token 引用，禁止在组件里写裸 hex。",
+      "单位：尺寸类 token 一律为 pt（iOS 逻辑像素）。",
+      "间距只允许 4 的整数倍（4/8/12/16/20/24/32/40/48/64/80）。",
+      "字号在 iOS 上必须随 Dynamic Type 缩放（timer 除外，定点并封顶）。"
+    ]
+  },
+
+  "color": {
+    "bg":            { "type": "color", "value": { "light": "#F1F3F2", "dark": "#0F1211" }, "note": "页面底色。冷中性偏绿灰，刻意避开暖米色（奶油感）。" },
+    "surface":       { "type": "color", "value": { "light": "#FFFFFF", "dark": "#161A19" }, "note": "卡片/容器。" },
+    "surface-raised": { "type": "color", "value": { "light": "#FFFFFF", "dark": "#1E2423" }, "note": "浮起层（sheet 内卡片、选中项）。深色下靠亮度递进表达层级。" },
+    "surface-sunken": { "type": "color", "value": { "light": "#E9ECEA", "dark": "#0A0D0C" }, "note": "凹陷区：输入框底、进度槽、分段控件轨道。" },
+
+    "fg":            { "type": "color", "value": { "light": "#14181A", "dark": "#E8EDEB" }, "note": "主文本。近黑墨带绿底调，非纯黑。" },
+    "fg-2":          { "type": "color", "value": { "light": "#333E40", "dark": "#BFC9C6" }, "note": "次级文本。" },
+    "muted":         { "type": "color", "value": { "light": "#4E5A5E", "dark": "#93A09D" }, "note": "副文本 / 说明。对 bg 对比 ≥ 5.1:1。" },
+    "meta":          { "type": "color", "value": { "light": "#5F6B6E", "dark": "#7C8886" }, "note": "三级文本 / 元数据（最小允许文本色）。对比 ≥ 4.5:1，禁止再调浅用于文字。" },
+
+    "border":        { "type": "color", "value": { "light": "#DDE2E0", "dark": "#2A322F" }, "note": "默认 1pt 边框。" },
+    "border-strong": { "type": "color", "value": { "light": "#C3CAC7", "dark": "#3A4340" }, "note": "可聚焦控件边框 / 输入框悬停。" },
+    "hairline":      { "type": "color", "value": { "light": "#E8ECEA", "dark": "#202624" }, "note": "行分隔线，仅 1pt，仅装饰，不可当文本色。" },
+
+    "accent":        { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "唯一强调色（赭石/烧陶）。每屏可见使用 ≤ 2 处。" },
+    "accent-hover":  { "type": "color", "value": { "light": "#9C3A16", "dark": "#E47C46" } },
+    "accent-active": { "type": "color", "value": { "light": "#86320F", "dark": "#C05C28" } },
+    "accent-on":     { "type": "color", "value": { "light": "#FFFFFF", "dark": "#14100D" }, "note": "accent 底上的前景。浅色 5.5:1 / 深色 5.3:1。" },
+    "accent-soft":   { "type": "color", "value": { "light": "#FBEDE6", "dark": "#2B1A13" }, "note": "accent 8% 底：选中 chip、进度条轨道高亮。" },
+    "accent-on-soft": { "type": "color", "value": { "light": "#8C3512", "dark": "#E8875C" }, "note": "accent-soft 底上的文字，6.3:1。" },
+
+    "success":       { "type": "color", "value": { "light": "#15703A", "dark": "#4FB477" }, "note": "仅用于「已完成/达标」，不用于品牌表达。" },
+    "success-soft":  { "type": "color", "value": { "light": "#E6F2EA", "dark": "#12241A" } },
+    "warn":          { "type": "color", "value": { "light": "#8A6100", "dark": "#E0B341" }, "note": "与 accent 刻意拉开色相（金 vs 赭）+ 明度，避免混淆。" },
+    "warn-soft":     { "type": "color", "value": { "light": "#F7F0DD", "dark": "#2A2213" } },
+    "danger":        { "type": "color", "value": { "light": "#B01F2E", "dark": "#F0736F" }, "note": "删除 / 失败 / 中断。不与 accent 混用在同一视觉块。" },
+    "danger-soft":   { "type": "color", "value": { "light": "#FAE9EA", "dark": "#2C1416" } },
+
+    "ring-track":    { "type": "color", "value": { "light": "#E1E6E3", "dark": "#242B29" }, "note": "倒计时环 / 进度环的底槽。" },
+    "ring-progress": { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "= accent。环是唯一允许「大面积彩色」的地方，因为它承载状态。" },
+    "focus-ring":    { "type": "color", "value": { "light": "#B4451C", "dark": "#D96A32" }, "note": "2pt 外环 + 2pt 偏移（offset）。" },
+    "scrim":         { "type": "color", "value": { "light": "rgba(10,12,11,0.55)", "dark": "rgba(0,0,0,0.70)" }, "note": "遮罩。仅用于真实模态，不做装饰性毛玻璃。" },
+    "selected-tint": { "type": "color", "value": { "light": "rgba(180,69,28,0.06)", "dark": "rgba(217,106,50,0.10)" }, "note": "列表选中行背景。" }
+  },
+
+  "typography": {
+    "family": {
+      "display": { "type": "fontFamily", "value": "SF Pro Display", "note": "标题与大字。iOS 内置，字距收紧。不另装字体。" },
+      "body":    { "type": "fontFamily", "value": "SF Pro Text", "note": "UI 正文与标签（< 20pt）。" },
+      "cjk":     { "type": "fontFamily", "value": "PingFang SC", "note": "中文唯一正文字族，回退顺序 PingFang SC → system-ui。" },
+      "timer":   { "type": "fontFamily", "value": "B612 Mono", "note": "唯一打包字体（OFL / Google Fonts，仅 Bold 700）。B612 为驾驶舱仪表设计——本产品「仪表感」的签名。仅用于倒计时与训练中主数字。" },
+      "code":    { "type": "fontFamily", "value": "SF Mono", "note": "计划粘贴框内容、AI Key 展示。" }
+    },
+    "weight": {
+      "regular":  { "type": "number", "value": 400 },
+      "medium":   { "type": "number", "value": 500 },
+      "semibold": { "type": "number", "value": 600 },
+      "bold":     { "type": "number", "value": 700, "note": "仅限 timer 与 streak 大数字。" }
+    },
+    "size": {
+      "xs":     { "type": "dimension", "value": 12, "note": "元数据、单位、ALL CAPS 标签" },
+      "sm":     { "type": "dimension", "value": 14, "note": "辅助说明、表格次级" },
+      "base":   { "type": "dimension", "value": 16, "note": "正文基准（中文正文最小 16）" },
+      "md":     { "type": "dimension", "value": 20, "note": "卡片标题、按钮文字（训练中）" },
+      "lg":     { "type": "dimension", "value": 24, "note": "页面标题" },
+      "xl":     { "type": "dimension", "value": 32, "note": "关键数字、章节数字" },
+      "2xl":    { "type": "dimension", "value": 40, "note": "总结页主数字" },
+      "3xl":    { "type": "dimension", "value": 56, "note": "仅总结页 PR 大数字" },
+      "timer":  { "type": "dimension", "value": 88, "note": "休息倒计时。定点不缩放，最大封顶 96。" }
+    },
+    "lineHeight": {
+      "timer":   { "type": "number", "value": 1.0 },
+      "display": { "type": "number", "value": 1.12 },
+      "title":   { "type": "number", "value": 1.28 },
+      "body":    { "type": "number", "value": 1.55, "note": "中文正文必须 ≥ 1.5" },
+      "label":   { "type": "number", "value": 1.35 }
+    },
+    "tracking": {
+      "display": { "type": "dimension", "value": "-0.02em", "note": "≥ 32pt 标题" },
+      "title":   { "type": "dimension", "value": "-0.01em" },
+      "body":    { "type": "dimension", "value": "0" },
+      "caps":    { "type": "dimension", "value": "0.08em", "note": "ALL CAPS 必填（『第 6 天』『组』这类标签）" },
+      "timer":   { "type": "dimension", "value": "-0.01em", "note": "B612 Mono 等宽，负字距收拢观感" }
+    }
+  },
+
+  "spacing": {
+    "4":  { "type": "dimension", "value": 4,  "note": "图标与文字之间（最小）" },
+    "8":  { "type": "dimension", "value": 8,  "note": "同组元素 / 触控最小间隙" },
+    "12": { "type": "dimension", "value": 12 },
+    "16": { "type": "dimension", "value": 16, "note": "卡片内边距 / 屏幕左右边距" },
+    "20": { "type": "dimension", "value": 20 },
+    "24": { "type": "dimension", "value": 24, "note": "模块间距" },
+    "32": { "type": "dimension", "value": 32, "note": "区块间距" },
+    "40": { "type": "dimension", "value": 40 },
+    "48": { "type": "dimension", "value": 48, "note": "大区块" },
+    "64": { "type": "dimension", "value": 64 },
+    "80": { "type": "dimension", "value": 80, "note": "仅引导页大留白" }
+  },
+
+  "size": {
+    "hairline":     { "type": "dimension", "value": 1 },
+    "touchMin":     { "type": "dimension", "value": 44, "note": "WCAG 2.5.5 下限" },
+    "touchSession": { "type": "dimension", "value": 56, "note": "训练中所有可点区域下限（出汗/单手）" },
+    "touchPrimary": { "type": "dimension", "value": 64, "note": "训练中主操作按钮高度（记录一组）" },
+    "buttonHeight": { "type": "dimension", "value": 50, "note": "常规页主按钮" },
+    "inputHeight":  { "type": "dimension", "value": 50 },
+    "iconSm":       { "type": "dimension", "value": 16, "note": "行内，随文字 500 字重" },
+    "iconMd":       { "type": "dimension", "value": 20, "note": "按钮内" },
+    "iconLg":       { "type": "dimension", "value": 24, "note": "TabBar / 独立图标" },
+    "tabBarHeight": { "type": "dimension", "value": 49, "note": "iOS 标准，加 safe-area-inset-bottom" },
+    "navBarHeight": { "type": "dimension", "value": 44 },
+    "ringStroke":   { "type": "dimension", "value": 8, "note": "倒计时环线宽；小尺寸环用 6" },
+    "illustration": { "type": "dimension", "value": 240, "note": "动作示意图方形画布（详情页 280，训练中 200）" }
+  },
+
+  "radius": {
+    "xs":   { "type": "dimension", "value": 4,  "note": "标签 / badge" },
+    "sm":   { "type": "dimension", "value": 6,  "note": "输入框 / 小 chip" },
+    "md":   { "type": "dimension", "value": 10, "note": "按钮 / 动作缩略卡" },
+    "lg":   { "type": "dimension", "value": 14, "note": "卡片上限。仪表感要求克制，禁止 ≥ 20 的卡片" },
+    "xl":   { "type": "dimension", "value": 20, "note": "仅 bottom sheet 顶部" },
+    "pill": { "type": "dimension", "value": 999, "note": "Stepper 按钮 / 状态药丸 / 音频式圆按钮" }
+  },
+
+  "shadow": {
+    "none":     { "type": "boxShadow", "value": "none" },
+    "card":     { "type": "boxShadow", "value": { "light": "0 1px 2px rgba(16,20,18,0.04), 0 2px 8px rgba(16,20,18,0.04)", "dark": "none" }, "note": "深色下用 surface-raised 亮度差代替阴影" },
+    "float":    { "type": "boxShadow", "value": { "light": "0 8px 24px rgba(16,20,18,0.10)", "dark": "none" } },
+    "sheet":    { "type": "boxShadow", "value": { "light": "0 -8px 32px rgba(16,20,18,0.10)", "dark": "none" } },
+    "stickyAction": { "type": "boxShadow", "value": { "light": "0 -1px 0 #DDE2E0", "dark": "0 -1px 0 #2A322F" }, "note": "训练页底部固定操作条：用 1pt 上行线，不用投影" }
+  },
+
+  "motion": {
+    "duration": {
+      "instant": { "type": "duration", "value": 80,  "note": "按下反馈" },
+      "fast":    { "type": "duration", "value": 150, "note": "收值：hover/选中/勾选" },
+      "base":    { "type": "duration", "value": 200, "note": "元素进入" },
+      "enter":   { "type": "duration", "value": 240 },
+      "exit":    { "type": "duration", "value": 160 },
+      "screen":  { "type": "duration", "value": 300, "note": "页面/Sheet 转场，用 iOS 原生 push" }
+    },
+    "easing": {
+      "standard":   { "type": "cubicBezier", "value": [0.2, 0, 0, 1] },
+      "decelerate": { "type": "cubicBezier", "value": [0.05, 0.7, 0.1, 1] },
+      "accelerate": { "type": "cubicBezier", "value": [0.3, 0, 0.8, 0.15] },
+      "linear":     { "type": "cubicBezier", "value": [0, 0, 1, 1], "note": "仅倒计时环消耗，进度必须等速" }
+    },
+    "spring": { "type": "spring", "value": { "response": 0.32, "dampingFraction": 0.86 }, "note": "对应 SwiftUI .snappy" },
+    "haptic": {
+      "setLogged":   { "type": "string", "value": "impactLight" },
+      "restStart":   { "type": "string", "value": "impactMedium" },
+      "restEnd":     { "type": "string", "value": "notificationSuccess" },
+      "error":       { "type": "string", "value": "notificationError" },
+      "selection":   { "type": "string", "value": "selection" }
+    },
+    "reducedMotion": { "type": "string", "value": "禁用所有位移/缩放/弹簧；环改为每 1s 跳步更新；转场改用 crossfade 150ms。倒计时数字仍实时更新（信息不可减）。" }
+  },
+
+  "component": {
+    "buttonPrimary": {
+      "bg": "color.accent", "fg": "color.accent-on",
+      "bgPressed": "color.accent-active", "bgDisabled": "color.surface-sunken",
+      "fgDisabled": "color.meta",
+      "height": "size.buttonHeight", "radius": "radius.md",
+      "paddingX": "spacing.20", "labelSize": "typography.size.base", "labelWeight": "typography.weight.semibold"
+    },
+    "buttonSecondary": {
+      "bg": "transparent", "fg": "color.fg", "border": "1pt color.border-strong",
+      "bgPressed": "color.surface-sunken", "height": "size.buttonHeight", "radius": "radius.md"
+    },
+    "buttonSessionPrimary": {
+      "bg": "color.accent", "fg": "color.accent-on",
+      "height": "size.touchPrimary", "radius": "radius.md",
+      "labelSize": "typography.size.md", "labelWeight": "typography.weight.semibold",
+      "note": "训练中『完成本组』。整行宽，贴拇指区。"
+    },
+    "stepperButton": {
+      "size": "size.touchSession", "radius": "radius.pill",
+      "bg": "color.surface-sunken", "fg": "color.fg", "border": "1pt color.border"
+    },
+    "card": {
+      "bg": "color.surface", "border": "1pt color.border", "radius": "radius.lg",
+      "shadow": "shadow.card", "padding": "spacing.16"
+    },
+    "cardSelected": {
+      "border": "1pt color.accent", "bg": "color.selected-tint"
+    },
+    "input": {
+      "bg": "color.surface", "border": "1pt color.border", "radius": "radius.sm",
+      "placeholder": "color.meta", "focusBorder": "1pt color.accent",
+      "focusRing": "2pt color.focus-ring, offset 2", "errorBorder": "1pt color.danger",
+      "errorText": "color.danger", "height": "size.inputHeight"
+    },
+    "listRow": {
+      "minHeight": "size.touchMin", "bg": "color.surface",
+      "separator": "1pt color.hairline", "paddingY": "spacing.12", "paddingX": "spacing.16"
+    },
+    "segmentedControl": {
+      "track": "color.surface-sunken", "thumb": "color.surface",
+      "labelActive": "color.fg", "labelIdle": "color.muted", "height": 36, "radius": "radius.sm"
+    },
+    "progressBar": {
+      "track": "color.surface-sunken", "fill": "color.accent", "height": 6, "radius": "radius.pill"
+    },
+    "timerRing": {
+      "track": "color.ring-track", "progress": "color.ring-progress",
+      "stroke": "size.ringStroke", "cap": "butt",
+      "note": "从 12 点方向顺时针递减；最后 5 秒环与数字转为 color.accent-active，并叠加一次 warn 色脉冲（reduced-motion 下不脉冲）。"
+    },
+    "tabBar": {
+      "bg": "color.surface", "border": "1pt color.hairline",
+      "iconActive": "color.accent", "iconIdle": "color.muted",
+      "labelActive": "color.accent", "labelIdle": "color.muted",
+      "height": "size.tabBarHeight", "tabs": 3
+    },
+    "bottomSheet": {
+      "bg": "color.surface-raised", "radiusTop": "radius.xl", "shadow": "shadow.sheet",
+      "scrim": "color.scrim", "grabber": "3×36 color.border-strong"
+    },
+    "toast": {
+      "bg": "color.fg", "fg": "color.bg", "radius": "radius.md",
+      "paddingX": "spacing.16", "paddingY": "spacing.12",
+      "note": "最多 1 行 + 一个撤销按钮；2.5s 自动消失；不阻塞操作。"
+    },
+    "illustrationFrame": {
+      "size": "size.illustration", "bg": "color.surface",
+      "strokeColor": "color.fg", "strokeWidth": 6,
+      "bgTint": "color.surface-sunken",
+      "note": "单色线稿人形，线宽在 240pt 画布上为 6pt（等比），统一两端圆头。"
+    }
+  },
+
+  "a11y": {
+    "contrastBody": { "type": "string", "value": "≥ 4.5:1（正文），≥ 3:1（≥ 24pt 或 ≥ 19pt 粗体）" },
+    "contrastChecked": [
+      { "pair": "fg on bg", "light": "15.1:1", "dark": "16.0:1" },
+      { "pair": "muted on bg", "light": "5.2:1", "dark": "6.4:1" },
+      { "pair": "meta on surface", "light": "5.1:1", "dark": "4.8:1" },
+      { "pair": "accent on bg", "light": "5.0:1", "dark": "5.4:1" },
+      { "pair": "accent-on on accent", "light": "5.5:1", "dark": "5.3:1" },
+      { "pair": "success on surface", "light": "5.6:1", "dark": "6.7:1" },
+      { "pair": "danger on surface", "light": "6.2:1", "dark": "6.1:1" }
+    ],
+    "dynamicType": { "type": "string", "value": "全量支持。字号 token 为 @Large 默认值；『今日/训练执行/总结』页必须通过 AX1（xxLarge）验证不截断。timer 例外：固定 + 最大 96。" },
+    "reduceMotion": { "type": "string", "value": "必须支持。" },
+    "voiceOver": { "type": "string", "value": "倒计时环的 accessibilityValue 每秒更新但仅按 10 秒粒度播报，避免噪音；训练中每组用 accessibilityLabel『第 2 组，12 次，已完成』。" }
+  }
+}
