@@ -577,7 +577,7 @@
     }
   },
   "radius": {
-    "_note": "SPEC §8 锁定 4/6/10/14/20。卡片禁止 ≥20。",
+    "_note": "常规控件 4/6/10/14，卡片 20 上限；玻璃浮层另有 28/36/40 三档，遵守同心圆角（内 = 外 − 内边距）。",
     "xs": {
       "type": "dimension",
       "value": 4,
@@ -607,6 +607,21 @@
       "type": "dimension",
       "value": 999,
       "usage": "圆形图标按钮、状态药丸、进度条、环端帽"
+    },
+    "glassSheet": {
+      "type": "dimension",
+      "value": 28,
+      "usage": "底部玻璃 sheet 顶部两角"
+    },
+    "glassCard": {
+      "type": "dimension",
+      "value": 36,
+      "usage": "玻璃卡片 / 控制坞 / 训练卡"
+    },
+    "glassIsland": {
+      "type": "dimension",
+      "value": 40,
+      "usage": "浮动 tab 栏外框、导航玻璃条"
     }
   },
   "motion": {
@@ -730,191 +745,44 @@
     }
   },
   "figure": {
-    "_note": "参数化骨架规格，**现行方案**（team-lead 最终冻结）。自绘 12 关节 + 3 关键帧，18 个动作全部有骨架；不使用第三方素材，因此无署名义务。渲染器唯一：DesignSystem/Figures/ExerciseFigureView.swift。设计交付是位姿数据（docs/figure-specs.sample.json，10 个打样 + 中立站立位姿），不是插画。",
+    "_note": "图示规格，**现行方案**：开源素材库 bryllim/workout-guide 的单色线条插画（Everkinetic 重描，CC BY-SA 4.0）。每个动作恰 3 帧 512×512 透明 SVG，18 个 catalogId 全覆盖；构建期解析 SVG 路径生成 SwiftUI Path 常量，运行期按包围盒等比适配。素材可换源（FigureSource 协议），下一顺位为公有领域素材库 yuhonas/free-exercise-db（The Unlicense）。",
     "renderInterface": {
       "type": "string",
-      "value": "ExerciseFigureView(catalogId: String, size: CGFloat, playsAnimation: Bool)。UI 不感知内部实现——3 帧 / 2.4s 循环 / 帧间 120ms 交叉淡入 / 列表内静态首帧 / 同屏只播 1 个 / 单色 textPrimary / catalogId 不在 18 个白名单内或 spec 缺失时走降级态。"
+      "value": "ExerciseFigureView(catalogId: String, size: CGFloat)。UI 只依赖 FigureLibrary.figure(for:) 拿到的帧集 / 播放规则 / 包围盒；默认静止，点按三帧循环，再点停止回首帧；同屏只播 1 个；白名单外与缺失走 _generic 占位，界面不出现无图状态。"
     },
-    "joints": {
-      "type": "array",
-      "value": [
-        "head",
-        "neck",
-        "shoulder",
-        "hip",
-        "elbowNear",
-        "wristNear",
-        "elbowFar",
-        "wristFar",
-        "kneeNear",
-        "ankleNear",
-        "kneeFar",
-        "ankleFar"
-      ],
-      "note": "12 关节 = 躯干 4 点 + 双侧上肢 / 下肢各 2 点。8 关节只能画侧视单侧骨架：18 个动作里 **10 个可用、8 个不可用**（7 个缺双侧肢体：弓步蹲 / 哑铃划船 / 开合跳 / 登山跑 / 高抬腿 / 死虫 / 鸟狗式；1 个缺正面转体：俄罗斯转体）。唯一口径见 figure-specs.sample.json 的 coverageMap.eightJointVerdict，本节不另立算法。扩展成本为零：FigurePose.points 是字典、links 在 spec 内、渲染器按数据迭代。8 关节作为兼容退化模式保留（只用 Near 侧 7 条线）。"
+    "fill": {
+      "type": "color",
+      "value": "label",
+      "note": "插画墨线填主文本色（浅色近黑 / 深色近白）。素材是单条 evenodd 路径，墨线由细轮廓填充而成，所以填色后呈现线条画；**不用 tint 填充**——tint 只留给选中态、进度与主按钮。"
     },
-    "links": {
-      "type": "array",
-      "value": [
-        [
-          "neck",
-          "head"
-        ],
-        [
-          "neck",
-          "shoulder"
-        ],
-        [
-          "shoulder",
-          "hip"
-        ],
-        [
-          "shoulder",
-          "elbowNear"
-        ],
-        [
-          "elbowNear",
-          "wristNear"
-        ],
-        [
-          "shoulder",
-          "elbowFar"
-        ],
-        [
-          "elbowFar",
-          "wristFar"
-        ],
-        [
-          "hip",
-          "kneeNear"
-        ],
-        [
-          "kneeNear",
-          "ankleNear"
-        ],
-        [
-          "hip",
-          "kneeFar"
-        ],
-        [
-          "kneeFar",
-          "ankleFar"
-        ]
-      ],
-      "note": "11 条连线，固定不逐动作改。"
+    "halo": {
+      "light": {
+        "type": "color",
+        "value": "rgba(14,124,102,.16)"
+      },
+      "dark": {
+        "type": "color",
+        "value": "rgba(52,179,154,.18)"
+      },
+      "note": "剪影背后 12%~18% tint 径向光晕。它同时是玻璃折射所需的内容层，不可省略。"
     },
-    "coordinateSpace": {
+    "ghost": {
       "type": "string",
-      "value": "归一化 0...1 单位正方形，原点左上、y 向下。允许超界（autofit 前），渲染前统一做并集缩放。"
+      "value": "训练屏背景保留放大的剪影 ghost，tint 色、12% 不透明度，同样服务于玻璃折射。"
     },
-    "autofit": {
-      "type": "object",
-      "value": {
-        "enabled": true,
-        "targetBox": [
-          0.06,
-          0.94
-        ],
-        "minScale": 0.6
-      },
-      "note": "同一动作全部帧取并集 bbox，等比缩放并居中到 0.06–0.94。没有它，死虫这类横跨 1.11 的动作会被裁掉一截。最小缩放 0.6 防止极端动作缩成蚂蚁。约 5 行代码。"
+    "frames": {
+      "dynamic": 3,
+      "staticHold": 1,
+      "note": "动态动作 3 帧循环；静力动作（平板支撑 / 靠墙静蹲 / 侧平板）只取第 1 帧、不循环，清单是显式白名单。素材数据上静力也是 3 帧，取帧发生在渲染期。"
     },
-    "frameCount": {
+    "fit": {
       "type": "string",
-      "value": "每个动作 3 帧（起始 / 最吃力点 / 回起始）；静力动作 2 帧且姿势近似，靠 loopSeconds 拉长。线稿方案同样是每动作 3 帧。"
+      "value": "按路径 boundingRect 等比缩放居中，包围盒取三帧并集，padding 8pt；最小缩放不设下限（素材已按 512 画布标准化）。"
     },
-    "segmentLengths": {
-      "type": "object",
-      "value": {
-        "torso": 0.26,
-        "thigh": 0.24,
-        "shin": 0.21,
-        "upperArm": 0.15,
-        "forearm": 0.13,
-        "neck": 0.06,
-        "tolerance": 0.15
-      },
-      "note": "同动作各帧的骨段长度必须一致，容差 ±15%，否则插值会出现「橡皮筋」。"
-    },
-    "stroke": {
-      "lineWidth": {
-        "type": "number",
-        "value": 0.022,
-        "note": "相对画布边长比例。160pt 画布约 3.5pt；44pt 缩略约 1pt，渲染器自动加粗到最低 2.5pt。"
-      },
-      "lineCap": {
-        "type": "string",
-        "value": "round"
-      },
-      "lineJoin": {
-        "type": "string",
-        "value": "round"
-      },
-      "jointRadius": {
-        "type": "number",
-        "value": 0.016,
-        "note": "小于 lineWidth×1.2，避免「糖葫芦」。关节圆用 background 色挖空形成线稿感。"
-      },
-      "torsoWeight": {
-        "type": "number",
-        "value": 1.4,
-        "note": "shoulder 到 hip 的倍率。躯干比四肢粗一档，否则读不出哪个是身体。"
-      },
-      "farLimbOpacity": {
-        "type": "number",
-        "value": 0.55,
-        "note": "远侧肢体透明度，表达前后遮挡。这是 12 关节方案能读的前提。"
-      },
-      "color": {
-        "type": "string",
-        "value": "textPrimary",
-        "note": "骨架永远 textPrimary，不用 accent——它描述身体，不表达情绪。线稿方案设 Template Image 后同样自动取这条色。"
-      },
-      "jointColor": {
-        "type": "string",
-        "value": "surfaceRaised"
-      },
-      "torsoFill": {
-        "type": "string",
-        "value": "none",
-        "note": "**不做躯干填充**。填充后关节与线不再区分，且会让人读成「人体剪影」而不是「骨架」，反而降低辨识度。"
-      }
-    },
-    "props": {
-      "type": "object",
-      "value": {
-        "floor": "水平 1pt 实线，separator，画在 y=0.94 全宽",
-        "wall": "垂直 1pt 实线，separator，位置由 spec.wallX 指定（靠墙静蹲必需，否则会被读成半蹲）",
-        "dumbbell": "wrist 位置小哑铃：2 个 0.012 半径实心圆 + 1 条短横线，textPrimary（哑铃划船 / 肩推必需，否则读成徒手）",
-        "band": "wrist 到固定点 1pt 虚线，separator"
-      },
-      "note": "props 是辨识度的一部分，不是装饰。18 个动作里需要 props 的：dumbbell_row / shoulder_press（dumbbell）、wall_sit（wall + floor）、glute_bridge / dead_bug / bird_dog / superman / crunch / russian_twist（floor）。"
-    },
-    "view": {
-      "type": "string",
-      "value": "side（默认面朝右）| front。18 个动作里必须正面的是 jumping_jack、high_knees；side_plank 用 side 但视角偏低。"
-    },
-    "stateStyles": {
-      "animated": {
-        "type": "string",
-        "value": "训练页与动作详情：3 帧 2.4s 循环，帧间 120ms 交叉淡入，30fps，同屏仅 1 个。"
-      },
-      "staticFirst": {
-        "type": "string",
-        "value": "动作库列表、记录列表、校对页缩略：只画第 1 帧，不建 TimelineView（iPhone SE 3 验收）。"
-      },
-      "reducedMotion": {
-        "type": "string",
-        "value": "固定第 1 帧不播放，但保留 accessibilityLabel。倒计时数字照常更新。"
-      },
-      "placeholder": {
-        "type": "string",
-        "value": "库外动作：中立站立位姿（key = `_generic`，渲染器内置位姿数据，不单独出图）+ 明确文案；线条取 textSecondary 而非更淡一档，避免被读成占位骨架屏。不加虚线框、不转圈。见 UIUX.md §6.4。"
-      }
-    },
-    "a11y": {
-      "type": "string",
-      "value": "accessibilityLabel 取 cues 首句；线条与关节 accessibilityHidden(true)，避免 VoiceOver 逐个读点。"
+    "source": {
+      "protocol": "FigureSource",
+      "current": "BundledVectorFigures",
+      "swapTarget": "yuhonas/free-exercise-db（The Unlicense，2 帧静图，缺 开合跳 / 靠墙静蹲 / 鸟狗 / 高抬腿）"
     }
   },
   "component": {
@@ -1193,6 +1061,34 @@
     "differentiateWithoutColor": {
       "type": "string",
       "value": "三态打卡、issue 行、图表序列都不能只靠颜色区分：三态各配不同 SF Symbol；issue 行带 exclamationmark + 文字说明；图表柱用不同填充（实心 / 斜线）并配图例。"
+    }
+  },
+  "glass": {
+    "_note": "真玻璃材质。深浅两套配方独立，不是同色反相；iOS 26+ 用系统原生 Liquid Glass，iOS 18 用 material + 手写高光近似，两条路径封装在同一个修饰器内，页面代码不出现版本判断。",
+    "light": {
+      "blur": "24px",
+      "saturate": "180%",
+      "fill": "rgba(255,255,255,.14)",
+      "stroke": "rgba(255,255,255,.25)",
+      "innerHighlight": "rgba(255,255,255,.55)",
+      "topEdge": "rgba(255,255,255,.65)",
+      "bottomEdge": "rgba(0,0,0,.08)",
+      "sheen": 0.14
+    },
+    "dark": {
+      "blur": "26px",
+      "saturate": "180%",
+      "fill": "rgba(255,255,255,.06)",
+      "stroke": "rgba(255,255,255,.12)",
+      "innerHighlight": "rgba(255,255,255,.28)",
+      "topEdge": "rgba(255,255,255,.38)",
+      "bottomEdge": "rgba(0,0,0,.50)",
+      "sheen": 0.08
+    },
+    "pressed": {
+      "blur": "12px",
+      "brightness": 0.96,
+      "scale": 0.98
     }
   }
 }

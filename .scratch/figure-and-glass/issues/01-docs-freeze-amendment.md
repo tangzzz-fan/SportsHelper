@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] FROZEN 决策 6 改写为开源素材 + 许可说明；决策 1 明确部署版本仍为 iOS 18、原生玻璃仅 iOS 26 生效
 - [ ] SPEC 的骨架门禁章节改写为生成产物门禁（18 动作各 3 帧、_generic 1 帧、不存在 2 帧条目）

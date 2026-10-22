@@ -4,7 +4,7 @@
 
 **Blocked by:** Blocked by: 01
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] 现有 52 条测试全绿，测试数量不减（该管线本无测试覆盖）
 - [ ] 全仓无对旧位姿类型与插值器的引用

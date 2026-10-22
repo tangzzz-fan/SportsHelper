@@ -4,7 +4,7 @@
 
 **Blocked by:** Blocked by: 02
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] 图示模块上线：给定 catalogId 返回帧集、播放规则与包围盒；白名单外与未覆盖动作回退 _generic
 - [ ] 训练执行屏能显示深蹲的静态剪影：label 填充、12% tint 光晕、按包围盒等比居中不变形

@@ -38,7 +38,7 @@
 | 动作库规模 | **18 个**（schema 已锁定的 catalogId） | 60 个矢量图会把 MVP 拖长；18 个覆盖居家核心动作，库外用文字要点兜底 |
 | 久坐提醒 | **移出 MVP，列 P1** | 用户原始诉求只提训练提醒；避免范围蔓延 |
 | 最低 iOS | **18.0** | SwiftData 成熟度与覆盖率的最优解（覆盖 93% 在用 iPhone） |
-| 动作素材 | **自绘参数化骨架，不用第三方素材** | 规避 workout-guide 的 CC BY-SA share-alike 传染 |
+| 动作素材 | **开源素材库 `bryllim/workout-guide` 的单色线条插画**（CC BY-SA 4.0，18/18 覆盖） | 用户裁决接受动画素材；本轮不上架，share-alike 处置延后，素材走 `FigureSource` 可换源（下一顺位：公有领域 `yuhonas/free-exercise-db`） |
 | 主题 | **浅色为主 + 深色完整** | 与「健身房深色」竞品拉开第一眼差异 |
 
 ---
@@ -56,7 +56,7 @@
 | 会员 / 内购 / 支付 | 先验证执行闭环，再谈变现 | 不做 |
 | Apple Watch / HealthKit / Live Activity / AlarmKit | 与「纯 iPhone、零硬件」立场冲突；Live Activity 需额外 Target | P2 |
 | iPad / 横屏 / 多语言 | 手机竖屏为唯一目标 | 不做 |
-| 第三方图标库 / 第三方动作素材 | SF Symbols 唯一图标源；骨架自绘，避免授权传染 | 不做 |
+| 第三方图标库 | SF Symbols 唯一图标源，不引入图标包 | 不做 |
 
 ---
 
@@ -106,7 +106,7 @@
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-specs.json`（18 个动作各 3 帧，静力动作 2 帧；另 1 条 `_generic` 占位骨架）。
+**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-data.json`（构建期由素材 SVG 生成：18 个动作各 3 帧矢量路径 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 
@@ -118,14 +118,14 @@
 |---|------|------|----------|------|
 | 1 | 引导问卷（5 屏） | 首次启动 | 步进器、选项 chip、跳过 | UserProfile |
 | 2 | 今日 | Tab 1 | 今日训练卡、下次训练、通知缺失条 | Plan + Session |
-| 3 | 训练执行 | 今日 / 通知深链 | 动作骨架图、组进度、完成本组、做不动 | WorkoutFlowModel |
+| 3 | 训练执行 | 今日 / 通知深链 | 动作剪影图示、组进度、完成本组、做不动 | WorkoutFlowModel |
 | 4 | 休息计时 | 训练页 sheet | 88pt 倒计时、环形进度、+15s / 跳过 | RestTimerStateMachine |
 | 5 | 完成总结 | 训练结束 | 完成率 / 降阶率 / 跳过率 三数并列、总时长 | Session + SetLog |
 | 6 | 计划 | Tab 2 | 7 天列表、训练日 / 休息日、当前计划 | PlanRecord |
 | 7 | 计划导入 | 计划页 / 今日空态 | 粘贴框、JSON / 文本识别、AI 生成、复制提示词 | ImportViewModel |
 | 8 | 计划预览与校正 | 导入后必经 | 逐动作行、issue 高亮、编辑 sheet、保存 | ParsedPlanDraft |
 | 9 | 动作库 | 计划页 | 18 动作分组列表 | exercises.json |
-| 10 | 动作详情 | 动作库 / 训练页 | 骨架图、要点、常见错误、低阶替代 | ExerciseCatalogItem |
+| 10 | 动作详情 | 动作库 / 训练页 | 剪影图示、要点、常见错误、低阶替代 | ExerciseCatalogItem |
 | 11 | 记录 | Tab 3 | 周完成率图、连续天数、历史列表 | Session + SetLog |
 | 12 | 设置 | 今日页导航栏 | 提醒时间、AI Base URL / Key、清空数据、关于 | ReminderSettings + Keychain |
 
@@ -143,7 +143,7 @@
 | 成功 / 警告 / 危险 | `#17803F` / `#9A5D08` / `#B01F2E`（浅色），深色见 token |
 | 字体 | SF Pro Display/Text + PingFang SC + 系统等宽；零打包字体，倒计时与训练主数字用 `.system(design: .monospaced)` + `.monospacedDigit()` |
 | 图标 | SF Symbols（iOS 18 SDK），经 `Icons.swift` 唯一入口；禁 emoji、禁第二套 |
-| 圆角 | 4 / 6 / 10 / 14 / 20；卡片禁止 ≥20 |
+| 圆角 | 常规控件 4 / 6 / 10 / 14；卡片 20（上限）；玻璃浮层 28（sheet）/ 36（卡片）/ 40（浮岛）。玻璃层遵守同心圆角：内层 = 外层 − 内边距，禁止内外同值 |
 | 触控 | 常规 ≥44pt；训练中 ≥56pt；主按钮 64pt |
 | 主题 | 浅色为主 + 深色完整；语义 token 自动适配 |
 | 动效 | 80 / 150 / 200 / 240 / 300ms；`cubic-bezier(0.2,0,0,1)`；禁止弹跳 |
@@ -165,7 +165,7 @@
 | AC-07 | 引导 | When 用户走到引导第 5 屏并选择提醒时间，系统**必须**在此刻请求通知权限（有上下文），拒绝后显示「已关闭，去系统设置打开」+ 跳转按钮，不阻塞其他功能 | P0 |
 | AC-08 | 提醒 | When 到训练日前 5 分钟，系统**必须**发出本地通知，正文含当日动作数与预计时长，点击直达训练页 | P0 |
 | AC-09 | 提醒 | When 计划被替换或删除，系统**必须**先清除 `dk.plan.` 前缀下的旧通知再重排，不得叠加 | P0 |
-| AC-10 | 训练 | When 用户进入训练页，系统**必须**立即显示当前动作、第 1 组 / 总组数、目标次数或时长、骨架图与要点，无需额外点击 | P0 |
+| AC-10 | 训练 | When 用户进入训练页，系统**必须**立即显示当前动作、第 1 组 / 总组数、目标次数或时长、动作剪影图示与要点，无需额外点击 | P0 |
 | AC-11 | 训练 | When 用户点「完成本组」，系统**必须**立即落库该组，并进入 restSec 秒休息倒计时 | P0 |
 | AC-12 | 训练 | When 休息倒计时归零，系统**必须**触发触觉 + 声音，并自动切到下一组 | P0 |
 | AC-13 | 训练 | If 用户锁屏 90 秒后回前台，系统**必须**按绝对时间重算，剩余时间不得出现负数或逐秒追赶 | P0 |
@@ -210,21 +210,22 @@
 | SwiftData 深关系链级联删除缺陷 | SwiftData | 多关系级联删除已知问题 | 计划扁平存 JSON；不建 `@Relationship`；显式按序删除 |
 | 全角引号 / 尾随逗号 / 代码围栏 | 粘贴解析 | AI 输出常见脏格式 | 引号感知括号配对；先清洗再解码；每条一个测试 |
 | 模拟器 Keychain 跨运行保留 | Security | 模拟器 Keychain 不随 App 删除清空 | 测试 teardown 删除自己的 key |
-| 骨架门禁首红被误判为回归 | figure-specs 数据 | 打样期交付的是 2 帧，门禁按「恰 3」判 | 门禁红先核对数据版本：`specs[]` 每条 `poses` 是否为 3、占位是否为 `_generic` 且 1 帧；数据齐了仍红才是代码问题 |
+| 素材门禁红被误判为回归 | 生成产物 `figure-data.json` | 生成器静默产出空帧或退化包围盒时，界面表现为「某动作图是空的」而非构建失败 | 门禁在生成期而非运行期：条目数必须 19（18 + `_generic`）、每个动作 3 帧、路径非空、包围盒有限且为正；任何一条不满足即构建失败 |
+| SVG 画布留白导致图示忽大忽小 | 素材 `512×512` 方图 | 各动作人形占画面比例不同（俯卧撑横、深蹲竖） | 渲染期按路径 `boundingRect` 等比 fit，包围盒取三帧并集，画面尺寸不随帧变化 |
 
 ---
 
 ## 12. 端到端验证步骤
 
 ```bash
-cd /Users/jove/Developments/运动提示助手
+cd /Users/tango/Developments/SportsHelper
 
 xcodegen generate
 xcodebuild -project DongKe.xcodeproj -scheme DongKe \
-  -destination 'platform=iOS Simulator,id=65E2C3C1-9BDA-49A7-907F-C05AF893D6B6' build
+  -destination 'platform=iOS Simulator,name=iPhone 16' build
 
 xcodebuild -project DongKe.xcodeproj -scheme DongKe \
-  -destination 'platform=iOS Simulator,id=65E2C3C1-9BDA-49A7-907F-C05AF893D6B6' test
+  -destination 'platform=iOS Simulator,name=iPhone 16' test
 
 xcrun simctl install booted <DerivedData>/Build/Products/Debug-iphonesimulator/DongKe.app
 xcrun simctl launch booted app.dongke.ios
@@ -242,4 +243,5 @@ xcrun simctl launch booted app.dongke.ios
 |------|------|------|------|
 | 2026-10-22 | 初版 | Phase 1.5 | 锁定 MVP 范围与技术契约 |
 | 2026-10-22 | 直连 AI 保留 MVP；动作库 60→18；久坐提醒移出；iOS 16→18 | 三文档冲突裁决 | 范围收敛，工期可控 |
+| 2026-10-22 | 动作图示由「自绘 12 关节骨架」改为开源素材库实心剪影（3 帧 SVG → 构建期转 Path），静力动作取第 1 帧，素材走 `FigureSource` 可换源；界面确立真玻璃材质，iOS 26 原生 / iOS 18 近似双路径；§8 圆角补玻璃浮层档位 | 用户裁决：接受动画素材、要求玻璃质感、且部署版本维持 iOS 18 | 图示管线与界面材质整体替换，旧骨架体系作废 |
 | 2026-10-22 | 主色定为深青绿 `#0E7C66` / `#34B39A`；动作图示定为自绘参数化骨架（不用第三方素材）；SetLog 改三态；通知权限在引导第 5 屏后请求；跳过并顺延列 P1 | 最终冻结裁决 | 与 design-tokens v2 对齐，消除授权与额度风险 |

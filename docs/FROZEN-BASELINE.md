@@ -7,12 +7,12 @@
 
 | # | 决策 | 锁定值 | 被覆盖的旧说法 |
 |---|------|--------|----------------|
-| 1 | 平台 | iOS 18.0+，iPhone 竖屏 | PRD 的 iOS 16 |
+| 1 | 平台 | iOS 18.0+，iPhone 竖屏。界面玻璃材质走双路径：iOS 26+ 用系统原生 Liquid Glass，iOS 18 用等价材质近似（手写内高光 / 外描边 / 厚度边 / 镜面高光） | PRD 的 iOS 16；「必须抬到 iOS 26 才有玻璃」的说法 |
 | 2 | 技术栈 | SwiftUI + SwiftData + Swift 6，零第三方依赖 | — |
 | 3 | 计划来源 | 粘贴文本 / 粘贴 JSON / 直连 AI（BYOK）三条并列 | PM 建议「直连 AI 降 P1」 |
 | 4 | 直连 AI 形态 | OpenAI 兼容 `POST {base}/chat/completions`，非流式，Key 存 Keychain | — |
 | 5 | 动作库 | **18 个**（plan-schema catalogId 白名单） | PRD 的 60 个、架构的 40 个 |
-| 6 | 动作图示 | **自绘参数化骨架（12 关节）+ 3 关键帧 + 要点/常见错误**；不使用第三方素材 | 架构 D-20 的 workout-guide 线稿 |
+| 6 | 动作图示 | **开源素材库 `bryllim/workout-guide` 的单色线条插画**（Everkinetic 重描，媒体 CC BY-SA 4.0）：302 动作、每个恰 3 帧、512×512 透明 SVG，18 个 catalogId 全覆盖；构建期把 SVG 路径转成 SwiftUI `Path`，运行期按包围盒等比适配；静力动作只取第 1 帧；白名单外用 `_generic` 占位。素材必须可换源（`FigureSource` 协议），下一顺位目标是公有领域的 `yuhonas/free-exercise-db`（The Unlicense） | 本表旧值「自绘 12 关节骨架、不使用第三方素材」；架构 D-20 的线稿方案反而被恢复 |
 | 7 | 久坐提醒 | **移出 MVP，列 P1**；通知只有训练日提醒 | PRD v1.1 的久坐 P0、架构 §9.6 |
 | 8 | 通知排程 | 每个训练日 1 条 `UNCalendarNotificationTrigger(repeats: true)`，单计划 **≤7 条**；不做 48 小时滚动窗口 | 架构 v1.1 的 48h 滚动 + 50 条久坐额度 |
 | 9 | 通知权限时机 | 引导第 5 屏选择提醒时间后请求；拒绝不阻塞 | PRD 的「设置页才请求」 |
@@ -29,6 +29,6 @@
 | 门 | 状态 | 证据 |
 |----|------|------|
 | P0-1 无 emoji 图标 | 通过（文档层） | 全量正则扫描 CLEAN |
-| P0-2 无紫→粉渐变 | 通过 | design-tokens v2 全站 0 gradient |
+| P0-2 无紫→粉渐变 | 通过 | 视觉层只允许两类渐变：白色镜面高光（≤14% 白）与 tint 单色径向晕（≤16% tint）；全仓无紫→粉、无彩虹渐变 |
 | P0-3 无 AI 模板味 | 通过 | 文案规范 + 反例清单 |
 | 方案门 | 待用户确认 | 本文件 + SPEC.md |
