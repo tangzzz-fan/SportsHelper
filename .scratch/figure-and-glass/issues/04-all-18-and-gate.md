@@ -4,7 +4,7 @@
 
 **Blocked by:** Blocked by: 03
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] 门禁测试：19 个条目（18 + _generic）、动态动作 3 帧、_generic 1 帧、路径非空、包围盒有限且为正
 - [ ] 故意破坏一条路径数据后门禁变红，恢复后转绿

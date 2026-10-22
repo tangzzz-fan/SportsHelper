@@ -1,31 +1,67 @@
-import json, os, re, sys
-sys.path.insert(0, '/tmp/asset-probe')
-import svgcmd, svgpath
+"""Generate DongKe figure data from bryllim/workout-guide SVG assets.
 
-ROOT = '/Users/tango/Developments/SportsHelper'
-OUT = f'{ROOT}/DongKeCore/Figure/GeneratedFigureData.swift'
-PROBE = '/tmp/asset-probe'
+Run manually after dropping a fresh checkout into
+  .scratch/figure-and-glass/assets/workout-guide-main
+Output is committed; this script is NOT part of the build.
+"""
+import os
+import sys
 
-STATIC = {'plank', 'wall_sit', 'side_plank'}
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import svgcmd
+import svgpath
 
-# slug -> three frame files (T03 ships squat only; T04 fills the rest)
-ACTIONS = {
-    'squat': [f'{PROBE}/bw-squat-{i}.svg' for i in (1, 2, 3)],
+ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
+ASSETS = os.path.join(ROOT, '.scratch/figure-and-glass/assets/workout-guide-main/packages/workout-guide/assets')
+OUT = os.path.join(ROOT, 'DongKeCore/Figure/GeneratedFigureData.swift')
+
+# catalogId -> upstream asset slug. Verified against the upstream manifest
+# (name / equipment / exerciseType), never guessed from the name.
+MAPPING = {
+    'squat': 'bodyweight-squat',
+    'push_up': 'push-up',
+    'plank': 'plank',
+    'lunge': 'forward-lunge',
+    'glute_bridge': 'glute-bridge',
+    'dumbbell_row': 'dumbbell-bent-over-row',
+    'shoulder_press': 'seated-dumbbell-press',
+    'jumping_jack': 'jumping-jack',
+    'dead_bug': 'dead-bug',
+    'wall_sit': 'wall-sit',
+    'side_plank': 'side-plank',
+    'calf_raise': 'calf-raise',
+    'superman': 'superman',
+    'crunch': 'crunch',
+    'mountain_climber': 'mountain-climber',
+    'high_knees': 'high-knees',
+    'bird_dog': 'bird-dog',
+    'russian_twist': 'russian-twist',
 }
 
+# Explicit whitelist: isometric holds. Do not infer from upstream exerciseType --
+# mountain-climber and high-knees are also "duration" but they are dynamic.
+STATIC_HOLDS = {'plank', 'wall_sit', 'side_plank'}
 
-def dsl_of(svg_path):
-    d = svgpath.path_d(open(svg_path).read())
-    return svgcmd.normalized(d)
+
+def dsl_of(path):
+    return svgcmd.normalized(svgpath.path_d(open(path).read()))
 
 
-def points_of(dsl):
-    nums = [float(t) for t in dsl.split(' ') if not t.isalpha()]
-    return list(zip(nums[0::2], nums[1::2]))
+def numbers(dsl):
+    return [float(t) for t in dsl.split(' ') if not t.isalpha()]
+
+
+def bounds_of(dsls):
+    xs, ys = [], []
+    for dsl in dsls:
+        n = numbers(dsl)
+        xs.extend(n[0::2])
+        ys.extend(n[1::2])
+    return min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)
 
 
 def generic_dsl():
-    import math
     cmds = []
 
     def circle(cx, cy, r):
@@ -37,9 +73,9 @@ def generic_dsl():
         cmds.append(('C', [cx - r, cy - k, cx - k, cy - r, cx, cy - r]))
         cmds.append(('Z', []))
 
-    def poly(pts):
-        cmds.append(('M', list(pts[0])))
-        for p in pts[1:]:
+    def poly(points):
+        cmds.append(('M', list(points[0])))
+        for p in points[1:]:
             cmds.append(('L', list(p)))
         cmds.append(('Z', []))
 
@@ -61,60 +97,50 @@ def generic_dsl():
     return ' '.join(parts)
 
 
-def union_bounds(frame_dsls):
-    xs, ys = [], []
-    for dsl in frame_dsls:
-        for x, y in points_of(dsl):
-            xs.append(x); ys.append(y)
-    return min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)
-
-
-def emit():
-    records = []
-    used = []
-    for slug, files in ACTIONS.items():
-        dsls = [dsl_of(f) for f in files]
-        used += dsls
-        x, y, w, h = union_bounds(dsls)
-        motion = 'hold' if slug in STATIC else 'loop'
-        frames = ',\n            '.join('"{}"'.format(d) for d in dsls)
-        records.append(
-            '        FigureRecord(\n'
-            f'            catalogId: "{slug}",\n'
-            f'            motion: .{motion},\n'
-            f'            bounds: FigureBounds(minX: {x:.2f}, minY: {y:.2f}, width: {w:.2f}, height: {h:.2f}),\n'
-            '            frames: [\n'
-            f'            {frames}\n'
-            '            ]\n'
-            '        )'
-        )
-
-    g = generic_dsl()
-    x, y, w, h = union_bounds([g])
-    records.append(
+def record(catalog_id, motion, dsls, source):
+    x, y, w, h = bounds_of(dsls)
+    frames = ',\n            '.join(f'"{d}"' for d in dsls)
+    return (
+        f'        // {catalog_id} <- {source}\n'
         '        FigureRecord(\n'
-        '            catalogId: "_generic",\n'
-        '            motion: .hold,\n'
+        f'            catalogId: "{catalog_id}",\n'
+        f'            motion: .{motion},\n'
         f'            bounds: FigureBounds(minX: {x:.2f}, minY: {y:.2f}, width: {w:.2f}, height: {h:.2f}),\n'
         '            frames: [\n'
-        f'            "{g}"\n'
+        f'            {frames}\n'
         '            ]\n'
         '        )'
     )
 
-    body = ',\n'.join(records)
+
+def main():
+    assert len(MAPPING) == 18, f'expected 18 catalog ids, got {len(MAPPING)}'
+    blocks = []
+    for catalog_id, slug in MAPPING.items():
+        folder = os.path.join(ASSETS, slug)
+        assert os.path.isdir(folder), f'missing asset folder: {folder}'
+        dsls = [dsl_of(os.path.join(folder, f'frame-{i}.svg')) for i in (1, 2, 3)]
+        for d in dsls:
+            assert d.startswith('M ') and len(d) > 200, f'{catalog_id} frame looks empty'
+        motion = 'hold' if catalog_id in STATIC_HOLDS else 'loop'
+        blocks.append(record(catalog_id, motion, dsls, slug))
+
+    blocks.append(record('_generic', 'hold', [generic_dsl()], 'placeholder (hand drawn)'))
+
     src = (
         '// Generated by .scratch/figure-and-glass/tools/gen_figures.py. Do not edit by hand.\n'
-        '// Source: bryllim/workout-guide (Everkinetic-derived poses, CC BY-SA 4.0).\n'
+        '// Artwork: bryllim/workout-guide, derived from Everkinetic -- CC BY-SA 4.0.\n'
+        '// 18 catalog ids x 3 frames + 1 generic placeholder.\n'
         'enum GeneratedFigureData {\n'
         '    static let records: [FigureRecord] = [\n'
-        f'{body}\n'
+        + ',\n'.join(blocks) + '\n'
         '    ]\n'
         '}\n'
     )
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     open(OUT, 'w').write(src)
-    print('wrote', OUT, len(src), 'bytes', '| actions', list(ACTIONS), '| generic included')
+    print(f'wrote {OUT}: {len(src)} bytes, {len(MAPPING)} actions + generic')
 
 
 if __name__ == '__main__':
-    emit()
+    main()

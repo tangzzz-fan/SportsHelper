@@ -39,11 +39,57 @@ struct FigureLibraryTests {
         #expect(figure.bounds.isValid)
     }
 
-    @Test("an unshipped whitelist action falls back until its asset lands")
-    func unshippedFallsBack() {
-        let figure = FigureLibrary.bundled.figure(for: "plank")
+    @Test("an id outside the whitelist falls back to the generic placeholder")
+    func outsideWhitelistFallsBack() {
+        let figure = FigureLibrary.bundled.figure(for: "plank_hold_advanced")
         #expect(figure.catalogId == "_generic")
         #expect(figure.motion == .hold)
+        #expect(figure.frames.count == 1)
+    }
+
+    @Test("all eighteen whitelist actions are backed by real artwork")
+    func whitelistCoverage() {
+        let whitelist = [
+            "squat", "push_up", "plank", "lunge", "glute_bridge", "dumbbell_row",
+            "shoulder_press", "jumping_jack", "dead_bug", "wall_sit", "side_plank",
+            "calf_raise", "superman", "crunch", "mountain_climber", "high_knees",
+            "bird_dog", "russian_twist"
+        ]
+        for id in whitelist {
+            let figure = FigureLibrary.bundled.figure(for: id)
+            #expect(figure.catalogId == id, "\(id) fell back to placeholder")
+            #expect(figure.frames.count == 3, "\(id) should carry three frames")
+            #expect(figure.bounds.isValid, "\(id) bounds invalid")
+        }
+    }
+
+    @Test("isometric holds are declared explicitly, not inferred from duration type")
+    func staticHoldsAreExplicit() {
+        let holds = ["plank", "wall_sit", "side_plank"]
+        for id in holds {
+            #expect(FigureLibrary.bundled.figure(for: id).motion == .hold, "\(id) should hold")
+        }
+        let dynamicButDurationTyped = ["mountain_climber", "high_knees", "jumping_jack"]
+        for id in dynamicButDurationTyped {
+            #expect(FigureLibrary.bundled.figure(for: id).motion == .loop, "\(id) should loop")
+        }
+    }
+
+    @Test("generated dataset holds nineteen records, all with three frames")
+    func generatedDatasetGate() {
+        let records = GeneratedFigureData.records
+        #expect(records.count == 19)
+        #expect(records.filter { $0.catalogId == "_generic" }.count == 1)
+        let generic = records.first { $0.catalogId == "_generic" }
+        #expect(generic?.frames.count == 1)
+        for record in records where record.catalogId != "_generic" {
+            #expect(record.frames.count == 3, "\(record.catalogId) frame count")
+            #expect(record.bounds.isValid, "\(record.catalogId) bounds")
+            for frame in record.frames {
+                #expect(frame.hasPrefix("M "), "\(record.catalogId) frame must start with a move")
+                #expect(frame.count > 200, "\(record.catalogId) frame looks empty")
+            }
+        }
     }
 }
 
