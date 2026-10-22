@@ -42,3 +42,18 @@ struct FreeTextPlanParserTests {
         #expect(draft.hasBlockingIssues)
     }
 }
+
+@Suite("FreeTextPlanParser 标题")
+struct FreeTextPlanParserTitleTests {
+    @Test("全是动作行时用默认计划名，不拿动作名当标题")
+    func defaultTitle() {
+        let draft = FreeTextPlanParser.parse("周一 深蹲 4组×12次")
+        #expect(draft.plan?.meta.title == "我的训练计划")
+    }
+
+    @Test("显式的标题行会被当作计划名")
+    func customTitle() {
+        let draft = FreeTextPlanParser.parse("八周增肌\n周一 深蹲 4组×12次")
+        #expect(draft.plan?.meta.title == "八周增肌")
+    }
+}

@@ -222,7 +222,10 @@ public enum FreeTextPlanParser {
         for rawLine in text.components(separatedBy: .newlines) {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             guard !line.isEmpty else { continue }
-            let stripped = cleanedName(removingWeekdayToken(in: line))
+            let withoutWeekday = removingWeekdayToken(in: line)
+            if parseItem(withoutWeekday) != nil { continue }
+            if line.rangeOfCharacter(from: .decimalDigits) != nil { continue }
+            let stripped = cleanedName(withoutWeekday)
             if stripped.count >= 2 {
                 return String(stripped.prefix(24))
             }

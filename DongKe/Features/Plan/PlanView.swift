@@ -5,6 +5,19 @@ struct PlanView: View {
     let plan: WorkoutPlan
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(PlanStore.self) private var planStore
+    @Environment(NotificationService.self) private var notifications
+    @State private var showLibrary = false
+    @State private var showImport = false
+
+    init(plan: WorkoutPlan) {
+        self.plan = plan
+        #if DEBUG
+        let preview = ProcessInfo.processInfo.environment["DK_PREVIEW"] ?? ""
+        _showLibrary = State(initialValue: preview == "library" || preview == "detail")
+        _showImport = State(initialValue: preview == "import")
+        #endif
+    }
 
     private var weeks: [(weekday: Weekday, day: PlanDay?)] {
         Weekday.allCases.map { weekday in
@@ -53,15 +66,59 @@ struct PlanView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
 
-                Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · 18 个动作")
+                Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
                     .padding(.top, 10)
 
+                HStack(spacing: 10) {
+                    entryButton(title: "动作库", symbol: "figure.strengthtraining.traditional") {
+                        showLibrary = true
+                    }
+                    entryButton(title: "导入计划", symbol: "square.and.arrow.down") {
+                        showImport = true
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+
                 Spacer()
             }
         }
+        .sheet(isPresented: $showLibrary) {
+            ExerciseLibraryView { showLibrary = false }
+        }
+        .sheet(isPresented: $showImport) {
+            ImportView { imported in
+                planStore.save(imported)
+                showImport = false
+                Task {
+                    if notifications.status == .authorized || notifications.status == .provisional {
+                        await notifications.reschedule(
+                            plan: imported,
+                            settings: ReminderSettingsStore.shared.settings
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func entryButton(title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                Text(title)
+                    .font(.system(size: 15, weight: .medium))
+            }
+            .foregroundStyle(Theme.accent(for: colorScheme))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(PressableGlassStyle())
+        .glassSurface(radius: Theme.Radius.card)
     }
 
     private func row(_ weekday: Weekday, _ day: PlanDay?) -> some View {

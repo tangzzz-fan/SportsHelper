@@ -9,9 +9,10 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层；今日 / 训练执行 / 休息 / 计划 / 记录五屏已落地；训练记录、档案、计划三份数据走 SwiftData 持久化；提醒按计划排程；计划由引导档案生成（未接粘贴导入与 AI） |
-| 测试 | 52 条 Swift Testing，**52 绿 0 红**；转绿记录见 `docs/GATE-2-TEST-REPORT.md` 第 6 节 |
-| Gate 2 | 已放行并全部转绿。下一步：18 个动作骨架数据 → UI |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存）、动作库、动作详情、记录、设置 |
+| 数据 | 训练记录、档案、计划三份数据走 SwiftData；提醒按计划排程（≤7 条、先清后排）；计划由引导档案生成，也可粘贴文本 / JSON 导入 |
+| 测试 | 132 条 Swift Testing，**132 绿 0 红**（`ios-run.sh test`） |
+| Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
 ## 2. 新机器要装什么
@@ -34,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；测试跑完 52 条，38 失败 14 通过。**这个红是基线，不是环境坏了。**
+预期：生成工程成功；测试跑完 132 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 ## 4. 专家团怎么续上
 
@@ -95,6 +96,9 @@ SIMCTL_CHILD_DK_REQUEST_PROVISIONAL=1 xcrun simctl launch booted app.dongke.ios 
 SIMCTL_CHILD_DK_PREVIEW=onboarding SIMCTL_CHILD_DK_ONBOARD_STEP=0..4 xcrun simctl launch booted app.dongke.ios  # 引导各屏
 SIMCTL_CHILD_DK_COMPLETE_ONBOARDING=1 xcrun simctl launch booted app.dongke.ios # 用默认值完成引导
 SIMCTL_CHILD_DK_RESET_PROFILE=1 xcrun simctl launch booted app.dongke.ios       # 清掉档案，回到未引导
+SIMCTL_CHILD_DK_PREVIEW=summary xcrun simctl launch booted app.dongke.ios      # 完成总结（预置 4 组完成 + 1 组降阶）
+SIMCTL_CHILD_DK_PREVIEW=library | detail xcrun simctl launch booted app.dongke.ios  # 动作库 / 动作详情
+SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl launch booted app.dongke.ios  # 直接看校对页
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 

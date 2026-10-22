@@ -26,6 +26,22 @@ struct AppShell: View {
             _tab = State(initialValue: .plan)
         case "history":
             _tab = State(initialValue: .history)
+        case "library", "import", "detail":
+            _tab = State(initialValue: .plan)
+        case "summary":
+            let active = WorkoutSession(
+                plan: SampleData.plan,
+                dayIndex: dayIndex,
+                startedAt: Date().addingTimeInterval(-22 * 60)
+            )
+            for _ in 0..<4 {
+                active.completeSet()
+                active.skipRest()
+            }
+            active.downgradeSet()
+            active.skipRest()
+            active.endWorkout()
+            _session = State(initialValue: active)
         case "rest":
             let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)
             active.completeSet()

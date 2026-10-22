@@ -8,20 +8,20 @@ final class WorkoutSession: Identifiable {
     let plan: WorkoutPlan
     let dayIndex: Int
     let flow: WorkoutFlowModel
-    let startedAt = Date()
+    let startedAt: Date
     var store: SessionStore?
 
     private(set) var stepIndex = 0
     private(set) var logs: [SetLog] = []
     private(set) var rest: RestState = .idle
     private(set) var restKicker = "组间休息"
+    private(set) var finishedAt: Date?
 
-    var onFinish: (() -> Void)?
-
-    init(plan: WorkoutPlan, dayIndex: Int, store: SessionStore? = nil) {
+    init(plan: WorkoutPlan, dayIndex: Int, store: SessionStore? = nil, startedAt: Date = Date()) {
         self.plan = plan
         self.dayIndex = dayIndex
         self.store = store
+        self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
     }
 
@@ -72,6 +72,19 @@ final class WorkoutSession: Identifiable {
     var isFinished: Bool {
         if case .finished? = currentStep { return true }
         return false
+    }
+
+    var showsSummary: Bool {
+        isFinished || finishedAt != nil
+    }
+
+    var recap: SessionRecap {
+        SessionRecap(
+            logs: logs,
+            plannedSets: plannedSets,
+            startedAt: startedAt,
+            finishedAt: finishedAt ?? Date()
+        )
     }
 
     func remainingRest(now: Date) -> TimeInterval {
@@ -158,8 +171,13 @@ final class WorkoutSession: Identifiable {
 
     func endWorkout() {
         rest = .idle
-        persist(finishedAt: Date())
-        onFinish?()
+        finish(now: Date())
+    }
+
+    private func finish(now: Date) {
+        guard finishedAt == nil else { return }
+        finishedAt = now
+        persist(finishedAt: now)
     }
 
     private func persist(finishedAt: Date? = nil) {
@@ -174,11 +192,19 @@ final class WorkoutSession: Identifiable {
     }
 
     private func beginRestIfNeeded(seconds: Int, kicker: String, now: Date) {
+        if case .finished? = nextStep {
+            advance()
+            return
+        }
         guard seconds > 0 else {
             advance()
             return
         }
         startRest(seconds: seconds, kicker: kicker, now: now)
+    }
+
+    private var nextStep: FlowStep? {
+        stepIndex + 1 < flow.steps.count ? flow.steps[stepIndex + 1] : nil
     }
 
     private func startRest(seconds: Int, kicker: String, now: Date) {
@@ -201,7 +227,7 @@ final class WorkoutSession: Identifiable {
         case let .blockBreak(seconds, nextTitle)?:
             startRest(seconds: seconds, kicker: "下一项 · \(nextTitle)", now: now)
         case .finished?:
-            onFinish?()
+            finish(now: now)
         default:
             break
         }

@@ -18,6 +18,14 @@ struct WorkoutView: View {
     }
 
     var body: some View {
+        if session.showsSummary {
+            WorkoutSummaryView(title: session.sessionTitle, recap: session.recap, onDone: onClose)
+        } else {
+            workoutBody
+        }
+    }
+
+    private var workoutBody: some View {
         ZStack {
             Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
@@ -86,7 +94,6 @@ struct WorkoutView: View {
 
             Button("结束") {
                 session.endWorkout()
-                onClose()
             }
             .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(Theme.accent(for: colorScheme))
