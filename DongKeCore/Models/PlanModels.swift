@@ -184,7 +184,7 @@ public struct PlanDay: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
-public enum PlanGoal: String, Codable, Sendable {
+public enum PlanGoal: String, Codable, Sendable, CaseIterable {
     case loseFat = "lose_fat"
     case buildMuscle = "build_muscle"
     case endurance
@@ -192,7 +192,7 @@ public enum PlanGoal: String, Codable, Sendable {
     case mobility
 }
 
-public enum TrainingLevel: String, Codable, Sendable {
+public enum TrainingLevel: String, Codable, Sendable, CaseIterable {
     case beginner
     case intermediate
     case advanced

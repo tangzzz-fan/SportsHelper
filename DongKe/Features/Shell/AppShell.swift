@@ -11,6 +11,8 @@ struct AppShell: View {
     @State private var tab: Tab = .today
     @State private var session: WorkoutSession?
     @Environment(SessionStore.self) private var store
+    @Environment(ProfileStore.self) private var profileStore
+    @State private var showingOnboarding = false
 
     init() {
         #if DEBUG
@@ -66,6 +68,18 @@ struct AppShell: View {
                 )
             }
             #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_RESET_PROFILE"] == "1" {
+                profileStore.reset()
+            }
+            #endif
+            showingOnboarding = !profileStore.hasOnboarded || ProcessInfo.processInfo.environment["DK_PREVIEW"] == "onboarding"
+            #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_COMPLETE_ONBOARDING"] == "1", !profileStore.hasOnboarded {
+                profileStore.save(OnboardingDraft().completedProfile(now: Date()))
+                showingOnboarding = false
+            }
+            #endif
+            #if DEBUG
             if ProcessInfo.processInfo.environment["DK_SEED_SESSION"] == "1", store.sessions.isEmpty {
                 store.upsert(
                     id: UUID(),
@@ -78,11 +92,35 @@ struct AppShell: View {
             }
             #endif
         }
+        .fullScreenCover(isPresented: $showingOnboarding) {
+            OnboardingView(initialStep: previewOnboardingStep()) { profile in
+                profileStore.save(profile)
+                showingOnboarding = false
+                Task {
+                    if profile.reminderEnabled {
+                        await NotificationService.shared.requestAuthorization()
+                        await NotificationService.shared.reschedule(
+                            plan: SampleData.plan,
+                            settings: ReminderSettingsStore.shared.settings
+                        )
+                    }
+                }
+            }
+        }
         .fullScreenCover(item: $session) { active in
             WorkoutView(session: active) {
                 session = nil
             }
         }
+    }
+
+    private func previewOnboardingStep() -> OnboardingStep {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["DK_ONBOARD_STEP"], let value = Int(raw) {
+            return OnboardingStep(rawValue: value) ?? .basics
+        }
+        #endif
+        return .basics
     }
 
     private func startWorkout() {
