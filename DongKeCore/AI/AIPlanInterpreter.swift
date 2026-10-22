@@ -25,9 +25,8 @@ public enum AIPlanInterpreter {
         guard draft.path == .strictJSON || draft.path == .lenientJSON else {
             return .failure(.invalidJSON)
         }
-        guard PlanValidator.validate(plan).contains(where: { $0.severity == .error }) == false else {
-            let detail = PlanValidator.validate(plan).first(where: { $0.severity == .error })?.message ?? "取值范围不合法"
-            return .failure(.schemaMismatch(detail))
+        if let blocking = PlanValidator.validate(plan).first(where: { $0.severity == .error }) {
+            return .failure(.schemaMismatch(blocking.message))
         }
         return .success(draft)
     }

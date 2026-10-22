@@ -59,7 +59,7 @@
 		7E63F9E457189407097A7F74 /* DraftLineScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F2EC7CE530776A90723C5E /* DraftLineScanner.swift */; };
 		81278E2D70FBF56A0B8B3D75 /* GeneratedFigureData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4258105F5D20BAA7B02B2D8 /* GeneratedFigureData.swift */; };
 		83034C0C6188573AE65AF0F5 /* AppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5C42B631AEEA9DEE954410 /* AppShell.swift */; };
-		84C2438B06C21F1149467DFD /* PlanPromptTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A57F28D62F4F0AC91F64AA8 /* PlanPromptTemplate.swift */; };
+		830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D87F13E5E0F8B3E53D513D /* SecretStoring.swift */; };
 		8A761B270DE386006FA8C786 /* PlanDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE6A1F4AD7591AD6983C576 /* PlanDraft.swift */; };
 		8ACCC6640A22A6C0A5C02011 /* PlanJSONExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C2A8EFCBCE9FBA6E77CABA /* PlanJSONExtractor.swift */; };
 		8BE4CC139A54B1CABC9C66B8 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7586B4E6B3CEFE75F71141 /* OnboardingView.swift */; };
@@ -174,7 +174,6 @@
 		13738439C5FE4788D6F3DEE3 /* FigurePlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FigurePlayback.swift; sourceTree = "<group>"; };
 		1547F50AF8C9C7FCB7A58D13 /* PlanJSONExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanJSONExtractorTests.swift; sourceTree = "<group>"; };
 		168C6D3E33852EFB889A046D /* PlanGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanGenerator.swift; sourceTree = "<group>"; };
-		1A57F28D62F4F0AC91F64AA8 /* PlanPromptTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanPromptTemplate.swift; sourceTree = "<group>"; };
 		1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerStateMachineTests.swift; sourceTree = "<group>"; };
 		21517B12A3B634A18027F5A2 /* SessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionEntity.swift; sourceTree = "<group>"; };
 		2163C75A915C2783591E25F8 /* ExerciseFigureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseFigureView.swift; sourceTree = "<group>"; };
@@ -242,6 +241,7 @@
 		B42E93308AEE36A30EA046E1 /* PlanDraftCompiler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDraftCompiler.swift; sourceTree = "<group>"; };
 		B44258EF3F495884B4A898CD /* PlanImportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanImportServiceTests.swift; sourceTree = "<group>"; };
 		B8BBC30A47CBCB1FFBA3559E /* AliasMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasMemory.swift; sourceTree = "<group>"; };
+		B9D87F13E5E0F8B3E53D513D /* SecretStoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretStoring.swift; sourceTree = "<group>"; };
 		BA0C1CF5217A1B2A6AF2F245 /* AIContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIContractTests.swift; sourceTree = "<group>"; };
 		BA1B15B9B3D7F04E0207EB15 /* PlanDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDecoderTests.swift; sourceTree = "<group>"; };
 		BC27B3FE5BB66F047654D9AC /* DongKeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DongKeApp.swift; sourceTree = "<group>"; };
@@ -336,7 +336,6 @@
 				DBE6A1F4AD7591AD6983C576 /* PlanDraft.swift */,
 				B42E93308AEE36A30EA046E1 /* PlanDraftCompiler.swift */,
 				32ED59B5C1D381FD9B98AB62 /* PlanDraftParser.swift */,
-				1A57F28D62F4F0AC91F64AA8 /* PlanPromptTemplate.swift */,
 				ACA2DFBE1DD4F51BB07F99EA /* UserExercise.swift */,
 			);
 			path = Import;
@@ -431,6 +430,7 @@
 			isa = PBXGroup;
 			children = (
 				904DF836831AE69987D87364 /* AIPlanGenerating.swift */,
+				B9D87F13E5E0F8B3E53D513D /* SecretStoring.swift */,
 			);
 			path = Ports;
 			sourceTree = "<group>";
@@ -763,12 +763,12 @@
 				8ACCC6640A22A6C0A5C02011 /* PlanJSONExtractor.swift in Sources */,
 				977C44CBE08E1685E7ED99AA /* PlanModels.swift in Sources */,
 				B3BEEBA5111A92B4E36F1F65 /* PlanNormalizer.swift in Sources */,
-				84C2438B06C21F1149467DFD /* PlanPromptTemplate.swift in Sources */,
 				FF662691F24AB80298C81510 /* PlanSchemaJSON.swift in Sources */,
 				0BF68397448AA01C7529030A /* PlanValidator.swift in Sources */,
 				A145922B969FA0DD34ED248A /* ProfileModels.swift in Sources */,
 				D8A69C1D25DA37A6DC575B1E /* ReminderTrigger.swift in Sources */,
 				977C82EB49CDE10F874BC667 /* RestTimerStateMachine.swift in Sources */,
+				830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */,
 				A13E1F5C2A38031A677C05A4 /* SessionModels.swift in Sources */,
 				532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */,
 				72C79F497D63B8481F6705D3 /* TimeOfDay.swift in Sources */,

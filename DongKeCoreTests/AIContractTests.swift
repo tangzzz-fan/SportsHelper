@@ -96,12 +96,33 @@ struct AIResponseMappingTests {
 
     @Test func rejectsOnlyWhenErrorPointsAtResponseFormat() {
         let body = Data(#"{"error":{"message":"Invalid parameter: response_format is not supported"}}"#.utf8)
-        #expect(AIResponseMapper.outcome(status: 400, body: body) == .degrade)
+        guard case .degrade = AIResponseMapper.outcome(status: 400, body: body) else {
+            Issue.record("应当判定为可降级")
+            return
+        }
     }
 
     @Test func otherBadRequestIsNotADegradeSignal() {
         let body = Data(#"{"error":{"message":"model not found"}}"#.utf8)
-        #expect(AIResponseMapper.outcome(status: 400, body: body) == .failure(.serverError(400)))
+        guard case let .failure(error) = AIResponseMapper.outcome(status: 400, body: body) else {
+            Issue.record("不该降级")
+            return
+        }
+        guard case let .requestRejected(code, detail) = error else {
+            Issue.record("应当映射成 requestRejected，实际 \(error)")
+            return
+        }
+        #expect(code == 400)
+        #expect(detail.contains("model not found"))
+    }
+
+    @Test func notFoundKeepsBodyForTheUser() {
+        let body = Data("404 page not found".utf8)
+        guard case let .failure(.requestRejected(404, detail)) = AIResponseMapper.outcome(status: 404, body: body) else {
+            Issue.record("404 应当带原文交给用户")
+            return
+        }
+        #expect(detail.contains("page not found"))
     }
 
     @Test func timeoutMapsToTimeout() {
@@ -121,8 +142,8 @@ struct AIClientErrorTests {
     private var all: [AIClientError] {
         [
             .missingKey, .invalidBaseURL, .unauthorized, .rateLimited,
-            .serverError(500), .timeout, .transport("x"), .emptyResponse,
-            .invalidJSON, .schemaMismatch("days 缺 2 天")
+            .serverError(500), .requestRejected(400, "model not found"), .timeout,
+            .transport("x"), .emptyResponse, .invalidJSON, .schemaMismatch("days 缺 2 天")
         ]
     }
 
@@ -142,6 +163,7 @@ struct AIClientErrorTests {
         #expect(AIClientError.unauthorized.isRetryable == false)
         #expect(AIClientError.invalidJSON.isRetryable == false)
         #expect(AIClientError.serverError(400).isRetryable == false)
+        #expect(AIClientError.requestRejected(400, "x").isRetryable == false)
     }
 }
 

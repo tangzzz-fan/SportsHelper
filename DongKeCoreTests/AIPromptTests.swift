@@ -65,6 +65,15 @@ struct AIPromptBuilderTests {
         let brief = AIPromptBuilder.userBrief(profile: profile, extraNote: "")
         #expect(brief.contains("伤病") == false)
     }
+
+    @Test func copyablePromptKeepsBothHalves() {
+        var profile = UserProfile()
+        profile.sessionMinutes = 45
+        let text = AIPromptBuilder.copyablePrompt(profile: profile)
+        #expect(text.hasPrefix("你是健身计划生成器"))
+        #expect(text.contains("45"))
+        #expect(text.contains("schemaVersion"))
+    }
 }
 
 @Suite("计划 Schema 常量")

@@ -8,6 +8,12 @@ public enum AIPromptBuilder {
         ]
     }
 
+    public static func copyablePrompt(profile: UserProfile, extraNote: String = "") -> String {
+        makeMessages(profile: profile, extraNote: extraNote)
+            .map(\.content)
+            .joined(separator: "\n\n")
+    }
+
     public static func systemPrompt() -> String {
         """
         你是健身计划生成器。只输出一个 JSON 对象，不要输出解释，不要用 markdown 代码块包裹。

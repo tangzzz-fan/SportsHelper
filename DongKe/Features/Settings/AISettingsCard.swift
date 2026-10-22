@@ -18,7 +18,8 @@ struct AISettingsCard: View {
                 title: "接口地址",
                 prompt: "https://api.openai.com/v1",
                 text: $baseURL,
-                isSecure: false
+                isSecure: false,
+                usesURLKeyboard: true
             )
 
             input(
@@ -70,7 +71,13 @@ struct AISettingsCard: View {
         }
     }
 
-    private func input(title: String, prompt: String, text: Binding<String>, isSecure: Bool) -> some View {
+    private func input(
+        title: String,
+        prompt: String,
+        text: Binding<String>,
+        isSecure: Bool,
+        usesURLKeyboard: Bool = false
+    ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption)
@@ -85,10 +92,13 @@ struct AISettingsCard: View {
             .font(.system(size: 15, design: .monospaced))
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
-            .keyboardType(isSecure ? .default : .URL)
+            .keyboardType(usesURLKeyboard ? .URL : .default)
             .padding(.horizontal, 10)
             .padding(.vertical, 9)
-            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(
+                Color.primary.opacity(0.05),
+                in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+            )
         }
     }
 
@@ -97,8 +107,7 @@ struct AISettingsCard: View {
             Button(action: save) {
                 Text("保存")
                     .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PressableGlassStyle())
             .foregroundStyle(Theme.callToActionInk(for: colorScheme))
@@ -115,7 +124,7 @@ struct AISettingsCard: View {
                 } label: {
                     Text("清除 Key")
                         .font(.subheadline.weight(.medium))
-                        .padding(.vertical, 10)
+                        .frame(minHeight: 44)
                         .padding(.horizontal, 14)
                 }
                 .buttonStyle(PressableGlassStyle())

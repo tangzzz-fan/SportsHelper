@@ -96,8 +96,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
    校对页（假设逐条列出、未识别动作可标可换）
 ```
 
-要加一种新格式，只加一个适配器产出 `PlanDraft`，编译器与页面都不用动。要给某个 agent 定契约，让它照
-`PlanPromptTemplate.text` 的 JSON 输出——那份示例由测试保证能被自己的解析器读懂。
+要加一种新格式，只加一个适配器产出 `PlanDraft`，编译器与页面都不用动。要给某个 agent 定契约，就让它输出 `AIPromptBuilder.copyablePrompt(profile:)` 里那份提示词要求的 JSON——直连 AI 与「复制提示词」按钮**共用同一份** system prompt（ARCH §8.3），不再维护第二套模板。
 
 ### 库外动作的三层处理（22–24）
 

@@ -2,21 +2,27 @@ import Foundation
 
 public enum AIHTTPOutcome: Equatable, Sendable {
     case content(String)
-    case degrade
+    case degrade(String)
     case failure(AIClientError)
 }
 
 public enum AIResponseMapper {
+    private static let snippetLimit = 200
+
     public static func outcome(status: Int, body: Data) -> AIHTTPOutcome {
         switch status {
         case 200..<300:
             return content(from: body)
-        case 400:
-            return degradeRequested(in: body) ? .degrade : .failure(.serverError(400))
         case 401, 403:
             return .failure(.unauthorized)
         case 429:
             return .failure(.rateLimited)
+        case 400..<500:
+            let snippet = snippet(from: body)
+            guard degradeRequested(in: snippet) else {
+                return .failure(.requestRejected(status, snippet))
+            }
+            return .degrade(snippet)
         default:
             return .failure(.serverError(status))
         }
@@ -38,10 +44,17 @@ public enum AIResponseMapper {
         return trimmed.isEmpty ? .failure(.emptyResponse) : .content(trimmed)
     }
 
-    private static func degradeRequested(in body: Data) -> Bool {
-        let text = String(decoding: body, as: UTF8.self).lowercased()
+    private static func degradeRequested(in snippet: String) -> Bool {
+        let text = snippet.lowercased()
         return text.contains("response_format")
             || text.contains("json_schema")
             || text.contains("not supported")
+    }
+
+    private static func snippet(from body: Data) -> String {
+        let text = String(decoding: body, as: UTF8.self)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\n", with: " ")
+        return String(text.prefix(snippetLimit))
     }
 }

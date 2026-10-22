@@ -27,12 +27,19 @@ struct AIGenerateCard: View {
             if let errorText {
                 Text(errorText)
                     .font(.caption)
-                    .foregroundStyle(Color.red)
+                    .foregroundStyle(Theme.danger(for: colorScheme))
                     .fixedSize(horizontal: false, vertical: true)
                 if needsKeyFix {
-                    Button("去改 Key") { showSettings = true }
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.accent(for: colorScheme))
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Text("去改 Key")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.accent(for: colorScheme))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -94,8 +101,13 @@ struct AIGenerateCard: View {
                 let draft = try await AIPlanClient().generatePlan(profile: profile, extraNote: "")
                 onGenerated(draft)
             } catch let error as AIClientError {
-                errorText = error.message
-                needsKeyFix = error == .unauthorized || error == .missingKey
+                if error == .unauthorized {
+                    ai.clearKey()
+                    errorText = "API Key 被拒绝，已从本机移除，重新填一个再试"
+                } else {
+                    errorText = error.message
+                }
+                needsKeyFix = error.needsKeyFix
             } catch is CancellationError {
                 errorText = nil
             } catch {

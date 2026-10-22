@@ -6,6 +6,7 @@ public enum AIClientError: Error, Equatable, Sendable {
     case unauthorized
     case rateLimited
     case serverError(Int)
+    case requestRejected(Int, String)
     case timeout
     case transport(String)
     case emptyResponse
@@ -23,7 +24,11 @@ public enum AIClientError: Error, Equatable, Sendable {
         case .rateLimited:
             "请求太频繁，10 秒后可重试"
         case let .serverError(code):
-            "模型服务返回 \(code)，稍后重试或改用粘贴导入"
+            "模型服务暂时不可用（\(code)），稍后重试或改用粘贴导入"
+        case let .requestRejected(code, detail):
+            detail.isEmpty
+                ? "接口拒绝了这次请求（\(code)），检查模型名与接口地址后重试"
+                : "接口拒绝了这次请求（\(code)）：\(detail)"
         case .timeout:
             "生成超过 60 秒，已中断。可以重试，或改用粘贴导入"
         case .transport:
@@ -46,5 +51,9 @@ public enum AIClientError: Error, Equatable, Sendable {
         default:
             false
         }
+    }
+
+    public var needsKeyFix: Bool {
+        self == .unauthorized || self == .missingKey
     }
 }

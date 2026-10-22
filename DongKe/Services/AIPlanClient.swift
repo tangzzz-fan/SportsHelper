@@ -5,7 +5,14 @@ import DongKeCore
 final class AIPlanClient: AIPlanGenerating {
     private enum SendOutcome {
         case content(String)
-        case degrade
+        case formatRejected(String)
+    }
+
+    private struct Request {
+        let url: URL
+        let key: String
+        let model: String
+        let messages: [ChatMessage]
     }
 
     private let settings: AISettingsStore
@@ -28,65 +35,56 @@ final class AIPlanClient: AIPlanGenerating {
     func generatePlan(profile: UserProfile, extraNote: String) async throws -> ParsedPlanDraft {
         let configuration = settings.configuration
         guard let key = configuration.resolvedKey else { throw AIClientError.missingKey }
-        let url = try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get()
-        let messages = AIPromptBuilder.makeMessages(profile: profile, extraNote: extraNote)
+        let request = Request(
+            url: try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get(),
+            key: key,
+            model: configuration.resolvedModel,
+            messages: AIPromptBuilder.makeMessages(profile: profile, extraNote: extraNote)
+        )
 
         var mode: AIResponseMode? = .jsonSchema
+        var lastRejection = ""
         while let current = mode {
-            let outcome = try await attempt(
-                url: url,
-                key: key,
-                model: configuration.resolvedModel,
-                messages: messages,
-                mode: current
-            )
-            switch outcome {
+            switch try await attempt(request, mode: current) {
             case let .content(text):
                 return try AIPlanInterpreter.interpret(text).get()
-            case .degrade:
+            case let .formatRejected(snippet):
+                lastRejection = snippet
                 mode = current.next
             }
         }
-        throw AIClientError.serverError(400)
+        throw AIClientError.requestRejected(400, lastRejection)
     }
 
-    private func attempt(
-        url: URL,
-        key: String,
-        model: String,
-        messages: [ChatMessage],
-        mode: AIResponseMode
-    ) async throws -> SendOutcome {
+    private func attempt(_ request: Request, mode: AIResponseMode) async throws -> SendOutcome {
         do {
-            return try await send(url: url, key: key, model: model, messages: messages, mode: mode)
+            return try await send(request, mode: mode)
         } catch let error as AIClientError where error.isRetryable {
             try await Task.sleep(for: .seconds(2))
-            return try await send(url: url, key: key, model: model, messages: messages, mode: mode)
+            return try await send(request, mode: mode)
         }
     }
 
-    private func send(
-        url: URL,
-        key: String,
-        model: String,
-        messages: [ChatMessage],
-        mode: AIResponseMode
-    ) async throws -> SendOutcome {
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 60
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        request.httpBody = ChatRequestBodyBuilder.data(model: model, messages: messages, mode: mode)
+    private func send(_ request: Request, mode: AIResponseMode) async throws -> SendOutcome {
+        var urlRequest = URLRequest(url: request.url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.timeoutInterval = 60
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("Bearer \(request.key)", forHTTPHeaderField: "Authorization")
+        urlRequest.httpBody = ChatRequestBodyBuilder.data(
+            model: request.model,
+            messages: request.messages,
+            mode: mode
+        )
 
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await session.data(for: urlRequest)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             switch AIResponseMapper.outcome(status: status, body: data) {
             case let .content(text):
                 return .content(text)
-            case .degrade:
-                return .degrade
+            case let .degrade(snippet):
+                return .formatRejected(snippet)
             case let .failure(error):
                 throw error
             }

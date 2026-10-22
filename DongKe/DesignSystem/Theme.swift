@@ -5,9 +5,15 @@ enum Theme {
     static let tintDark = Color(red: 52 / 255, green: 179 / 255, blue: 154 / 255)
     static let haloLight = Color(red: 14 / 255, green: 124 / 255, blue: 102 / 255).opacity(0.16)
     static let haloDark = Color(red: 52 / 255, green: 179 / 255, blue: 154 / 255).opacity(0.18)
+    static let dangerLight = Color(red: 176 / 255, green: 31 / 255, blue: 46 / 255)
+    static let dangerDark = Color(red: 233 / 255, green: 102 / 255, blue: 111 / 255)
 
     static func accent(for scheme: ColorScheme) -> Color {
         scheme == .dark ? tintDark : tint
+    }
+
+    static func danger(for scheme: ColorScheme) -> Color {
+        scheme == .dark ? dangerDark : dangerLight
     }
 
     static func callToActionInk(for scheme: ColorScheme) -> Color {

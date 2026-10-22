@@ -22,6 +22,7 @@ struct ImportView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @Environment(UserExerciseStore.self) private var userExercises
+    @Environment(ProfileStore.self) private var profiles
 
     @State private var text = ""
     @State private var draft: ParsedPlanDraft?
@@ -86,7 +87,9 @@ struct ImportView: View {
                     }
 
                     Button {
-                        UIPasteboard.general.string = PlanPromptTemplate.text
+                        UIPasteboard.general.string = AIPromptBuilder.copyablePrompt(
+                            profile: profiles.profile ?? UserProfile()
+                        )
                         copiedPrompt = true
                     } label: {
                         HStack(spacing: 8) {

@@ -208,20 +208,4 @@ struct HeterogeneousImportTests {
         #expect(tuesday.first?.name == "农夫行走")
         #expect(tuesday.first?.catalogId.hasPrefix("custom_") == true)
     }
-
-    @Test("发布给 AI 的提示词本身能被自己的解析器读懂")
-    func promptTemplateIsParseable() throws {
-        let text = PlanPromptTemplate.text
-        #expect(text.contains("days"))
-        #expect(text.contains("restSec"))
-
-        let json = try #require(PlanJSONExtractor.extract(from: text))
-        let plan = try plan(from: json)
-        #expect(plan.meta.title == "8 周增肌 · 第 1 周")
-        #expect(itemsIn(plan, .monday).count == 2)
-        let wednesday = itemsIn(plan, .wednesday)
-        #expect(wednesday.count == 1)
-        #expect(wednesday[0].catalogId == "plank")
-        #expect(wednesday[0].target.value == 45)
-    }
 }
