@@ -1,7 +1,7 @@
 {
   "$meta": {
     "name": "动刻 DongKe — Design Tokens",
-    "version": "4.2.0",
+    "version": "4.3.0",
     "status": "aligned with team-lead 最终冻结（2026-10-22）＋ SPEC.md；主色深青绿、图示自绘 12 关节骨架、动作库 18、久坐 P1、通知 ≤7、完成总结三数并列。PRD / ARCHITECTURE / UIUX 自本条冻结起只作存档依据，开发唯一依据是 FROZEN-BASELINE.md + SPEC.md。",
     "designer": "颜好看",
     "date": "2026-10-22",
@@ -35,6 +35,11 @@
       "每屏可见 accent ≤2 处，且每屏只允许 1 个语义色族（见 color.accentBudget）。"
     ],
     "changeLog": [
+      {
+        "version": "4.3.0",
+        "change": "清掉素材方案专有残留：`_generic` 素材命名改为「中立站立位姿」（内置位姿数据）；关于页授权声明全部移除；UIUX §6 仍为自绘 12 关节骨架",
+        "reason": "FROZEN-BASELINE 决策 6 定稿，素材方案作废（下载失败 + 授权需法务）"
+      },
       {
         "version": "4.2.0",
         "change": "动作图示按 team-lead 最终冻结回滚为自绘 12 关节骨架（12 关节 / autofit / 骨段容差 ±15% / 线宽 2.2% / 关节 1.6% / 躯干 1.4 倍 / 远侧 0.55 / props 四件全部生效）；关于页不做 CC 署名区；authority 改为「冻结 + SPEC 为开发唯一依据」",
@@ -720,7 +725,7 @@
     }
   },
   "figure": {
-    "_note": "参数化骨架规格，**现行方案**（team-lead 最终冻结）。自绘 12 关节 + 3 关键帧，18 个动作全部有骨架；不使用第三方素材，因此无署名义务。渲染器唯一：DesignSystem/Figures/ExerciseFigureView.swift。设计交付是位姿数据（docs/figure-specs.sample.json，10 个打样 + `_generic`），不是插画。",
+    "_note": "参数化骨架规格，**现行方案**（team-lead 最终冻结）。自绘 12 关节 + 3 关键帧，18 个动作全部有骨架；不使用第三方素材，因此无署名义务。渲染器唯一：DesignSystem/Figures/ExerciseFigureView.swift。设计交付是位姿数据（docs/figure-specs.sample.json，10 个打样 + 中立站立位姿），不是插画。",
     "renderInterface": {
       "type": "string",
       "value": "ExerciseFigureView(catalogId: String, size: CGFloat, playsAnimation: Bool)。UI 不感知内部实现——3 帧 / 2.4s 循环 / 帧间 120ms 交叉淡入 / 列表内静态首帧 / 同屏只播 1 个 / 单色 textPrimary / custom_ 前缀走降级态。"
@@ -899,7 +904,7 @@
       },
       "placeholder": {
         "type": "string",
-        "value": "库外动作：`_generic` 通用站位骨架（同一渲染器、同一线宽）+ 明确文案，不加虚线框、不转圈、不用灰色骨架屏。见 UIUX.md §6.4。"
+        "value": "库外动作：中立站立位姿（渲染器内置位姿数据，不单独出图）+ 明确文案，不加虚线框、不转圈、不用灰色骨架屏。见 UIUX.md §6.4。"
       }
     },
     "a11y": {

@@ -1178,6 +1178,8 @@ PRD §9.4 要求埋点，但本期没有自建后端，**没有任何上传通�
 
 包体积核算：主二进制约 8–12MB（SwiftUI + SwiftData，无第三方）。加 `figure-specs.json` 约 40–60KB、B612 子集 <40KB，总量在 12MB 以内。
 
+与 token 的冲突待同步：`docs/design-tokens.json` 的 `typography.fontPolicy` 目前写的是「零打包字体，`UIAppFonts` 保持为空」，与本节相反。按 FROZEN-BASELINE 的效力条款（FROZEN + SPEC > token），本节按 SPEC §4 执行；token 需设计侧改为打包 B612 的一侧，否则实现会分裂成两套。
+
 ### 14.5 文案口径
 
 不写空话。通知文案、空状态、错误提示都要说清楚"发生了什么、下一步做什么"。示例：

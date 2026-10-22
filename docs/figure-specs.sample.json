@@ -1,12 +1,12 @@
 {
   "$meta": {
     "name": "动刻 骨架动作规格 — 10 个打样（PRD R10 打样评审用）",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "date": "2026-10-22",
     "designer": "颜好看",
     "targetFile": "DongKe/DesignSystem/Figures/figure-specs.json",
     "consumer": "ExerciseFigureView.swift（唯一渲染器）+ PoseInterpolator（纯函数，可单测）",
-    "scope": "动作库锁定 18 个 catalogId（plan-schema 白名单）。本文件交付其中 10 个打样 + `_generic`，覆盖蹲/推/撑/单腿/桥/拉/举/跳/核心/静力十类形态。剩余 8 个（mountain_climber / high_knees / side_plank / calf_raise / bird_dog / superman / crunch / russian_twist）按同一规格补齐，是续做不是重设计。",
+    "scope": "动作库锁定 18 个 catalogId（plan-schema 白名单）。本文件交付其中 10 个打样 + 中立站立位姿，覆盖蹲/推/撑/单腿/桥/拉/举/跳/核心/静力十类形态。剩余 8 个（mountain_climber / high_knees / side_plank / calf_raise / bird_dog / superman / crunch / russian_twist）按同一规格补齐，是续做不是重设计。",
     "acceptance": "PRD R10：验收标准是辨识度，不是美观度——能一眼看出「这是深蹲不是硬拉」即达标。",
     "authoringDecisions": {
       "1-lineWidth": "画布边长 2.2%（160pt 画布约 3.5pt）。缩略图低于 2.5pt 时渲染器自动加粗到 2.5pt。",
@@ -1312,7 +1312,7 @@
       ]
     },
     {
-      "catalogId": "_generic",
+      "catalogId": "customFallback",
       "name": "通用占位（库外动作降级用）",
       "view": "side",
       "loopSeconds": 2.0,
@@ -1320,7 +1320,7 @@
         "floor"
       ],
       "isPlaceholder": true,
-      "note": "只画静态首帧，不循环。渲染时整体降为 textTertiary，见 UIUX §6.3。",
+      "note": "库外动作（custom_ 前缀）的兜底位姿。不是素材文件，是渲染器内置的一份中立站立位姿数据。",
       "poses": [
         {
           "phase": 0.0,
