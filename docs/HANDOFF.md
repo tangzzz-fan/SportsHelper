@@ -86,11 +86,16 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 ```bash
 xcrun simctl terminate booted app.dongke.ios
 SIMCTL_CHILD_DK_PREVIEW=workout xcrun simctl launch booted app.dongke.ios   # 训练执行
+SIMCTL_CHILD_DK_PREVIEW=plan    xcrun simctl launch booted app.dongke.ios   # 计划
+SIMCTL_CHILD_DK_PREVIEW=history xcrun simctl launch booted app.dongke.ios   # 记录
 SIMCTL_CHILD_DK_PREVIEW=rest    xcrun simctl launch booted app.dongke.ios   # 休息面板
+SIMCTL_CHILD_DK_FORCE_LEGACY_GLASS=1 xcrun simctl launch booted app.dongke.ios  # 强制走 iOS 18 玻璃回退分支
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 
 注意必须先 `terminate`：App 已在运行时 `launch` 不会重启进程，环境变量不生效。
+
+玻璃分支判断是 `#available(iOS 26)`，因此**任何 ≥26 的运行时都走原生分支**；要验证回退观感只能用 `DK_FORCE_LEGACY_GLASS=1`，不要指望装 iOS 26 运行时能覆盖到。
 
 ## 7. 换机后容易踩的三个坑
 

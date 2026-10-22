@@ -16,7 +16,7 @@ struct GlassSurface: ViewModifier {
     @ViewBuilder
     private var background: some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), !DebugFlags.forcesLegacyGlass {
             shape
                 .fill(.clear)
                 .glassEffect(
@@ -91,5 +91,15 @@ struct PressableGlassStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .brightness(configuration.isPressed ? -0.04 : 0)
             .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
+    }
+}
+
+enum DebugFlags {
+    static var forcesLegacyGlass: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["DK_FORCE_LEGACY_GLASS"] == "1"
+        #else
+        false
+        #endif
     }
 }

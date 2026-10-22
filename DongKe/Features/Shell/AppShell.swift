@@ -18,6 +18,10 @@ struct AppShell: View {
         switch preview {
         case "workout":
             _session = State(initialValue: WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex))
+        case "plan":
+            _tab = State(initialValue: .plan)
+        case "history":
+            _tab = State(initialValue: .history)
         case "rest":
             let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)
             active.completeSet()
@@ -37,9 +41,9 @@ struct AppShell: View {
                 case .today:
                     TodayView(onStart: startWorkout)
                 case .plan:
-                    PlaceholderScreen(title: "计划", subtitle: "下周排期与计划导入")
+                    PlanView()
                 case .history:
-                    PlaceholderScreen(title: "记录", subtitle: "周完成率与连续天数")
+                    HistoryView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -85,24 +89,5 @@ private struct TabIsland: View {
         }
         .padding(4)
         .glassSurface(radius: Theme.Radius.glassIsland)
-    }
-}
-
-private struct PlaceholderScreen: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 34, weight: .bold))
-            Text(subtitle)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
     }
 }
