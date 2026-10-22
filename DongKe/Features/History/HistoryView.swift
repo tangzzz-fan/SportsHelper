@@ -2,6 +2,8 @@ import SwiftUI
 import DongKeCore
 
 struct HistoryView: View {
+    var weeklyTarget: Int = 3
+
     @Environment(SessionStore.self) private var store
 
     @Environment(\.colorScheme) private var colorScheme
@@ -88,7 +90,7 @@ struct HistoryView: View {
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline, spacing: 28) {
-                metric(value: "\(store.completedThisWeek) / \(SampleData.plan.meta.daysPerWeek)", label: "本周")
+                metric(value: "\(store.completedThisWeek) / \(weeklyTarget)", label: "本周")
                 metric(value: "\(store.streakDays) 天", label: "连续")
                 Spacer()
             }

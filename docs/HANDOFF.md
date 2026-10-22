@@ -9,7 +9,7 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层；今日 / 训练执行 / 休息三屏已按设计稿落地，数据来自内置示例计划（未接持久化与通知） |
+| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层；今日 / 训练执行 / 休息 / 计划 / 记录五屏已落地；训练记录、档案、计划三份数据走 SwiftData 持久化；提醒按计划排程；计划由引导档案生成（未接粘贴导入与 AI） |
 | 测试 | 52 条 Swift Testing，**52 绿 0 红**；转绿记录见 `docs/GATE-2-TEST-REPORT.md` 第 6 节 |
 | Gate 2 | 已放行并全部转绿。下一步：18 个动作骨架数据 → UI |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |

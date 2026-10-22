@@ -2,13 +2,15 @@ import SwiftUI
 import DongKeCore
 
 struct TodayView: View {
+    let plan: WorkoutPlan
     var onStart: () -> Void
 
     @State private var showSettings: Bool
     private let settingsStore = ReminderSettingsStore.shared
     @Environment(NotificationService.self) private var notifications
 
-    init(onStart: @escaping () -> Void) {
+    init(plan: WorkoutPlan, onStart: @escaping () -> Void) {
+        self.plan = plan
         self.onStart = onStart
         var initial = false
         #if DEBUG
@@ -20,9 +22,12 @@ struct TodayView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SessionStore.self) private var store
 
-    private var plan: WorkoutPlan { SampleData.plan }
     private var today: PlanDay? {
-        plan.days.first(where: { $0.dayIndex == SampleData.trainingDayIndex(for: Date()) && !$0.isRestDay })
+        let weekday = SampleData.weekday(for: Date())
+        if let day = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay }) {
+            return day
+        }
+        return nextTrainingDay
     }
 
     private var dateLine: String {
@@ -66,7 +71,7 @@ struct TodayView: View {
                         .padding(.top, 22)
                 }
 
-                if let next = SampleData.nextTrainingDay(after: Date()) {
+                if let next = nextTrainingDay, !isRestToday {
                     Text("下次训练 \(next.weekday.chineseName) \(timeText(next))")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -122,13 +127,22 @@ struct TodayView: View {
         .ignoresSafeArea()
     }
 
+    private var isRestToday: Bool {
+        let weekday = SampleData.weekday(for: Date())
+        guard let day = plan.days.first(where: { $0.weekday == weekday }) else { return true }
+        return day.isRestDay
+    }
+
     private func sessionCard(_ day: PlanDay) -> some View {
         let items = day.blocks.flatMap(\.items)
+        let resting = isRestToday
         return VStack(alignment: .leading, spacing: 12) {
-            Text(day.title)
+            Text(resting ? "今天休息" : day.title)
                 .font(.system(size: 22, weight: .semibold))
 
-            Text("\(items.count) 个动作 · 约 \(day.estimatedMinutes) 分钟 · \(timeText(day))")
+            Text(resting
+                 ? "下次训练 \(day.weekday.chineseName) \(timeText(day)) · \(items.count) 个动作"
+                 : "\(items.count) 个动作 · 约 \(day.estimatedMinutes) 分钟 · \(timeText(day))")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
@@ -147,7 +161,7 @@ struct TodayView: View {
             .padding(.top, 12)
 
             Button(action: onStart) {
-                Text("开始训练")
+                Text(isRestToday ? "提前练一次" : "开始训练")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -174,6 +188,13 @@ struct TodayView: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassSurface(radius: Theme.Radius.glassCard)
+    }
+
+    private var nextTrainingDay: PlanDay? {
+        let training = plan.days.filter { !$0.isRestDay }
+        guard !training.isEmpty else { return nil }
+        let today = SampleData.weekday(for: Date()).rawValue
+        return training.first(where: { $0.weekday.rawValue > today }) ?? training.first
     }
 
     private func timeText(_ day: PlanDay) -> String {

@@ -2,7 +2,7 @@ import SwiftUI
 import DongKeCore
 
 struct PlanView: View {
-    private let plan = SampleData.plan
+    let plan: WorkoutPlan
 
     @Environment(\.colorScheme) private var colorScheme
 

@@ -12,6 +12,7 @@ struct AppShell: View {
     @State private var session: WorkoutSession?
     @Environment(SessionStore.self) private var store
     @Environment(ProfileStore.self) private var profileStore
+    @Environment(PlanStore.self) private var planStore
     @State private var showingOnboarding = false
 
     init() {
@@ -42,11 +43,11 @@ struct AppShell: View {
             Group {
                 switch tab {
                 case .today:
-                    TodayView(onStart: startWorkout)
+                    TodayView(plan: activePlan, onStart: startWorkout)
                 case .plan:
-                    PlanView()
+                    PlanView(plan: activePlan)
                 case .history:
-                    HistoryView()
+                    HistoryView(weeklyTarget: activePlan.meta.daysPerWeek)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -95,12 +96,14 @@ struct AppShell: View {
         .fullScreenCover(isPresented: $showingOnboarding) {
             OnboardingView(initialStep: previewOnboardingStep()) { profile in
                 profileStore.save(profile)
+                let generated = PlanGenerator.makePlan(profile: profile)
+                planStore.save(generated)
                 showingOnboarding = false
                 Task {
                     if profile.reminderEnabled {
                         await NotificationService.shared.requestAuthorization()
                         await NotificationService.shared.reschedule(
-                            plan: SampleData.plan,
+                            plan: generated,
                             settings: ReminderSettingsStore.shared.settings
                         )
                     }
@@ -123,8 +126,17 @@ struct AppShell: View {
         return .basics
     }
 
+    private var activePlan: WorkoutPlan {
+        planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
+    }
+
     private func startWorkout() {
-        let active = WorkoutSession(plan: SampleData.plan, dayIndex: SampleData.trainingDayIndex(for: Date()))
+        let plan = activePlan
+        let weekday = SampleData.weekday(for: Date())
+        let dayIndex = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay })?.dayIndex
+            ?? plan.days.first(where: { !$0.isRestDay })?.dayIndex
+            ?? 1
+        let active = WorkoutSession(plan: plan, dayIndex: dayIndex)
         active.store = store
         session = active
     }
