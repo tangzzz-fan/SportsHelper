@@ -11,9 +11,12 @@ struct AppShell: View {
     @State private var tab: Tab = .today
     @State private var session: WorkoutSession?
     @Environment(SessionStore.self) private var store
+    @Environment(SetLogStore.self) private var setLogs
     @Environment(ProfileStore.self) private var profileStore
     @Environment(PlanStore.self) private var planStore
     @State private var showingOnboarding = false
+    @State private var resumeCandidate: WorkoutCheckpoint?
+    private let checkpoints = WorkoutCheckpointStore()
 
     init() {
         #if DEBUG
@@ -59,7 +62,12 @@ struct AppShell: View {
             Group {
                 switch tab {
                 case .today:
-                    TodayView(plan: activePlan, onStart: startWorkout)
+                    TodayView(
+                        plan: activePlan,
+                        onStart: startWorkout,
+                        resumeHint: resumeHint,
+                        onResume: resumeWorkout
+                    )
                 case .plan:
                     PlanView(plan: activePlan)
                 case .history:
@@ -78,9 +86,12 @@ struct AppShell: View {
             }
             #endif
             await NotificationService.shared.refreshStatus()
+            NotificationService.shared.router.onOpenWorkout = { link in
+                openWorkout(link)
+            }
             if NotificationService.shared.status == .authorized || NotificationService.shared.status == .provisional {
                 await NotificationService.shared.reschedule(
-                    plan: SampleData.plan,
+                    plan: activePlan,
                     settings: ReminderSettingsStore.shared.settings
                 )
             }
@@ -89,7 +100,7 @@ struct AppShell: View {
                 profileStore.reset()
             }
             #endif
-            showingOnboarding = !profileStore.hasOnboarded || ProcessInfo.processInfo.environment["DK_PREVIEW"] == "onboarding"
+            showingOnboarding = shouldShowOnboarding()
             #if DEBUG
             if ProcessInfo.processInfo.environment["DK_COMPLETE_ONBOARDING"] == "1", !profileStore.hasOnboarded {
                 profileStore.save(OnboardingDraft().completedProfile(now: Date()))
@@ -129,8 +140,10 @@ struct AppShell: View {
         .fullScreenCover(item: $session) { active in
             WorkoutView(session: active) {
                 session = nil
+                refreshResumeCandidate()
             }
         }
+        .onAppear(perform: refreshResumeCandidate)
     }
 
     private func previewOnboardingStep() -> OnboardingStep {
@@ -146,6 +159,34 @@ struct AppShell: View {
         planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
     }
 
+    private func shouldShowOnboarding() -> Bool {
+        if profileStore.hasOnboarded == false { return true }
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["DK_PREVIEW"] == "onboarding"
+        #else
+        return false
+        #endif
+    }
+
+    private func openWorkout(_ link: WorkoutDeepLink) {
+        let plan = activePlan
+        let dayIndex: Int?
+        switch link {
+        case let .dayIndex(index):
+            dayIndex = plan.days.first(where: { $0.dayIndex == index })?.dayIndex
+        case let .weekday(weekday):
+            dayIndex = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay })?.dayIndex
+        }
+        guard let dayIndex else { return }
+        tab = .today
+        let active = WorkoutSession(plan: plan, dayIndex: dayIndex)
+        active.store = store
+        active.setLogStore = setLogs
+        active.checkpointStore = checkpoints
+        active.restNotifications = NotificationService.shared
+        session = active
+    }
+
     private func startWorkout() {
         let plan = activePlan
         let weekday = SampleData.weekday(for: Date())
@@ -154,7 +195,55 @@ struct AppShell: View {
             ?? 1
         let active = WorkoutSession(plan: plan, dayIndex: dayIndex)
         active.store = store
+        active.setLogStore = setLogs
+        active.checkpointStore = checkpoints
+        active.restNotifications = NotificationService.shared
         session = active
+    }
+
+    private func resumeWorkout() {
+        guard let checkpoint = resumeCandidate else { return }
+        let active = WorkoutSession(
+            plan: activePlan,
+            dayIndex: checkpoint.dayIndex,
+            store: store,
+            startedAt: checkpoint.startedAt,
+            id: checkpoint.sessionId,
+            checkpoint: checkpoint
+        )
+        active.setLogStore = setLogs
+        active.checkpointStore = checkpoints
+        active.restNotifications = NotificationService.shared
+        resumeCandidate = nil
+        session = active
+    }
+
+    private func refreshResumeCandidate() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["DK_SEED_CHECKPOINT"] == "1", checkpoints.load() == nil {
+            let plan = activePlan
+            let dayIndex = plan.days.first(where: { !$0.isRestDay })?.dayIndex ?? 1
+            let flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
+            let now = Date()
+            checkpoints.save(WorkoutCheckpoint(
+                sessionId: UUID(),
+                dayIndex: dayIndex,
+                stepIndex: min(3, max(0, flow.steps.count - 2)),
+                totalSteps: flow.steps.count,
+                startedAt: now.addingTimeInterval(-420),
+                updatedAt: now
+            ))
+        }
+        #endif
+        let stored = checkpoints.load()
+        resumeCandidate = WorkoutResumePolicy.canResume(stored, now: Date()) ? stored : nil
+    }
+
+    private var resumeHint: String? {
+        guard let checkpoint = resumeCandidate else { return nil }
+        let title = activePlan.days.first(where: { $0.dayIndex == checkpoint.dayIndex })?.title ?? "上次训练"
+        let step = min(checkpoint.stepIndex + 1, checkpoint.totalSteps)
+        return "\(title) · 停在第 \(step)/\(checkpoint.totalSteps) 步"
     }
 }
 

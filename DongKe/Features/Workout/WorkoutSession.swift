@@ -4,25 +4,45 @@ import DongKeCore
 @MainActor
 @Observable
 final class WorkoutSession: Identifiable {
-    let id = UUID()
+    let id: UUID
     let plan: WorkoutPlan
     let dayIndex: Int
     let flow: WorkoutFlowModel
     let startedAt: Date
     var store: SessionStore?
+    var setLogStore: SetLogStore?
+    var checkpointStore: WorkoutCheckpointStore?
+    weak var restNotifications: (any RestNotificationScheduling)?
 
     private(set) var stepIndex = 0
     private(set) var logs: [SetLog] = []
     private(set) var rest: RestState = .idle
     private(set) var restKicker = "组间休息"
     private(set) var finishedAt: Date?
+    private(set) var restFinishedToken = 0
 
-    init(plan: WorkoutPlan, dayIndex: Int, store: SessionStore? = nil, startedAt: Date = Date()) {
+    init(
+        plan: WorkoutPlan,
+        dayIndex: Int,
+        store: SessionStore? = nil,
+        startedAt: Date = Date(),
+        id: UUID = UUID(),
+        checkpoint: WorkoutCheckpoint? = nil,
+        now: Date = Date()
+    ) {
+        self.id = id
         self.plan = plan
         self.dayIndex = dayIndex
         self.store = store
         self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
+
+        if let checkpoint {
+            let lastIndex = max(0, flow.steps.count - 1)
+            self.stepIndex = min(max(0, checkpoint.stepIndex), lastIndex)
+            self.logs = checkpoint.logs
+            self.rest = WorkoutResumePolicy.restState(checkpoint, now: now)
+        }
     }
 
     var day: PlanDay? {
@@ -105,7 +125,7 @@ final class WorkoutSession: Identifiable {
             advance()
             return
         }
-        logs.append(SetLog(
+        appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
             setIndex: setIndex,
@@ -113,8 +133,7 @@ final class WorkoutSession: Identifiable {
             plannedValue: target.value,
             actualValue: target.value,
             completedAt: now
-        ))
-        persist()
+        ), now: now)
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
     }
 
@@ -123,7 +142,7 @@ final class WorkoutSession: Identifiable {
             advance()
             return
         }
-        logs.append(SetLog(
+        appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
             setIndex: setIndex,
@@ -132,24 +151,45 @@ final class WorkoutSession: Identifiable {
             actualValue: max(1, target.value / 2),
             skipReason: .tooHard,
             completedAt: now
-        ))
-        persist()
+        ), now: now)
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
+    }
+
+    func skipSet(reason: SkipReason = .noTime, now: Date = Date()) {
+        guard case let .set(prescriptionId, setIndex, target, _)? = currentStep else {
+            advance()
+            return
+        }
+        appendLog(.skipped(
+            sessionId: id,
+            prescriptionId: prescriptionId,
+            setIndex: setIndex,
+            plannedValue: target.value,
+            reason: reason,
+            at: now
+        ), now: now)
+        advance()
+        saveCheckpoint(now: now)
     }
 
     func refresh(now: Date = Date()) {
         var effects: [RestEffect] = []
         let next = RestTimerStateMachine.reduce(rest, .tick(now: now), &effects)
         if next != rest { rest = next }
+        if effects.contains(.playHaptic) {
+            restFinishedToken += 1
+        }
         if effects.contains(.autoAdvanceToNextSet) {
             rest = .idle
             advance()
+            saveCheckpoint(now: now)
         }
     }
 
     func extendRest(by seconds: Int = 15, now: Date = Date()) {
         var effects: [RestEffect] = []
         rest = RestTimerStateMachine.reduce(rest, .extend(seconds: seconds, now: now), &effects)
+        saveCheckpoint(now: now)
     }
 
     func togglePauseRest(now: Date = Date()) {
@@ -162,11 +202,13 @@ final class WorkoutSession: Identifiable {
         default:
             break
         }
+        saveCheckpoint(now: now)
     }
 
-    func skipRest() {
+    func skipRest(now: Date = Date()) {
         rest = .idle
         advance()
+        saveCheckpoint(now: now)
     }
 
     func endWorkout() {
@@ -178,6 +220,40 @@ final class WorkoutSession: Identifiable {
         guard finishedAt == nil else { return }
         finishedAt = now
         persist(finishedAt: now)
+        saveCheckpoint(now: now)
+    }
+
+    private func appendLog(_ log: SetLog, now: Date) {
+        logs.append(log)
+        setLogStore?.add(log)
+        persist()
+        saveCheckpoint(now: now)
+    }
+
+    private func saveCheckpoint(now: Date = Date()) {
+        syncRestNotification()
+        guard let checkpointStore else { return }
+        guard finishedAt == nil else {
+            checkpointStore.clear()
+            return
+        }
+        var restEndsAt: Date?
+        var restTotal = 0
+        if case let .running(endAt, total) = rest {
+            restEndsAt = endAt
+            restTotal = total
+        }
+        checkpointStore.save(WorkoutCheckpoint(
+            sessionId: id,
+            dayIndex: dayIndex,
+            stepIndex: stepIndex,
+            totalSteps: flow.steps.count,
+            startedAt: startedAt,
+            updatedAt: now,
+            restEndsAt: restEndsAt,
+            restTotalSeconds: restTotal,
+            logs: logs
+        ))
     }
 
     private func persist(finishedAt: Date? = nil) {
@@ -211,13 +287,32 @@ final class WorkoutSession: Identifiable {
         restKicker = kicker
         var effects: [RestEffect] = []
         rest = RestTimerStateMachine.reduce(rest, .start(seconds: seconds, now: now), &effects)
+        saveCheckpoint(now: now)
+    }
+
+    private func syncRestNotification() {
+        guard let restNotifications else { return }
+        if case let .running(endAt, _) = rest {
+            restNotifications.scheduleRestEnd(
+                dayIndex: dayIndex,
+                sessionId: id,
+                endsAt: endAt,
+                nextTitle: restKicker
+            )
+        } else {
+            restNotifications.cancelRestEnd()
+        }
     }
 
     private func advance() {
         rest = .idle
-        guard stepIndex + 1 < flow.steps.count else { return }
+        guard stepIndex + 1 < flow.steps.count else {
+            saveCheckpoint()
+            return
+        }
         stepIndex += 1
         autoStartRestIfBreak(now: Date())
+        saveCheckpoint()
     }
 
     private func autoStartRestIfBreak(now: Date) {

@@ -4,14 +4,23 @@ import DongKeCore
 struct TodayView: View {
     let plan: WorkoutPlan
     var onStart: () -> Void
+    var resumeHint: String?
+    var onResume: () -> Void
 
     @State private var showSettings: Bool
     private let settingsStore = ReminderSettingsStore.shared
     @Environment(NotificationService.self) private var notifications
 
-    init(plan: WorkoutPlan, onStart: @escaping () -> Void) {
+    init(
+        plan: WorkoutPlan,
+        onStart: @escaping () -> Void,
+        resumeHint: String? = nil,
+        onResume: @escaping () -> Void = {}
+    ) {
         self.plan = plan
         self.onStart = onStart
+        self.resumeHint = resumeHint
+        self.onResume = onResume
         var initial = false
         #if DEBUG
         initial = ProcessInfo.processInfo.environment["DK_PREVIEW"] == "settings"
@@ -65,12 +74,17 @@ struct TodayView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 2)
 
+                if let resumeHint {
+                    resumeCard(resumeHint)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 18)
+                }
+
                 if let day = today {
                     sessionCard(day)
                         .padding(.horizontal, 16)
                         .padding(.top, 22)
                 }
-
                 if let next = nextTrainingDay, !isRestToday {
                     Text("下次训练 \(next.weekday.chineseName) \(timeText(next))")
                         .font(.footnote)
@@ -131,6 +145,31 @@ struct TodayView: View {
         let weekday = SampleData.weekday(for: Date())
         guard let day = plan.days.first(where: { $0.weekday == weekday }) else { return true }
         return day.isRestDay
+    }
+
+    private func resumeCard(_ hint: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("上次训练没做完")
+                .font(.system(size: 16, weight: .semibold))
+            Text(hint)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Button(action: onResume) {
+                Text("继续训练")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(PressableGlassStyle())
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                    .strokeBorder(Theme.accent(for: colorScheme).opacity(0.35), lineWidth: 1)
+            )
+            .padding(.top, 2)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassSurface(radius: Theme.Radius.glassCard)
     }
 
     private func sessionCard(_ day: PlanDay) -> some View {

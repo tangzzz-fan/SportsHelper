@@ -6,6 +6,7 @@ import DongKeCore
 struct DongKeApp: App {
     private let container: ModelContainer
     @State private var store: SessionStore
+    @State private var setLogStore: SetLogStore
     @State private var profileStore: ProfileStore
     @State private var planStore: PlanStore
     @State private var userExerciseStore: UserExerciseStore
@@ -15,16 +16,19 @@ struct DongKeApp: App {
         let container: ModelContainer
         do {
             container = try ModelContainer(
-                for: SessionEntity.self, ProfileEntity.self, PlanEntity.self, UserExerciseEntity.self
+                for: SessionEntity.self, SetLogEntity.self, ProfileEntity.self,
+                PlanEntity.self, UserExerciseEntity.self
             )
         } catch {
             container = try! ModelContainer(
-                for: SessionEntity.self, ProfileEntity.self, PlanEntity.self, UserExerciseEntity.self,
+                for: SessionEntity.self, SetLogEntity.self, ProfileEntity.self,
+                PlanEntity.self, UserExerciseEntity.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }
         self.container = container
         _store = State(initialValue: SessionStore(context: container.mainContext))
+        _setLogStore = State(initialValue: SetLogStore(context: container.mainContext))
         _profileStore = State(initialValue: ProfileStore(context: container.mainContext))
         _planStore = State(initialValue: PlanStore(context: container.mainContext))
 
@@ -49,6 +53,7 @@ struct DongKeApp: App {
         WindowGroup {
             AppShell()
                 .environment(store)
+                .environment(setLogStore)
                 .environment(profileStore)
                 .environment(planStore)
                 .environment(userExerciseStore)

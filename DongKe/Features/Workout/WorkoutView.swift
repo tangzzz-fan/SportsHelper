@@ -6,6 +6,7 @@ struct WorkoutView: View {
     var onClose: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showSkipOptions = false
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
 
@@ -73,6 +74,9 @@ struct WorkoutView: View {
         }
         .onReceive(Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()) { _ in
             session.refresh()
+        }
+        .onChange(of: session.restFinishedToken) { _, _ in
+            Haptics.restFinished()
         }
     }
 
@@ -165,8 +169,17 @@ struct WorkoutView: View {
                 Text("这组做不动")
                     .font(.system(size: 17))
                     .foregroundStyle(Theme.accent(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(PressableGlassStyle())
+
+            Button {
+                showSkipOptions = true
+            } label: {
+                Text("跳过本组")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PressableGlassStyle())
         }
@@ -174,5 +187,12 @@ struct WorkoutView: View {
         .glassSurface(radius: Theme.Radius.glassCard)
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
+        .confirmationDialog("为什么跳过这组？", isPresented: $showSkipOptions, titleVisibility: .visible) {
+            Button("没时间") { session.skipSet(reason: .noTime) }
+            Button("太累了") { session.skipSet(reason: .tooHard) }
+            Button("身体不适") { session.skipSet(reason: .pain) }
+            Button("缺器械") { session.skipSet(reason: .noEquipment) }
+            Button("取消", role: .cancel) {}
+        }
     }
 }

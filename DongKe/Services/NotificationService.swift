@@ -3,9 +3,17 @@ import UserNotifications
 import DongKeCore
 
 @MainActor
+protocol RestNotificationScheduling: AnyObject {
+    func scheduleRestEnd(dayIndex: Int, sessionId: UUID, endsAt: Date, nextTitle: String)
+    func cancelRestEnd()
+}
+
+@MainActor
 @Observable
-final class NotificationService {
+final class NotificationService: RestNotificationScheduling {
     static let shared = NotificationService()
+
+    let router = NotificationRouter()
 
     private let center = UNUserNotificationCenter.current()
     private let prefix = "dk.plan."
@@ -13,7 +21,9 @@ final class NotificationService {
     private(set) var status: UNAuthorizationStatus = .notDetermined
     private(set) var scheduledCount = 0
 
-    private init() {}
+    private init() {
+        center.delegate = router
+    }
 
     var statusText: String {
         switch status {
@@ -59,6 +69,7 @@ final class NotificationService {
             content.title = spec.title
             content.body = spec.body
             content.sound = settings.soundEnabled ? .default : nil
+            content.userInfo = ReminderPayload.userInfo(weekday: spec.weekday)
 
             let trigger = ReminderTrigger.from(spec)
             let components = DateComponents(hour: trigger.hour, minute: trigger.minute, weekday: trigger.weekday)
@@ -70,6 +81,49 @@ final class NotificationService {
             try? await center.add(request)
         }
 
+        await refreshStatus()
+    }
+
+    func scheduleRestEnd(dayIndex: Int, sessionId: UUID, endsAt: Date, nextTitle: String) {
+        Task { await scheduleRestEndNow(dayIndex: dayIndex, sessionId: sessionId, endsAt: endsAt, nextTitle: nextTitle) }
+    }
+
+    func cancelRestEnd() {
+        Task { await cancelRestEndNow() }
+    }
+
+    private func scheduleRestEndNow(dayIndex: Int, sessionId: UUID, endsAt: Date, nextTitle: String) async {
+        await cancelRestEndNow()
+        let spec = RestNotificationBuilder.make(
+            dayIndex: dayIndex,
+            sessionId: sessionId,
+            endsAt: endsAt,
+            nextTitle: nextTitle
+        )
+        let seconds = spec.fireAt.timeIntervalSinceNow
+        guard seconds > 1 else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = spec.title
+        content.body = spec.body
+        content.sound = .default
+        content.userInfo = ReminderPayload.userInfo(dayIndex: spec.dayIndex)
+
+        let request = UNNotificationRequest(
+            identifier: spec.identifier,
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+        )
+        try? await center.add(request)
+        await refreshStatus()
+    }
+
+    private func cancelRestEndNow() async {
+        let identifiers = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix(RestNotificationBuilder.prefix) }
+        guard identifiers.isEmpty == false else { return }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
         await refreshStatus()
     }
 }
