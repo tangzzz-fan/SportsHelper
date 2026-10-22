@@ -17,6 +17,7 @@ struct SettingsSheet: View {
                 VStack(spacing: 16) {
                     reminderCard
                     statusCard
+                    AISettingsCard()
                 }
                 .padding(16)
             }

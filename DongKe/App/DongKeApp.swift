@@ -9,6 +9,7 @@ struct DongKeApp: App {
     @State private var profileStore: ProfileStore
     @State private var planStore: PlanStore
     @State private var userExerciseStore: UserExerciseStore
+    @State private var aiSettings = AISettingsStore.shared
 
     init() {
         let container: ModelContainer
@@ -51,6 +52,7 @@ struct DongKeApp: App {
                 .environment(profileStore)
                 .environment(planStore)
                 .environment(userExerciseStore)
+                .environment(aiSettings)
                 .environment(NotificationService.shared)
         }
         .modelContainer(container)

@@ -80,6 +80,11 @@ struct ImportView: View {
                         failureCard(draft)
                     }
 
+                    AIGenerateCard { generated in
+                        draft = generated
+                        showReview = true
+                    }
+
                     Button {
                         UIPasteboard.general.string = PlanPromptTemplate.text
                         copiedPrompt = true

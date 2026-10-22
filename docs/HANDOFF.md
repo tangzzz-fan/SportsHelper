@@ -9,9 +9,9 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存）、动作库、动作详情、记录、设置 |
-| 数据 | 训练记录、档案、计划三份数据走 SwiftData；提醒按计划排程（≤7 条、先清后排）；计划由引导档案生成，也可粘贴文本 / JSON 导入 |
-| 测试 | 132 条 Swift Testing，**132 绿 0 红**（`ios-run.sh test`） |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI） |
+| 数据 | 训练记录、档案、计划三份数据走 SwiftData；提醒按计划排程（≤7 条、先清后排）；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
+| 测试 | 197 条 Swift Testing，**197 绿 0 红**（`ios-run.sh test`）；AI 契约（请求体 / 映射 / 文案 / 端点 / 解释器 / 提示词 / schema）38 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,9 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；测试跑完 132 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；测试跑完 197 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+
+注意 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，真实结果看日志里的 `Test run with 197 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -47,8 +49,8 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 > 接手动刻（DongKe）项目，仓库已 clone 在本机。先按顺序读：`docs/HANDOFF.md`（本文件）、`docs/FROZEN-BASELINE.md`、`docs/SPEC.md`、`docs/GATE-2-TEST-REPORT.md`、`.workbuddy/memory/2026-10-22.md`。
 > 铁律：开发唯一依据是 FROZEN + SPEC，PRD / ARCHITECTURE / UIUX 只作存档，不许再跨角色对账或改写文档。
-> 现状：文档已冻结，Gate 2 报告已出，52 条测试 38 红，等用户放行。
-> 现在只做一件事：复述你读到的 MVP 范围、三条硬口径（字体零打包 / 占位键 `_generic` / 帧数动态 3 静力 2），以及红转绿顺序，然后停下等我放行。不要写代码，不要改文档。
+> 现状：文档已冻结，Gate 2 已放行；197 条测试全绿，构建通过。
+> 现在只做一件事：复述你读到的 MVP 范围、三条硬口径（字体零打包 / 占位键 `_generic` / 帧数动态 3 静力 2），然后停下等我放行。不要写代码，不要改文档。
 
 第 4 步是刻意设计的验收：让新团队先复述，确认它读的是文件当前版本而不是旧记忆。旧机上反复出现的返工，全部来自角色凭记忆对账。
 
@@ -133,6 +135,7 @@ SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl laun
 SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios   # 塞一个「我的动作」（农夫行走）
 SIMCTL_CHILD_DK_PREVIEW=myexercise SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios  # 我的动作详情
 xcrun simctl spawn booted defaults write app.dongke.ios dk.alias.memo -dict "保加利亚分腿蹲" "squat"  # 预置别名记忆，验第三层
+SIMCTL_CHILD_DK_SEED_AI=1 xcrun simctl launch booted app.dongke.ios   # 预置 AI 接口与假 Key（验已配置态）
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 
@@ -140,8 +143,32 @@ xcrun simctl io booted screenshot /tmp/shot.png
 
 玻璃分支判断是 `#available(iOS 26)`，因此**任何 ≥26 的运行时都走原生分支**；要验证回退观感只能用 `DK_FORCE_LEGACY_GLASS=1`，不要指望装 iOS 26 运行时能覆盖到。
 
+## 6.2 AI 直连（BYOK）
+
+用户自己填 `Base URL + Key`，App 只做「调用 + 解析」，不代管密钥、不自建后端。Key 走 Keychain（`AfterFirstUnlockThisDeviceOnly`），Base URL 与模型名走 UserDefaults。
+
+| 层 | 文件 | 职责 |
+|---|---|---|
+| Core（可单测，只 import Foundation） | `AI/AIEndpoint` | Base URL 归一化：非 https 直接拒，末尾斜杠不产生双斜杠，已带 `/chat/completions` 不重复拼 |
+| | `AI/AIPromptBuilder` | system prompt（内联 schema + 18 个 catalogId + 7 条硬规则）与 user brief（档案） |
+| | `AI/ChatRequestBodyBuilder` | 请求体与 `response_format` 三级形态 |
+| | `AI/AIResponseMapper` | HTTP 状态 + 正文 → `.content / .degrade / .failure` |
+| | `AI/AIPlanInterpreter` | 模型输出 → `ParsedPlanDraft`（复用导入链路，不另开解析器） |
+| | `AI/PlanSchemaJSON` | `docs/plan-schema.json` 的压缩副本（唯一真相仍是 docs 那份） |
+| App（IO 层） | `Services/AIPlanClient` | **全仓唯一持有 `URLSession` 的类型**；三级降级 + 仅 429/5xx/超时各重试 1 次（退避 2 秒） |
+| | `Services/KeychainService` / `AISettingsStore` | Keychain 读写；设置读写与 `isConfigured` 判定 |
+| | `Features/Import/AIGenerateCard`、`Features/Settings/AISettingsCard` | 生成入口与配置表单 |
+
+降级顺序固定：`json_schema(strict)` → `json_object` → 不带 `response_format`。判据是 **400 且正文提到 `response_format` / `json_schema` / `not supported`**；其它 400 不当降级信号，直接报错。三级都降完仍失败 → `serverError(400)`，文案引导改用粘贴导入。
+
+验证「唯一网络出口」：`grep -rn "URLSession" --include=*.swift DongKe DongKeCore` 应当只命中 `Services/AIPlanClient.swift`。
+
+改 schema 时同步 `PlanSchemaJSON`：测试守了两件事——`$defs` 恰好 6 个、18 个 catalogId 全部出现在 prompt 与 schema 文本里；drift 会红。
+
+**未做**：401 / 429 / 超时的真实端点 E2E（本机沙箱出网白名单不放行任意外部域名）；Key 的「先验证再保存」也没做——保存不联网是刻意选择，401 时给「去改 Key」入口。
+
 ## 7. 换机后容易踩的三个坑
 
 1. **`.xcodeproj` 不在库里**：只 clone 不跑 `xcodegen generate`，Xcode 打开一片空白。
-2. **把 38 条红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序，空实现桩本来就是红的。
+2. **把历史红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序（该报告是 2026-10-22 的历史快照，当前已全绿）。
 3. **骨架门禁红被当成回归**：打样期数据只有 2 帧，动态动作欠第 3 帧。判红前先核对 `figure-specs` 数据版本，见 SPEC §11 最后一条。
