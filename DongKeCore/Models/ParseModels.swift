@@ -31,6 +31,8 @@ public struct ParsedPlanDraft: Equatable, Sendable {
     public var issues: [ParseIssue]
     public var rawText: String
     public var path: ParsePath
+    public var assumptions: [String]
+    public var unmappedNames: [String]
 
     public var needsReview: Bool {
         path != .strictJSON || !issues.isEmpty
@@ -40,11 +42,20 @@ public struct ParsedPlanDraft: Equatable, Sendable {
         issues.contains { $0.severity == .error }
     }
 
-    public init(plan: WorkoutPlan?, issues: [ParseIssue], rawText: String, path: ParsePath) {
+    public init(
+        plan: WorkoutPlan?,
+        issues: [ParseIssue],
+        rawText: String,
+        path: ParsePath,
+        assumptions: [String] = [],
+        unmappedNames: [String] = []
+    ) {
         self.plan = plan
         self.issues = issues
         self.rawText = rawText
         self.path = path
+        self.assumptions = assumptions
+        self.unmappedNames = unmappedNames
     }
 
     public static func empty(rawText: String) -> ParsedPlanDraft {

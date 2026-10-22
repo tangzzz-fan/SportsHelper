@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 import DongKeCore
 
 private struct PlanEditRow: Identifiable {
     var dayIndex: Int
     var itemId: String
     var name: String
+    var catalogId: String
     var isDuration: Bool
     var sets: Int
     var value: Int
@@ -23,14 +25,16 @@ struct ImportView: View {
     @State private var draft: ParsedPlanDraft?
     @State private var showReview = false
     @State private var autoParsed = false
+    @State private var copiedPrompt = false
 
     private static let sampleText = """
+    增肌计划 第一周
     周一 深蹲 4组×12次，休息90秒
-    俯卧撑 3组×10次，休息60秒
-    平板支撑 3组 每组30秒，休息45秒
+    保加利亚分腿蹲 3组 每侧10次
+    农夫行走 3组 40米
 
-    周四 箭步蹲 3组 每侧12次，休息60秒
-    臀桥 3组×15次，休息60秒
+    周四 平板支撑 3组 每组45秒，休息45秒
+    臀桥 3组×15次
     """
 
     init(onSave: @escaping (WorkoutPlan) -> Void) {
@@ -72,6 +76,23 @@ struct ImportView: View {
                     if let draft, draft.plan == nil {
                         failureCard(draft)
                     }
+
+                    Button {
+                        UIPasteboard.general.string = PlanPromptTemplate.text
+                        copiedPrompt = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: copiedPrompt ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 14, weight: .medium))
+                            Text(copiedPrompt ? "提示词已复制，粘给任意 AI" : "复制提示词，让 AI 按这个格式输出")
+                                .font(.footnote.weight(.medium))
+                        }
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(PressableGlassStyle())
+                    .glassSurface(radius: Theme.Radius.card)
 
                     Text("示例：周一 深蹲 4组×12次，休息90秒 → 周五 平板支撑 3组 每组30秒")
                         .font(.caption)
@@ -198,6 +219,10 @@ struct PlanReviewView: View {
                     issueBanner
                 }
 
+                if draft.assumptions.isEmpty == false {
+                    assumptionsCard
+                }
+
                 ForEach(trainingDays) { day in
                     dayCard(day)
                 }
@@ -227,20 +252,21 @@ struct PlanReviewView: View {
         .sheet(item: $editing) { row in
             EditRowSheet(
                 row: row,
-                onApply: { sets, value, rest in
+                onApply: { sets, value, rest, catalogId in
                     plan = PlanEditing.updateItem(
                         in: plan,
                         dayIndex: row.dayIndex,
                         itemId: row.itemId,
                         sets: sets,
                         value: value,
-                        restSec: rest
+                        restSec: rest,
+                        catalogId: catalogId
                     )
                     editing = nil
                 },
                 onCancel: { editing = nil }
             )
-            .presentationDetents([.height(400)])
+            .presentationDetents([.height(460)])
             .presentationBackground(.regularMaterial)
         }
     }
@@ -262,6 +288,27 @@ struct PlanReviewView: View {
         case .freeText: "按文字识别"
         case .blank: "未识别"
         }
+    }
+
+    private var assumptionsCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("我替你判断了这些，请核对")
+                .font(.footnote.weight(.semibold))
+            ForEach(Array(draft.assumptions.prefix(6).enumerated()), id: \.offset) { _, line in
+                Text("· \(line)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if draft.assumptions.count > 6 {
+                Text("还有 \(draft.assumptions.count - 6) 条已按同样规则处理")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.halo(for: colorScheme).opacity(0.7), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var issueBanner: some View {
@@ -300,6 +347,7 @@ struct PlanReviewView: View {
                             dayIndex: day.dayIndex,
                             itemId: item.itemId,
                             name: item.name,
+                            catalogId: item.catalogId,
                             isDuration: item.target.type == .durationSec,
                             sets: item.sets,
                             value: item.target.value,
@@ -334,6 +382,14 @@ struct PlanReviewView: View {
                     .monospacedDigit()
             }
             Spacer()
+            if ExerciseLibrary.entry(for: item.catalogId) == nil {
+                Text("不在库里")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Color.orange.opacity(0.12), in: Capsule())
+            }
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.tertiary)
@@ -351,20 +407,26 @@ struct PlanReviewView: View {
 
 private struct EditRowSheet: View {
     let row: PlanEditRow
-    var onApply: (Int, Int, Int) -> Void
+    var onApply: (Int, Int, Int, String?) -> Void
     var onCancel: () -> Void
 
     @State private var sets: Int
     @State private var value: Int
     @State private var rest: Int
+    @State private var catalogId: String?
 
-    init(row: PlanEditRow, onApply: @escaping (Int, Int, Int) -> Void, onCancel: @escaping () -> Void) {
+    init(
+        row: PlanEditRow,
+        onApply: @escaping (Int, Int, Int, String?) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
         self.row = row
         self.onApply = onApply
         self.onCancel = onCancel
         _sets = State(initialValue: row.sets)
         _value = State(initialValue: row.value)
         _rest = State(initialValue: row.restSec)
+        _catalogId = State(initialValue: ExerciseLibrary.entry(for: row.catalogId) == nil ? nil : row.catalogId)
     }
 
     var body: some View {
@@ -375,9 +437,19 @@ private struct EditRowSheet: View {
                 Text(row.name)
                     .font(.system(size: 16, weight: .semibold))
                 Spacer()
-                Button("应用") { onApply(sets, value, rest) }
+                Button("应用") { onApply(sets, value, rest, catalogId) }
                     .fontWeight(.semibold)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+
+            Picker("动作", selection: $catalogId) {
+                Text("保留原名「\(row.name)」").tag(String?.none)
+                ForEach(ExerciseLibrary.all) { entry in
+                    Text("\(entry.name)（\(entry.equipment.chineseName)）").tag(String?.some(entry.id))
+                }
+            }
+            .pickerStyle(.menu)
             .padding(.horizontal, 16)
             .padding(.top, 16)
 

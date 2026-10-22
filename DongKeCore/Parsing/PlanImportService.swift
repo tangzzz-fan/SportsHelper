@@ -29,6 +29,9 @@ public enum PlanImportService {
             if let lenient = try? PlanDecoder.decodeLenient(trimmed) {
                 return draft(plan: lenient.plan, issues: lenient.issues, rawText: text, path: .lenientJSON)
             }
+            if let generic = PlanDraftParser.draft(fromJSON: trimmed) {
+                return compiled(generic, rawText: text, path: .lenientJSON)
+            }
             return ParsedPlanDraft(
                 plan: nil,
                 issues: [ParseIssue(
@@ -42,6 +45,18 @@ public enum PlanImportService {
         }
 
         return FreeTextPlanParser.parse(text)
+    }
+
+    private static func compiled(_ draft: PlanDraft, rawText: String, path: ParsePath) -> ParsedPlanDraft {
+        let result = PlanDraftCompiler.compile(draft)
+        return ParsedPlanDraft(
+            plan: result.plan,
+            issues: PlanValidator.validate(result.plan),
+            rawText: rawText,
+            path: path,
+            assumptions: result.assumptions,
+            unmappedNames: result.unmappedNames
+        )
     }
 
     private static func draft(
@@ -68,7 +83,8 @@ public enum PlanEditing {
         itemId: String,
         sets: Int? = nil,
         value: Int? = nil,
-        restSec: Int? = nil
+        restSec: Int? = nil,
+        catalogId: String? = nil
     ) -> WorkoutPlan {
         var updated = plan
         guard let dayOffset = updated.days.firstIndex(where: { $0.dayIndex == dayIndex }) else {
@@ -88,6 +104,17 @@ public enum PlanEditing {
             }
             if let restSec {
                 updated.days[dayOffset].blocks[blockOffset].items[itemOffset].restSec = max(0, restSec)
+            }
+            if let catalogId, let entry = ExerciseLibrary.entry(for: catalogId) {
+                updated.days[dayOffset].blocks[blockOffset].items[itemOffset].catalogId = catalogId
+                updated.days[dayOffset].blocks[blockOffset].items[itemOffset].name = entry.name
+                updated.days[dayOffset].blocks[blockOffset].items[itemOffset].load = Load(
+                    type: entry.equipment == .dumbbell ? .dumbbell : .bodyweight,
+                    value: 0
+                )
+                if entry.isStatic, updated.days[dayOffset].blocks[blockOffset].items[itemOffset].target.type == .reps {
+                    updated.days[dayOffset].blocks[blockOffset].items[itemOffset].target.type = .durationSec
+                }
             }
             changed = true
             break

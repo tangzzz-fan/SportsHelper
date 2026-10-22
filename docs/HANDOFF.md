@@ -80,6 +80,23 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | `DongKeCoreTests/` | Swift Testing，纯逻辑，不依赖模拟器 UI |
 | `.workbuddy/memory/` | 工作日志，**已纳入 git**，换机随仓库带走 |
 
+## 6.0 导入链路（别人给的计划怎么变成结构化计划）
+
+三种输入形状走同一条链路，代码都在 `DongKeCore/Import/`：
+
+```
+任意 JSON / 表格 / 列表 / 散文
+        ↓  适配器链（PlanDraftParser：表格 → 行扫描；JSON 走 DraftJSONAdapter）
+   PlanDraft（容错中间层：动作名原样留、剂量可缺、每行记出处）
+        ↓  实体解析（ExerciseAliasResolver）+ 补默认值
+   WorkoutPlan（7 天骨架 + PlanValidator）
+        ↓
+   校对页（假设逐条列出、未识别动作可标可换）
+```
+
+要加一种新格式，只加一个适配器产出 `PlanDraft`，编译器与页面都不用动。要给某个 agent 定契约，让它照
+`PlanPromptTemplate.text` 的 JSON 输出——那份示例由测试保证能被自己的解析器读懂。
+
 ## 6.1 截图自检钩子
 
 调试构建支持用环境变量直达某一屏（仅 `#if DEBUG`，发布构建无此分支）：
