@@ -54,6 +54,18 @@ struct AppShell: View {
         }
         .task {
             #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_REQUEST_PROVISIONAL"] == "1" {
+                await NotificationService.shared.requestProvisionalForTesting()
+            }
+            #endif
+            await NotificationService.shared.refreshStatus()
+            if NotificationService.shared.status == .authorized || NotificationService.shared.status == .provisional {
+                await NotificationService.shared.reschedule(
+                    plan: SampleData.plan,
+                    settings: ReminderSettingsStore.shared.settings
+                )
+            }
+            #if DEBUG
             if ProcessInfo.processInfo.environment["DK_SEED_SESSION"] == "1", store.sessions.isEmpty {
                 store.upsert(
                     id: UUID(),

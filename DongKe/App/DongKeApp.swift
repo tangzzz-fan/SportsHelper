@@ -24,6 +24,7 @@ struct DongKeApp: App {
         WindowGroup {
             AppShell()
                 .environment(store)
+                .environment(NotificationService.shared)
         }
         .modelContainer(container)
     }

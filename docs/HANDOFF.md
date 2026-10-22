@@ -90,6 +90,8 @@ SIMCTL_CHILD_DK_PREVIEW=plan    xcrun simctl launch booted app.dongke.ios   # �
 SIMCTL_CHILD_DK_PREVIEW=history xcrun simctl launch booted app.dongke.ios   # 记录
 SIMCTL_CHILD_DK_PREVIEW=rest    xcrun simctl launch booted app.dongke.ios   # 休息面板
 SIMCTL_CHILD_DK_FORCE_LEGACY_GLASS=1 xcrun simctl launch booted app.dongke.ios  # 强制走 iOS 18 玻璃回退分支
+SIMCTL_CHILD_DK_SEED_SESSION=1 xcrun simctl launch booted app.dongke.ios       # 写一条训练记录（验持久化）
+SIMCTL_CHILD_DK_REQUEST_PROVISIONAL=1 xcrun simctl launch booted app.dongke.ios # 静默授权，验提醒排程
 xcrun simctl io booted screenshot /tmp/shot.png
 ```
 

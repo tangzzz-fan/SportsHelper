@@ -4,6 +4,19 @@ import DongKeCore
 struct TodayView: View {
     var onStart: () -> Void
 
+    @State private var showSettings: Bool
+    private let settingsStore = ReminderSettingsStore.shared
+    @Environment(NotificationService.self) private var notifications
+
+    init(onStart: @escaping () -> Void) {
+        self.onStart = onStart
+        var initial = false
+        #if DEBUG
+        initial = ProcessInfo.processInfo.environment["DK_PREVIEW"] == "settings"
+        #endif
+        _showSettings = State(initialValue: initial)
+    }
+
     @Environment(\.colorScheme) private var colorScheme
     @Environment(SessionStore.self) private var store
 
@@ -26,10 +39,14 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Spacer()
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(Theme.accent(for: colorScheme))
-                        .frame(width: 44, height: 44)
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundStyle(Theme.accent(for: colorScheme))
+                            .frame(width: 44, height: 44)
+                    }
                 }
                 .padding(.horizontal, 8)
 
@@ -60,6 +77,27 @@ struct TodayView: View {
                 Spacer()
             }
             .padding(.top, 4)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet(
+                settingsStore: settingsStore,
+                plan: plan,
+                onRequestAuthorization: requestAuthorization,
+                onReschedule: rescheduleReminders
+            )
+        }
+    }
+
+    private func requestAuthorization() {
+        Task {
+            await notifications.requestAuthorization()
+            await notifications.reschedule(plan: plan, settings: settingsStore.settings)
+        }
+    }
+
+    private func rescheduleReminders() {
+        Task {
+            await notifications.reschedule(plan: plan, settings: settingsStore.settings)
         }
     }
 
