@@ -134,7 +134,7 @@ struct WorkoutView: View {
                     .padding(.vertical, 16)
             }
             .buttonStyle(PressableGlassStyle())
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.callToActionInk(for: colorScheme))
             .background(
                 Theme.accent(for: colorScheme),
                 in: RoundedRectangle(cornerRadius: 14, style: .continuous)

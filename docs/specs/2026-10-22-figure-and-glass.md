@@ -120,6 +120,25 @@
 - 第二个素材来源的真实实现（只做契约与文档，不做 `free-exercise-db` 的下载与打包）。
 - 久坐提醒（P1）。
 
+## 换源步骤（T05 交付）
+
+换成另一个素材库时只动两处，页面与状态机不改：
+
+1. **放素材**：把新素材库解包到 `.scratch/figure-and-glass/assets/<lib>/`（该目录不入库：体积 + 授权）。
+2. **改生成器**：在 `gen_figures.py` 里改 `MAPPING`（catalogId → 素材 id）与读取方式。
+   - 若新素材是「每动作 2 张静图」的形态（如 `yuhonas/free-exercise-db`），把每动作写成 2 帧、`motion` 设为 `.hold`；
+     渲染层无需改动，`FigureFrame.raster` 分支就是为这种形态留的。
+   - 缺图动作在 `MAPPING` 里留空，`FigureLibrary` 会自动回退 `_generic`。
+3. **重跑生成器**：`python3 .scratch/figure-and-glass/tools/gen_figures.py`，产物提交入库。
+4. **跑测试**：覆盖度、帧数、包围盒、换源契约四条门禁会立刻告诉你哪里不对。
+
+已核过的两个候选：
+
+| 库 | 动作数 | 形态 | 授权 | 已知缺口 |
+|---|---|---|---|---|
+| `yuhonas/free-exercise-db` | 873 | 每动作 2 张静图（中位 53KB） | **The Unlicense（公有领域，可商用免署名）** | 缺 开合跳 / 靠墙静蹲 / 鸟狗 / 高抬腿；`side_plank` 需用 `Side_Bridge` 顶 |
+| `hasaneyldrm/exercises-dataset` | 1324 | 每动作 1 个 GIF（180×180，中位 92KB） | 数据 MIT，**媒体 © Gym visual 需署名** | 尺寸偏小，220pt 展示会糊 |
+
 ## Further Notes
 
 - 两处已知观感折中（上游客源限制，不是映射错误）：`crunch` 的插画是斜板卷腹（上游标 Bodyweight，但画的是卧凳）；`calf_raise` 的插画带扶手架。两者都是上游该动作唯一的「徒手」版本，换用其它 slug 会变成另一个动作，因此保留并在实现说明里标注。

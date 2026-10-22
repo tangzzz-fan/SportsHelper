@@ -10,6 +10,10 @@ enum Theme {
         scheme == .dark ? tintDark : tint
     }
 
+    static func callToActionInk(for scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(red: 11 / 255, green: 11 / 255, blue: 12 / 255) : .white
+    }
+
     static func halo(for scheme: ColorScheme) -> Color {
         scheme == .dark ? haloDark : haloLight
     }
