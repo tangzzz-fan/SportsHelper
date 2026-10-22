@@ -13,6 +13,49 @@ public enum Weekday: Int, Codable, CaseIterable, Sendable {
         (rawValue % 7) + 1
     }
 
+    public var englishName: String {
+        switch self {
+        case .monday: "monday"
+        case .tuesday: "tuesday"
+        case .wednesday: "wednesday"
+        case .thursday: "thursday"
+        case .friday: "friday"
+        case .saturday: "saturday"
+        case .sunday: "sunday"
+        }
+    }
+
+    public init?(name: String) {
+        let lowered = name.lowercased()
+        guard let value = Weekday.allCases.first(where: { $0.englishName == lowered }) else { return nil }
+        self = value
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let name = try? container.decode(String.self) {
+            guard let value = Weekday(name: name) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "未知的星期名 \(name)")
+            }
+            self = value
+            return
+        }
+        let raw = try container.decode(Int.self)
+        guard let value = Weekday(rawValue: raw) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "星期序号须在 1 到 7 之间")
+        }
+        self = value
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(englishName)
+    }
+
+    public var previous: Weekday {
+        Weekday(rawValue: rawValue == 1 ? 7 : rawValue - 1) ?? .sunday
+    }
+
     public var chineseName: String {
         switch self {
         case .monday: "周一"

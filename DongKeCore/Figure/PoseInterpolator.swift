@@ -44,6 +44,30 @@ public struct FigureSpec: Codable, Equatable, Sendable {
 
 public enum PoseInterpolator {
     public static func pose(_ spec: FigureSpec, phase: Double) -> FigurePose {
-        spec.poses.first ?? FigurePose(points: [:])
+        guard let first = spec.poses.first else { return FigurePose(points: [:]) }
+        guard spec.poses.count > 1 else { return first }
+
+        let clamped = min(max(phase, 0), 1)
+        let scaled = clamped * Double(spec.poses.count - 1)
+        let lowerIndex = Int(scaled.rounded(.down))
+        let upperIndex = min(lowerIndex + 1, spec.poses.count - 1)
+        guard lowerIndex != upperIndex else { return spec.poses[lowerIndex] }
+
+        return blend(spec.poses[lowerIndex], spec.poses[upperIndex], scaled - Double(lowerIndex))
+    }
+
+    private static func blend(_ from: FigurePose, _ to: FigurePose, _ progress: Double) -> FigurePose {
+        var points = from.points
+        for (key, target) in to.points {
+            guard let source = from.points[key] else {
+                points[key] = target
+                continue
+            }
+            points[key] = FigurePoint(
+                x: source.x + (target.x - source.x) * progress,
+                y: source.y + (target.y - source.y) * progress
+            )
+        }
+        return FigurePose(points: points)
     }
 }

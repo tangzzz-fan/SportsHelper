@@ -9,9 +9,9 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | 只有 Domain 模型与空实现桩；UI 仅占位 `Text("动刻")` |
-| 测试 | 52 条 Swift Testing，38 红 / 14 绿，红基线见 `docs/GATE-2-TEST-REPORT.md` |
-| Gate 2 | 报告已提交，**等用户放行**。放行后才允许逐层转绿并写 UI |
+| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 骨架插值）；UI 仍占位 `Text("动刻")` |
+| 测试 | 52 条 Swift Testing，**52 绿 0 红**；转绿记录见 `docs/GATE-2-TEST-REPORT.md` 第 6 节 |
+| Gate 2 | 已放行并全部转绿。下一步：18 个动作骨架数据 → UI |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
 ## 2. 新机器要装什么
@@ -57,6 +57,8 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 | 口径 | 结论 | 位置 |
 |---|---|---|
+| UI 风格 | **Apple 原生**：NavigationStack / insetGrouped List / TabView / 系统语义色 / SF 字阶；深青绿 `#0E7C66` 只作 tint、选中态、进度环、主按钮 | 2026-10-22 用户裁决，取代 UIUX 的自建视觉体系 |
+| UI 出稿工具 | OpenDesign（本机 daemon `127.0.0.1:7456`，项目 `dongke-native`，skill `swiftui-design`）；设计稿只作实施依据，不参与文档对账 | 同上 |
 | 字体 | 零打包。`UIAppFonts` 为空，仓库无字体文件；倒计时用系统等宽 + `.monospacedDigit()`；字号与字族只在 `Theme/Typography.swift` 出现；88pt 是全项目唯一自定字号 | SPEC §4 / §8、ARCH §14.4 |
 | 占位骨架键名 | `_generic`（不是 catalogId，下划线前缀保住「白名单严格等于 18 个」） | ARCH §12.5 第 1 条 |
 | 骨架帧数 | 动态动作恰 3 帧（起始 / 最吃力点 / 回起始），`staticHold: true` 的静力动作恰 2 帧，`_generic` 恰 1 帧 | ARCH §12.5 第 2 条 |

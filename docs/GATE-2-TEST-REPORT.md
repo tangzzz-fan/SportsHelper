@@ -62,3 +62,42 @@
 | 实现转绿 | 待放行 |
 
 **Gate 2 待你放行。放行后我开始把 38 条红逐条转绿，再进入 UI 实施。**
+
+---
+
+## 6. 转绿结果（2026-10-22 21:25）
+
+| 指标 | 数值 |
+|------|------|
+| 测试总数 | 52 |
+| 通过 | 52 |
+| 失败 | 0 |
+| 结果 | `Test run with 52 tests in 9 suites passed` / **TEST SUCCEEDED** |
+
+命令：`xcodebuild -project DongKe.xcodeproj -scheme DongKe -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -parallel-testing-enabled NO test`
+
+### 6.1 本轮唯一一处「测试对、模型错」
+
+`Weekday` 原本声明为 `Int` rawValue（`monday = 1`），合成 Codable 按整数解码；而 `plan-schema.json` 的契约是字符串 `"monday"`。表现为 `PlanDecoder.decode(validPlanJSON())` 抛 `typeMismatch: days[0].weekday`，被 `decode` 的兜底 catch 包成 `schemaMismatch`。
+
+修法：保留 `Int` rawValue（`Weekday(rawValue:)` 的序号语义被测试与排程依赖），另写 `init(from:)` / `encode(to:)` 走字符串名，并加 `init?(name:)` 与 `englishName`。解码同时兼容整数形式，供旧数据兜底。
+
+### 6.2 各层落地要点
+
+| 层 | 实现要点 |
+|---|---|
+| `PlanJSONExtractor` | 代码围栏优先；无围栏时按引号感知的括号配对取首个平衡对象；单元素数组拆壳 |
+| `PlanDecoder` | 严格解码 + `schemaVersion == 1` 校验；宽松路径在 JSON 层补 `restSec=60` 等缺省并逐条记 issue |
+| `PlanValidator` | 组数 1–20、休息 0–600、轮数 1–20、7 天与 `dayIndex`/`weekday` 一致、`daysPerWeek` 与训练日数一致 |
+| `FreeTextPlanParser` | 逐行：星期标记 → 循环轮数 → 动作行；正则依次剥离休息 / 组×次 / 组 / 次 / 秒，剩余文本作动作名 |
+| `WorkoutFlowModel` | 循环/超级组按 `rounds` 展开，轮间插 `roundBreak`（末轮不插），块间插 `blockBreak` |
+| `RestTimerStateMachine` | 绝对 `endAt`；`tick` 越过终点只结算一次；暂停存剩余；加时同时延长 `endAt` 与 `totalSeconds` |
+| `WeeklyScheduleGenerator` | 提前量跨午夜时 `triggerTime` 回绕到前一日并同步回退 `weekday` |
+| `CompletionRateCalculator` | 分母 0 返 nil；完成率 clamp 到 0…1；连续天数阈值 0.8，今日未达标时从昨日回溯 |
+| `PoseInterpolator` | 关键帧线性插值，`phase` clamp 到 0…1，关节缺失时取目标帧 |
+
+### 6.3 仍未覆盖
+
+- 18 个动作的骨架数据（`figure-specs.json`）尚未编写，`PoseInterpolator` 只有算法没有数据。
+- 第 4 节列出的持久化、通知真实排程、AI 错误映射、UI 均未开始。
+

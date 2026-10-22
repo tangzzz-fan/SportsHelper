@@ -22,6 +22,12 @@ public struct TimeOfDay: Codable, Equatable, Comparable, Sendable {
         self.minute = minute
     }
 
+    public init?(minutesSinceMidnight minutes: Int) {
+        guard (0..<(24 * 60)).contains(minutes) else { return nil }
+        self.hour = minutes / 60
+        self.minute = minutes % 60
+    }
+
     public var stringValue: String {
         String(format: "%02d:%02d", hour, minute)
     }
