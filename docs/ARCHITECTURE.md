@@ -12,7 +12,7 @@
 - v1.0 首版：技术选型、分层、数据模型、计划契约、通知与训练引擎、测试策略
 - v1.1 吸收 PRD 与 UIUX 的硬约束后修订：动作图示从"自绘骨架"改为"开源线稿素材"（D-20）；新增久坐提醒链路与时效性通知（§9.7）；打卡改为三态（D-26）；新增跳过并顺延的排期解析（§5.4）；新增动作线稿授权履行义务（§12.3，v1.3 已撤销）；新增埋点只落本地的说明与 `notification_delivered` 不可得的结论（§13.4）；通知权限请求时机改到引导最后一屏（D-25）
 - v1.2 定稿收敛：动作库锁定 18 个 catalogId（与 `plan-schema.json` 白名单一致）；素材入包 18 动作 × 3 帧 = 54 张，新增 §12.5 文件映射表与导入流程（v1.3 已撤销）；久坐提醒移出 MVP 列 P1（§9.6），通知常驻量回到 ≤7 条、预算按此重算（§9.3）；主色裁决为深青绿 `#0E7C66`（§14.3、§14.6）；取消打包字体，改系统等宽（§14.4）；最低版本 iOS 18.0 与直连 AI 进 MVP 均确认
-- v1.3 按 `FROZEN-BASELINE.md` 回同步：动作图示恢复为**自绘参数化骨架 12 关节**（决策 6，撤销 D-20 的第三方素材）、主色确认**深青绿 `#0E7C66` / `#34B39A`**（决策 11）、**跳过并顺延移出 MVP 列 P1**（§2）、打包 B612 Mono Bold（SPEC §4）、久坐额度不再提 48 小时滚动窗口（决策 8）；§12 全章重写，§5.4 退化为 weekday 匹配
+- v1.3 按 `FROZEN-BASELINE.md` 回同步：动作图示恢复为**自绘参数化骨架 12 关节**（决策 6，撤销 D-20 的第三方素材）、主色确认**深青绿 `#0E7C66` / `#34B39A`**（决策 11）、**跳过并顺延移出 MVP 列 P1**（§2）、**字体改零打包**（撤销 B612 Mono Bold 打包，系统等宽 + `.monospacedDigit()`）、久坐额度不再提 48 小时滚动窗口（决策 8）；§12 全章重写，§5.4 退化为 weekday 匹配
 
 ---
 
@@ -45,7 +45,7 @@ MVP 功能闭环：
 | 依赖 | 零第三方。仅 Apple 框架：SwiftUI、SwiftData、UserNotifications、Security、Charts、Foundation、OSLog | 见 §3.2 |
 | 持久化 | SwiftData（iOS 18 及以上，可用 `#Index`、`#Unique`） | 见 §3.3 |
 | 图标 | SF Symbols 6（iOS 18 SDK 附带），全项目唯一图标来源 | 见 §14.1 |
-| 字体 | 系统字体（SF Pro / PingFang SC）+ 打包 B612 Mono Bold（OFL，子集 <40KB），仅倒计时与训练主数字 | 见 §14.4 |
+| 字体 | 系统字体（SF Pro / PingFang SC / 系统等宽），零打包，倒计时与训练主数字用 `.monospacedDigit()` | 见 §14.4 |
 | 动作图示 | 自绘参数化骨架，12 关节 × 3 关键帧，SwiftUI `Path` 绘制，零第三方素材 | 见 §12 |
 | 通知能力 | Time Sensitive Notifications capability（`com.apple.developer.usernotifications.time-sensitive`）；不申请 Critical Alerts | 见 §9.7 |
 | 埋点 | 仅本地 JSONL，无上传通道 | 见 §13.4 |
@@ -334,12 +334,8 @@ DongKe/
 └── Resources/
     ├── Assets.xcassets                 # 仅 AppIcon 与启动色，不含动作图
     ├── exercises.json                  # 内置动作库 18 条（别名/肌群/器械/难度/要点/常见错误/figureSpecId）
-    ├── figure-specs.json               # 18 个动作的 12 关节骨架数据，每动作 3 帧
+    ├── figure-specs.json               # 18 个动作的 12 关节骨架数据，每动作 3 帧 + 1 条 _generic
     ├── design-tokens.json              # 与 docs/design-tokens.json 同源，构建时拷贝
-    ├── fonts/
-    │   └── B612Mono-Bold-subset.ttf    # OFL，仅倒计时与训练主数字，子集化后 <40KB
-    ├── licenses/
-    │   └── OFL-B612.txt                # 打包字体的 OFL 全文，随仓
     └── Localizable.xcstrings
 ```
 
@@ -402,7 +398,7 @@ grep -rn "#[0-9A-Fa-f]\{6\}" DongKe --include=*.swift
 | `Load` | type, value | 负重类型与单只重量 |
 | `ExerciseCatalogItem` | id, name, aliases, primaryMuscles, equipment, difficulty, cues, commonMistakes, figureSpecId, defaultTarget | 只读，来自 `Resources/exercises.json`，首次启动加载进内存索引 |
 | `WorkoutSession` | id, ownerId, planId, planDayId, weekday, startedAt, finishedAt, status, plannedSets, completedSets, downgradedSets, skippedSets, totalRestSeconds | 一次训练一条。三个计数分开存，完成率口径靠它们算，不靠事后遍历 |
-| `SetLog` | id, ownerId, sessionId, prescriptionId, setIndex, targetType, targetValue, actualValue, outcome, skipReason, completedAt, rpe | 一组一条。**outcome 三态**：`done` / `downgraded`（降阶完成）/ `skipped`；`skipReason` 为枚举见下 |
+| `SetLog` | id, ownerId, sessionId, prescriptionId, setIndex, targetType, plannedValue, actualValue, outcome, skipReason, completedAt, rpe | 一组一条。**outcome 三态**：`done` / `downgraded`（降阶完成）/ `skipped`；`skipReason` 为枚举见下 |
 | `SetOutcome` | `done` / `downgraded` / `skipped` | 三态是 PRD 的硬要求，不用 `isSkipped: Bool`（布尔表达不了"降阶完成"） |
 | `SkipReason` | `noTime` / `tooHard` / `pain` / `noEquipment` / `other` | 跳过原因枚举。`pain` 单独一档，用于后续风险提示，不参与完成率 |
 | `ScheduleAdjustment`（P1） | id, ownerId, planId, targetDate, kind(`skipAndShift` / `skipOnly`), createdAt | 记录"今天跳过并顺延"这类偏离，**不改计划本身**。**本期不实现**，模型定义保留以免 P1 迁移，见 §5.4 |
@@ -503,7 +499,7 @@ SwiftData 实际落库 5 张表。计划部分刻意扁平化。
 | id | UUID | `#Unique` |
 | sessionId | UUID | `#Index` |
 | prescriptionId / setIndex | String / Int | `#Index([prescriptionId, completedAt])` 支撑"这个动作上次做了多少" |
-| targetTypeRaw / targetValue / actualValue | String / Int / Int | |
+| targetTypeRaw / plannedValue / actualValue | String / Int / Int | |
 | completedAt | Date | `#Index` |
 | outcomeRaw | String | `done` / `downgraded` / `skipped`，三态必填 |
 | skipReasonRaw | String | `outcome == .skipped` 时必填，其余为空串 |
@@ -996,7 +992,7 @@ FROZEN-BASELINE 决策 6 定的是**自绘参数化骨架**，不使用第三方
 | 关节 | 半径 1.6% 的**挖空圆点**（填 `surfaceRaised`），必须小于线宽 × 1.2 | 实心圆点会让 12 点骨架变成"糖葫芦"；挖空才读得出线稿感，同时保留关节点以便判断角度 |
 | 躯干 | `shoulder`→`hip` 连线加粗为其它骨段的 1.4 倍 | 不做躯干填充（填色会让深色模式成色块，且被读成"人体"而非"骨架"），只能靠粗细区分躯干与四肢 |
 | 远侧肢体 | 所有 `*Far` 关节参与的骨段 opacity 0.55 | 表达前后遮挡。缺这一层，正面视角会读成二维对称图 |
-| 颜色 | 单色 `textPrimary`；`props` 线走 `separator`；`_generic` 整体降为 `textTertiary` | 单色是为了让人看形状。双色骨架会把注意力引到"哪块肌肉"，这不是本产品的教学目标 |
+| 颜色 | 单色 `textPrimary`；`props` 线走 `separator`；`_generic` 整体降为 `textSecondary` | 单色是为了让人看形状。双色骨架会把注意力引到"哪块肌肉"，这不是本产品的教学目标 |
 | 骨长 | 同一动作各帧同名骨段必须一致，容差 ±15%，基准值在 `renderRules.segmentLengths`（torso 0.26 / thigh 0.24 / shin 0.21 / upperArm 0.15 / forearm 0.13 / neck 0.06） | 手标坐标必然有误差，超容差会在插值里表现为"橡皮筋"。这条进测试（§15），不靠肉眼 |
 
 ±15% 与 `segmentLengths` 是这套方案唯一的硬数据约束。它让"手标错了"在 CI 就红，而不是等用户看到动作变形。
@@ -1026,12 +1022,12 @@ static func fit(poses: [[String: CGPoint]], in rect: CGRect, minScale: CGFloat) 
 | 无障碍 | `accessibilityLabel` 取 `ExerciseCatalogItem.cues` 首句 |
 | 库外动作 | `custom_` 前缀或 `figureSpecId` 查不到规格时，渲染 `_generic` + 动作 `notes` 文本 |
 
-`_generic` 是一条普通 specs 记录（`isPlaceholder: true`，1 个 pose，不循环，整体 `textTertiary`），走**完全相同的渲染路径**，因此没有额外代码分支。占位必须让用户看出"这是正常状态"而不是加载失败——所以用同一个渲染器画同一个中性站姿，不用系统类别图标顶替。
+`_generic` 是一条普通 specs 记录（`isPlaceholder: true`，1 个 pose，不循环，整体 `textSecondary`），走**完全相同的渲染路径**，因此没有额外代码分支。占位必须让用户看出"这是正常状态"而不是加载失败——所以用同一个渲染器画同一个中性站姿，不用系统类别图标顶替。
 
 ### 12.5 数据门禁：七项，跑在测试里
 
 1. `specs[].catalogId` 集合 == 18 个 catalogId + `_generic`（与 `plan-schema.json` 白名单完全相等）
-2. pose 数：普通动作 2–3，`_generic` 恰 1
+2. pose 数：普通动作恰 3，`_generic` 恰 1
 3. 每个 pose 的 `points` 恰有 12 个关节名，且都在 `renderRules.joints` 内
 4. 坐标全为有限数（拒绝 `nan` / `inf`）
 5. 同动作各 pose 同名骨段长度在基准值 ±15% 内
@@ -1040,7 +1036,7 @@ static func fit(poses: [[String: CGPoint]], in rect: CGRect, minScale: CGFloat) 
 
 第 1 条与第 7 条互为反向校验：前者少一条、后者引用挂空，都会红。**这七项写在测试里，不写在构建脚本里**——数据是手写自有资源，没有上游仓库可依赖，缺项是本项目缺陷，必须让 CI 红。
 
-`coverageMap` 与 `renderRules.fallback8Joints` 对"8 关节能撑住几个动作"的判定不一致：前者列 11 个可用（含 `dumbbell_row`），后者说只有 6 个可用、并把哑铃划船列为做不到。交付前需设计侧统一——8 关节只是技术兜底、MVP 按 12 关节验收，不影响本期，但两个字段相反会让 P1 复用时判错。
+8 关节口径已统一，唯一口径在 `coverageMap.eightJointVerdict`：**18 个里 10 个可用、8 个不达标**（7 个缺双侧肢体 + `russian_twist` 缺正面转体；`superman` 计为可用）。`renderRules.fallback8Joints` 的文字与之一致，不再各写一套数字。8 关节只是技术兜底，MVP 按 12 关节验收。
 
 ### 12.6 要点与常见错误的来源
 
@@ -1152,23 +1148,23 @@ PRD §9.4 要求埋点，但本期没有自建后端，**没有任何上传通�
 
 主色已裁决：**深青绿 `#0E7C66`（深色 `#34B39A`）为唯一强调色，浅色为主、深色完整**（FROZEN-BASELINE 决策 11）。`docs/design-tokens.json` 的 `accent` / `chartPrimary` / `focusRing` 三个 token 同值，代码与文档不得另行指定颜色值。硬约束不变：不使用紫粉渐变，每屏强调色不超过 2 处。
 
-### 14.4 字体：系统字体 + 一个打包等宽字体
+### 14.4 字体：系统字体，零打包
 
 | 角色 | 字族 | 来源 | 用途 |
 |---|---|---|---|
 | 标题 / 正文 / 中文 | SF Pro Display / SF Pro Text / PingFang SC | 系统 | 全部常规文本，走 Dynamic Type |
-| 仪表数字 | B612 Mono Bold（OFL 打包，子集化） | `Resources/fonts/` | 仅休息倒计时与训练页主数字 |
+| 仪表数字 | 系统等宽（`.system(design: .monospaced)` + `.monospacedDigit()`） | 系统 | 仅休息倒计时与训练页主数字 |
 | 等宽（非数字） | SF Mono | 系统 | 计划粘贴框、AI Key 输入 |
 
-打包一个字体的理由是倒计时的"仪表感"：等宽数字在秒数跳动时不横向抖动。系统等宽也能不抖动，但字面偏窄、字重偏轻，88pt 下显得单薄。只打包一个字重、只用于两处，边界清楚。
+**不打包任何字体**（裁决：零打包）。倒计时需要的是等宽数字在秒数跳动时不横向抖动，系统等宽 + `.monospacedDigit()` 已经满足；88pt 的"仪表感"由字号、字重、等宽数字与环形进度等速消耗共同建立，不靠字族。为这点差别承担 40KB 包体、OFL 全文随仓、子集化流程与 Reserve Font Name 声明，不划算。
 
-打包的技术清单（缺一不可）：
+零打包的技术约束（缺一不可）：
 
-1. `UIAppFonts` 填**文件名**（含扩展名），不是 PostScript 名。填错的表现是字体静默回退，不报错
-2. OFL 全文随仓 `Resources/licenses/OFL-B612.txt`——OFL 要求随分发提供许可证
-3. 子集化到 <40KB（只保留数字、`:`、`+`、`s` 与少量单位字符），原始 ttf 不入包
-4. Reserve Font Name 声明为 `B612Mono-Bold`。OFL 允许保留原名但必须声明，不省这一步
-5. 打包字体只允许出现在倒计时与训练主数字**两处**，第三处出现即门禁失败（见 §4.3 的 grep）
+1. `Info.plist` 的 `UIAppFonts` **保持为空**；仓库内不得出现 `.ttf` / `.otf` / `.ttc`，构建脚本不拷贝字体文件
+2. 字体全部经 `Theme/Typography.swift` 单点封装：视图里不得写字体名、字族名或字号字面量，只调 `.timer` / `.workoutNumber` 这类语义入口
+3. 等宽数字一律 `.monospacedDigit()`；等宽文本（计划粘贴框、AI Key 输入）用 `.system(design: .monospaced)`
+4. 88pt 是全项目唯一自定字号；其余字号从系统文本样式派生，跟随 Dynamic Type
+5. 无 OFL 授权文件、无子集化流程、无 Reserve Font Name 声明——这三项随「零打包」一并取消
 
 约束三条：
 
@@ -1176,9 +1172,9 @@ PRD §9.4 要求埋点，但本期没有自建后端，**没有任何上传通�
 2. 不跟随缩放必须补无障碍：倒计时视图设 `accessibilityLabel("休息剩余")` + `accessibilityValue("1 分 20 秒")`，**每整 10 秒更新一次**。不取 5 秒：VoiceOver 播一句要 2–3 秒，5 秒粒度会让播报排队，用户听到的是滞后的时间
 3. 其余全部文本走系统文本样式派生，动态字体自动生效
 
-包体积核算：主二进制约 8–12MB（SwiftUI + SwiftData，无第三方）。加 `figure-specs.json` 约 40–60KB、B612 子集 <40KB，总量在 12MB 以内。
+包体积核算：主二进制约 8–12MB（SwiftUI + SwiftData，无第三方，无字体文件）。加 `figure-specs.json` 约 40–60KB，总量在 12MB 以内。
 
-与 token 的冲突待同步：`docs/design-tokens.json` 的 `typography.fontPolicy` 目前写的是「零打包字体，`UIAppFonts` 保持为空」，与本节相反。按 FROZEN-BASELINE 的效力条款（FROZEN + SPEC > token），本节按 SPEC §4 执行；token 需设计侧改为打包 B612 的一侧，否则实现会分裂成两套。
+字体政策已裁决，本节此前「打包 B612」的写法作废：**零打包**。依据是与零第三方依赖策略同源、省 40KB 包体、省 OFL 全文与子集化流程，`UIAppFonts` 保持为空。`SPEC.md` §4、本节、`UIUX.md` 与 `design-tokens.json` 的 `typography.fontPolicy` 四处现已一致，不得再另行指定字族。
 
 ### 14.5 文案口径
 
@@ -1226,7 +1222,7 @@ PRD §9.4 要求埋点，但本期没有自建后端，**没有任何上传通�
 | `ScheduleResolver`（本期退化形式） | weekday 命中返回该日、不命中返回 nil、跨月跨年、计划只有 1 个训练日、周日边界（Calendar 的 1=周日 vs 计划的 1=周一） |
 | `SessionRepository` 写入权限 | 对 `finished` / `abandoned` 的 session 调 undo 必须抛错；已完成 session 的 SetLog 不可被修改；一次"完成一组"的 save 是原子的（日志与计数同进同退） |
 | `FigureFrame` | elapsed 为 0、整周期、相位取模（1.2 周期 → 0.2）、负数 clamp、frameCount 为 1 与 3 |
-| `FigureSpec` 解码与门禁 | §12.5 七项逐条：`specs[].catalogId` 集合 == 18 + `_generic`、pose 数 2–3（`_generic` 恰 1）、关节名恰 12 个、坐标拒绝 `nan`/`inf`、骨长 ±15%、`view`/`props` 枚举与 `wallX` 存在性、`figureSpecId` 反查命中 |
+| `FigureSpec` 解码与门禁 | §12.5 七项逐条：`specs[].catalogId` 集合 == 18 + `_generic`、pose 数恰 3（`_generic` 恰 1）、关节名恰 12 个、坐标拒绝 `nan`/`inf`、骨长 ±15%、`view`/`props` 枚举与 `wallX` 存在性、`figureSpecId` 反查命中 |
 | `FigureGeometry` | 12 关节 → 骨段连线表完整；`*Far` 关节判为远侧；躯干骨段加粗 1.4 倍；缺任一关节时不崩溃并返回空骨段 |
 | `FigureAutofit` | 全在框内 / 单点越界 / 跨度 1.11 的死虫 / 退化为单点（除零）/ 最小缩放 0.6 触发 / 多帧取并集而非逐帧 |
 | `Icons` 清单 | 白名单内每个 symbol 名称在 iOS 18.0 可用（编译期 `Image(systemName:)` 存在性靠真机验证，清单里标注可用版本） |
@@ -1402,9 +1398,9 @@ XCTest UI 测试只覆盖三条主链路，不做全面覆盖（成本高、稳�
 - [ ] Domain 层的模型与端口协议全部定义完（可以先返回 `fatalError`，但签名冻结）
 - [ ] 15.1 的测试清单已落成测试文件的空壳（红），按清单顺序逐个转绿
 - [ ] `figure-specs.json` 已覆盖 18 个 catalogId + `_generic`，§12.5 七项门禁全绿（集合、pose 数、关节名、有限数、骨长 ±15%、枚举与 wallX、figureSpecId 反查）
-- [ ] `Resources/licenses/OFL-B612.txt` 已随仓；`UIAppFonts` 填的是文件名，子集 <40KB（§14.4 五项逐条可查）
+- [ ] 仓库无字体文件、`UIAppFonts` 为空；字号与字族只出现在 `Typography.swift`（§14.4 五项逐条可查）
 - [ ] `design-tokens.json` 已拷入 Resources 且 `Theme` 能解码出全部 28 个语义色
-- [ ] 倒计时用 B612 Mono Bold 渲染且 VoiceOver 能读出剩余时间；打包字体只出现在倒计时与训练主数字两处
+- [ ] 倒计时用系统等宽 + `.monospacedDigit()` 渲染且 VoiceOver 能读出剩余时间；88pt 是全项目唯一自定字号
 - [ ] Time Sensitive Notifications capability 已在 Xcode 添加，entitlements 文件已入版本库
 - [ ] §14.6 三项裁决已回写本文，且本文与 `FROZEN-BASELINE.md` / `SPEC.md` 无冲突（v1.3 已回同步）
 

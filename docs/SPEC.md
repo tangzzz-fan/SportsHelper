@@ -102,11 +102,11 @@
 |----|----------|------|------|
 | `PlanRecord` | id, createdAt, updatedAt, isActive, sourceRaw, schemaVersion, planJSON, title, daysPerWeek, goalRaw | `#Unique id`；`#Index updatedAt`；`#Index isActive` | 无关系链；`planJSON` 为完整 `WorkoutPlan` |
 | `SessionRecord` | id, planId, planDayId, startedAt, finishedAt, statusRaw, plannedSets, completedSets, totalRestSeconds | `#Unique id`；`#Index startedAt`；`#Index planDayId` | 用 `planId` / `planDayId` 普通字段关联 |
-| `SetLogRecord` | id, sessionId, prescriptionId, setIndex, statusRaw(done/downgraded/skipped), plannedValue, actualValue, skipReasonRaw, completedAt, rpe | `#Unique id`；`#Index sessionId`；`#Index([prescriptionId, completedAt])` | 用 `sessionId` 普通字段关联；三态是完成率与「做不动」统计的唯一依据 |
+| `SetLogRecord` | id, sessionId, prescriptionId, setIndex, targetTypeRaw(reps/seconds), statusRaw(done/downgraded/skipped), plannedValue, actualValue, skipReasonRaw, completedAt, rpe | `#Unique id`；`#Index sessionId`；`#Index([prescriptionId, completedAt])` | 用 `sessionId` 普通字段关联；三态是完成率与「做不动」统计的唯一依据 |
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-specs.json`（18 个动作的 2–3 关键帧骨架）。
+**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-specs.json`（18 个动作各 3 关键帧 + 1 条 `_generic` 占位骨架）。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 
@@ -141,7 +141,7 @@
 | 页面底色 | `#F5F7F6`（浅色）/ `#0C1210`（深色） |
 | 主文本 | `#14201D`（浅色）/ `#E4EBE8`（深色） |
 | 成功 / 警告 / 危险 | `#17803F` / `#9A5D08` / `#B01F2E`（浅色），深色见 token |
-| 字体 | SF Pro Display/Text + PingFang SC；B612 Mono Bold 仅倒计时与训练主数字 |
+| 字体 | SF Pro Display/Text + PingFang SC + 系统等宽；零打包字体，倒计时与训练主数字用 `.system(design: .monospaced)` + `.monospacedDigit()` |
 | 图标 | SF Symbols（iOS 18 SDK），经 `Icons.swift` 唯一入口；禁 emoji、禁第二套 |
 | 圆角 | 4 / 6 / 10 / 14 / 20；卡片禁止 ≥20 |
 | 触控 | 常规 ≥44pt；训练中 ≥56pt；主按钮 64pt |

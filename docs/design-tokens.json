@@ -1,7 +1,7 @@
 {
   "$meta": {
     "name": "动刻 DongKe — Design Tokens",
-    "version": "4.3.0",
+    "version": "4.4.0",
     "status": "aligned with team-lead 最终冻结（2026-10-22）＋ SPEC.md；主色深青绿、图示自绘 12 关节骨架、动作库 18、久坐 P1、通知 ≤7、完成总结三数并列。PRD / ARCHITECTURE / UIUX 自本条冻结起只作存档依据，开发唯一依据是 FROZEN-BASELINE.md + SPEC.md。",
     "designer": "颜好看",
     "date": "2026-10-22",
@@ -36,6 +36,11 @@
     ],
     "changeLog": [
       {
+        "version": "4.4.0",
+        "change": "8 关节口径统一为「10 可用 / 8 不可用」，并指明唯一口径在 figure-specs 的 coverageMap.eightJointVerdict；占位位姿 key 定为 customFallback（后经 lead 裁决统一为 `_generic`）",
+        "reason": "同一问题此前三个文件给出 11 / 6 / 7 三个数，架构 §12.5 已列为交付前待修项"
+      },
+      {
         "version": "4.3.0",
         "change": "清掉素材方案专有残留：占位素材命名改为「中立站立位姿」（内置位姿数据）；关于页授权声明全部移除；UIUX §6 仍为自绘 12 关节骨架",
         "reason": "FROZEN-BASELINE 决策 6 定稿，素材方案作废（下载失败 + 授权需法务）"
@@ -47,7 +52,7 @@
       },
       {
         "version": "4.1.0",
-        "change": "字体改为零打包（ARCH v1.2 §14.4）：倒计时与训练主数字改用系统等宽 + .monospacedDigit()，删掉 B612 Mono Bold 与 OFL / 子集化 / UIAppFonts 全部前置；主色维持深青绿并补三方一致证据（PRD v1.5 §9.3 + SPEC §8 + FROZEN 决策 11）；标注 SPEC §4 字体行待回写",
+        "change": "字体改为零打包（ARCH v1.2 §14.4）：倒计时与训练主数字改用系统等宽 + .monospacedDigit()，删掉 B612 Mono Bold 与 OFL / 子集化 / UIAppFonts 全部前置；主色维持深青绿并补三方一致证据（PRD v1.5 §9.3 + SPEC §8 + FROZEN 决策 11）；SPEC §4 与 §8 随后由 lead 回写为零打包",
         "reason": "架构 v1.2 取消打包字体；主色在 ARCH v1.2 §14.3 仍写旧候选色，属该文档单点未同步，已上报等待裁决，设计侧不擅自改动"
       },
       {
@@ -324,7 +329,7 @@
     "fontPolicy": {
       "type": "string",
       "value": "零打包字体。全部走系统字体：SF Pro / PingFang SC / 系统等宽（.system(design: .monospaced) + .monospacedDigit()）。UIAppFonts 保持为空，仓库无字体文件，无 OFL 授权与子集化工作。",
-      "authority": "ARCHITECTURE v1.2 §14.4（现行）。**SPEC §4 的字体行仍写着「B612 Mono Bold + OFL 打包」，与 §14.4 相反，需架构或 lead 回写 SPEC**——否则开发照 SPEC 做会打包字体。",
+      "authority": "SPEC §4 与 §8、ARCHITECTURE §14.4、本 token 四处一致：零打包字体，倒计时与训练主数字用 .monospacedDigit()。2026-10-22 裁决，字体无第二解读，UIAppFonts 为空，仓库无字体文件。",
       "designPosition": "取消打包不影响设计：倒计时 88pt 的「仪表感」由字号、字重、等宽数字、环的等速消耗共同建立，不依赖具体字族。B612 Mono 与 SF Mono 在 88pt 上的差别，远小于「88pt 与 34pt」的差别。",
       "optionalSwap": "若将来重新允许打包，唯一允许的替换点是 typography.style.timer 与 typography.style.workoutNumber 两处（只换字族，尺寸 / relativeTo / monospacedDigit / 封顶 dynamicTypeSize 全部不动）。第三处出现即门禁失败。"
     },
@@ -746,7 +751,7 @@
         "kneeFar",
         "ankleFar"
       ],
-      "note": "12 关节 = 躯干 4 点 + 双侧上肢 / 下肢各 2 点。8 关节只能画侧视单侧骨架，18 个动作里有 7 个画不出来（弓步蹲画不出后腿、死虫画不出对侧伸展、开合跳画不出两腿分开、登山跑/高抬腿画不出左右交替、鸟狗式/超人式画不出对角）。扩展成本为零：FigurePose.points 是字典、links 在 spec 内、渲染器按数据迭代。8 关节作为兼容退化模式保留（只用 Near 侧 7 条线）。"
+      "note": "12 关节 = 躯干 4 点 + 双侧上肢 / 下肢各 2 点。8 关节只能画侧视单侧骨架：18 个动作里 **10 个可用、8 个不可用**（7 个缺双侧肢体：弓步蹲 / 哑铃划船 / 开合跳 / 登山跑 / 高抬腿 / 死虫 / 鸟狗式；1 个缺正面转体：俄罗斯转体）。唯一口径见 figure-specs.sample.json 的 coverageMap.eightJointVerdict，本节不另立算法。扩展成本为零：FigurePose.points 是字典、links 在 spec 内、渲染器按数据迭代。8 关节作为兼容退化模式保留（只用 Near 侧 7 条线）。"
     },
     "links": {
       "type": "array",
@@ -904,7 +909,7 @@
       },
       "placeholder": {
         "type": "string",
-        "value": "库外动作：中立站立位姿（渲染器内置位姿数据，不单独出图）+ 明确文案，不加虚线框、不转圈、不用灰色骨架屏。见 UIUX.md §6.4。"
+        "value": "库外动作：中立站立位姿（key = `_generic`，渲染器内置位姿数据，不单独出图）+ 明确文案；线条取 textSecondary 而非更淡一档，避免被读成占位骨架屏。不加虚线框、不转圈。见 UIUX.md §6.4。"
       }
     },
     "a11y": {

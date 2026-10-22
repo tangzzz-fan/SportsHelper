@@ -1,7 +1,7 @@
 {
   "$meta": {
     "name": "动刻 骨架动作规格 — 10 个打样（PRD R10 打样评审用）",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "date": "2026-10-22",
     "designer": "颜好看",
     "targetFile": "DongKe/DesignSystem/Figures/figure-specs.json",
@@ -20,7 +20,14 @@
       "9-farLimb": "远侧肢体 opacity 0.55，表达前后遮挡关系。这是 12 关节方案能读的关键，不加会变成一团线。"
     },
     "status": "**现行交付**（team-lead 最终冻结：自绘 12 关节骨架、18 动作 × 3 帧、不使用第三方素材）。素材方案已否决（包两次下载失败 + CC BY-SA 与 FairPlay 需法务），本文件不再是存档而是实施依据。",
-    "renderInterfaceContract": "UI 层只认 ExerciseFigureView(catalogId:size:playsAnimation:)。3 帧、2.4s 循环、帧间 120ms 交叉淡入、列表内静态首帧、同屏只播 1 个、单色 textPrimary、custom_ 前缀走降级态——这七条在骨架与线稿两种素材下完全一致，所以页面代码不随裁决改动。"
+    "renderInterfaceContract": "UI 层只认 ExerciseFigureView(catalogId:size:playsAnimation:)。3 帧、2.4s 循环、帧间 120ms 交叉淡入、列表内静态首帧、同屏只播 1 个、单色 textPrimary、custom_ 前缀走降级态——这七条在骨架与线稿两种素材下完全一致，所以页面代码不随裁决改动。",
+    "changeLog": [
+      {
+        "version": "2.5.0",
+        "change": "8 关节口径统一为 10 可用 / 8 不可用（superman 移入可用；dumbbell_row 与 russian_twist 判为不可用，其中 russian_twist 单列 needsFrontView）；新增 coverageMap.eightJointVerdict 作为唯一口径；占位位姿 key 改为 customFallback（后经 lead 裁决统一为 `_generic`，与 ARCH §12.5 门禁一致）",
+        "reason": "同一问题此前三个文件给出 11 / 6 / 7 三个数，架构 §12.5 列为交付前待修项"
+      }
+    ]
   },
   "renderRules": {
     "coordinateSpace": "作者空间：归一化单位正方形，原点左上，y 向下。允许超出 0..1（由 autofit 处理）。",
@@ -93,7 +100,7 @@
         "ankleFar"
       ]
     ],
-    "fallback8Joints": "若渲染器只支持 8 关节：删除所有 *Far 关节与对应 4 条连线即可退化，深蹲 / 跪姿俯卧撑 / 平板支撑 / 臀桥 / 肩推 / 靠墙静蹲 这 6 个仍可用；弓步蹲 / 开合跳 / 死虫 / 哑铃划船 4 个无法达标。",
+    "fallback8Joints": "若渲染器只支持 8 关节：删除所有 *Far 关节与对应 4 条连线即可退化，不走任何分支代码。退化后 18 个里 **10 个仍可用**（squat / push_up / plank / glute_bridge / shoulder_press / wall_sit / side_plank / calf_raise / superman / crunch），**8 个不达标**（lunge / dumbbell_row / jumping_jack / mountain_climber / high_knees / dead_bug / bird_dog 缺双侧肢体，russian_twist 缺正面转体）。数字以 coverageMap.eightJointVerdict 为唯一口径。",
     "segmentLengths": {
       "note": "同动作各帧必须一致（容差 ±15%），否则插值会出现「橡皮筋」。以下为打样采用的基准值（归一化单位）。",
       "torso": 0.26,
@@ -1312,7 +1319,7 @@
       ]
     },
     {
-      "catalogId": "customFallback",
+      "catalogId": "_generic",
       "name": "通用占位（库外动作降级用）",
       "view": "side",
       "loopSeconds": 2.0,
@@ -1320,7 +1327,7 @@
         "floor"
       ],
       "isPlaceholder": true,
-      "note": "库外动作（custom_ 前缀）的兜底位姿。不是素材文件，是渲染器内置的一份中立站立位姿数据。",
+      "note": "库外动作（custom_ 前缀）的兜底位姿。不是素材文件，是渲染器内置的一份中立站立位姿数据；1 个 pose、不循环、不参与 autofit 之外的插值。线条取 textSecondary（不取更淡的一档）——一调浅就会被读成「占位骨架屏」，而它应该是「内容」。",
       "poses": [
         {
           "phase": 0.0,
@@ -1380,33 +1387,33 @@
     }
   ],
   "coverageMap": {
-    "note": "18 个 catalogId 的骨架可行性判定。这是回答「这几个决定如何影响辨识度」的完整答案。",
+    "note": "18 个 catalogId 的骨架可行性判定。**8 关节口径只在这里定义一次**，其他文件引用 eightJointVerdict 的数字，不另行推算。三个标签列表之间不互斥：jumping_jack 与 high_knees 同时命中 needsBilateral12Joints 与 needsFrontView（既要双侧也要正面）。真正的划分只有一句：worksWith8JointsOnly（10）+ 其余（8）= 18。",
     "total": 18,
     "needsBilateral12Joints": [
       "lunge",
+      "dumbbell_row",
       "jumping_jack",
-      "dead_bug",
       "mountain_climber",
       "high_knees",
-      "bird_dog",
-      "superman"
+      "dead_bug",
+      "bird_dog"
     ],
     "worksWith8JointsOnly": [
       "squat",
       "push_up",
       "plank",
       "glute_bridge",
-      "dumbbell_row",
       "shoulder_press",
       "wall_sit",
       "side_plank",
       "calf_raise",
-      "crunch",
-      "russian_twist"
+      "superman",
+      "crunch"
     ],
     "needsFrontView": [
       "jumping_jack",
-      "high_knees"
+      "high_knees",
+      "russian_twist"
     ],
     "needsProps": {
       "dumbbell": [
@@ -1437,7 +1444,14 @@
         "russian_twist"
       ]
     },
-    "conclusion": "11 个动作 8 关节即可；7 个必须 12 关节（双侧肢体）；2 个必须正面视角。因此 12 关节 + view 字段是让 18 个动作全部达到辨识度标准的必要条件。"
+    "conclusion": "10 个动作 8 关节即可，8 个必须 12 关节或正面视角。因此 12 关节 + view 字段是让 18 个动作全部达到辨识度标准的必要条件。",
+    "eightJointVerdict": {
+      "total": 18,
+      "usableWith8": 10,
+      "unusableWith8": 8,
+      "unusableBreakdown": "7 个缺双侧肢体（lunge / dumbbell_row / jumping_jack / mountain_climber / high_knees / dead_bug / bird_dog）+ 1 个缺正面转体（russian_twist，侧视看不见躯干旋转）",
+      "note": "superman 算 8 关节可用：俯卧两头起在侧视下「一条手臂前伸 + 一条腿抬起」就能读出动作，不需要看到对侧。dumbbell_row 算不可用：没有远侧支撑手，躯干会被读成悬空俯身或躺姿，而这正是 PRD F9 把它列为不达标的原因。"
+    }
   },
   "deliveryPlan": {
     "batch0": {
