@@ -210,6 +210,7 @@
 | SwiftData 深关系链级联删除缺陷 | SwiftData | 多关系级联删除已知问题 | 计划扁平存 JSON；不建 `@Relationship`；显式按序删除 |
 | 全角引号 / 尾随逗号 / 代码围栏 | 粘贴解析 | AI 输出常见脏格式 | 引号感知括号配对；先清洗再解码；每条一个测试 |
 | 模拟器 Keychain 跨运行保留 | Security | 模拟器 Keychain 不随 App 删除清空 | 测试 teardown 删除自己的 key |
+| 骨架门禁首红被误判为回归 | figure-specs 数据 | 打样期交付的是 2 帧，门禁按「恰 3」判 | 门禁红先核对数据版本：`specs[]` 每条 `poses` 是否为 3、占位是否为 `_generic` 且 1 帧；数据齐了仍红才是代码问题 |
 
 ---
 
