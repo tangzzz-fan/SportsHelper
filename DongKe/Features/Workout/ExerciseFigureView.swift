@@ -12,6 +12,7 @@ final class FigurePlaybackStore {
 struct ExerciseFigureView: View {
     let catalogId: String
     var figureSize: CGSize
+    var showsHalo = true
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var playback: FigurePlayback
@@ -19,9 +20,10 @@ struct ExerciseFigureView: View {
 
     private let frameInterval: TimeInterval = 0.8
 
-    init(catalogId: String, figureSize: CGSize = CGSize(width: 220, height: 260)) {
+    init(catalogId: String, figureSize: CGSize = CGSize(width: 220, height: 260), showsHalo: Bool = true) {
         self.catalogId = catalogId
         self.figureSize = figureSize
+        self.showsHalo = showsHalo
         let figure = FigureLibrary.bundled.figure(for: catalogId)
         _playback = State(initialValue: FigurePlayback(motion: figure.motion, frameCount: figure.frames.count))
     }
@@ -44,16 +46,18 @@ struct ExerciseFigureView: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Theme.halo(for: colorScheme), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: figureSize.width * 0.52
+            if showsHalo {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Theme.halo(for: colorScheme), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: figureSize.width * 0.52
+                        )
                     )
-                )
-                .frame(width: figureSize.width * 1.05, height: figureSize.width * 1.05)
+                    .frame(width: figureSize.width * 1.05, height: figureSize.width * 1.05)
+            }
 
             ZStack {
                 ForEach(Array(figure.frames.enumerated()), id: \.offset) { index, frame in

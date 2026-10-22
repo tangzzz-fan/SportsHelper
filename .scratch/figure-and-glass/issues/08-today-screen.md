@@ -4,7 +4,7 @@
 
 **Blocked by:** Blocked by: 07
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] 底部浮动玻璃 tab 栏：今日 / 计划 / 记录，选中态是一枚独立玻璃胶囊
 - [ ] 数据来自内置示例计划，不落库

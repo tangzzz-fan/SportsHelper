@@ -9,7 +9,7 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
-| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 骨架插值）；UI 仍占位 `Text("动刻")` |
+| 代码 | Domain 九层已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层；今日 / 训练执行 / 休息三屏已按设计稿落地，数据来自内置示例计划（未接持久化与通知） |
 | 测试 | 52 条 Swift Testing，**52 绿 0 红**；转绿记录见 `docs/GATE-2-TEST-REPORT.md` 第 6 节 |
 | Gate 2 | 已放行并全部转绿。下一步：18 个动作骨架数据 → UI |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
@@ -74,9 +74,23 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | `docs/design/` | 设计稿快照（`<日期>-<页面名>/index.html` + `brief.md` + `shots/`），只作实施依据，不参与文档对账 |
 | `.scratch/<feature>/issues/` | 本地 ticket 看板，一票一文件；`README.md` 是索引与当前前沿 |
 | `DongKeCore/` | Domain：模型、解析、排程、休息状态机、图示。只 import Foundation |
+| `DongKe/DesignSystem/` | 主题令牌与玻璃修饰器（`glassSurface`），页面不得出现字面量颜色 |
 | `DongKe/` | App 层：Features / Services / Data / App |
 | `DongKeCoreTests/` | Swift Testing，纯逻辑，不依赖模拟器 UI |
 | `.workbuddy/memory/` | 工作日志，**已纳入 git**，换机随仓库带走 |
+
+## 6.1 截图自检钩子
+
+调试构建支持用环境变量直达某一屏（仅 `#if DEBUG`，发布构建无此分支）：
+
+```bash
+xcrun simctl terminate booted app.dongke.ios
+SIMCTL_CHILD_DK_PREVIEW=workout xcrun simctl launch booted app.dongke.ios   # 训练执行
+SIMCTL_CHILD_DK_PREVIEW=rest    xcrun simctl launch booted app.dongke.ios   # 休息面板
+xcrun simctl io booted screenshot /tmp/shot.png
+```
+
+注意必须先 `terminate`：App 已在运行时 `launch` 不会重启进程，环境变量不生效。
 
 ## 7. 换机后容易踩的三个坑
 

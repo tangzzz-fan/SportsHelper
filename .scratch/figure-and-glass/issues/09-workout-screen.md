@@ -4,7 +4,7 @@
 
 **Blocked by:** Blocked by: 06, 07
 
-**Status:** ready-for-agent
+**Status:** done（2026-10-22）
 
 - [ ] 图示区接入图示模块与播放交互，背景保留低透明剪影 ghost 供玻璃折射
 - [ ] 「完成本组」推进执行流；「这组做不动」写入降级记录（含原因）
