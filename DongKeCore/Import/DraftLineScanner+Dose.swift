@@ -13,10 +13,12 @@ extension DraftLineScanner {
         let perSide = containsAny(working.lowercased(), ["每侧", "单侧", "each side", "per side", "each leg", "单腿"])
         let origin = working
 
-        if let match = firstMatch(in: working, pattern: "(?:休息|组间|间隔|rest)\\s*[:：]?\\s*(\\d+)\\s*(分钟|min|分|秒|s|sec)?") {
-            let amount = Int(match.groups[0]) ?? 0
+        if let match = firstMatch(in: working, pattern: "(?:休息|组间|间隔|rest)\\s*[:：]?\\s*(\\d+(?:\\.\\d+)?)\\s*(分钟|min|分|秒|s|sec)?"),
+           let amount = Double(match.groups[0]) {
             let unit = match.groups.count > 1 ? match.groups[1].lowercased() : ""
-            rest = (unit == "分钟" || unit == "min" || unit == "分") ? amount * 60 : amount
+            rest = (unit == "分钟" || unit == "min" || unit == "分")
+                ? Int((amount * 60).rounded())
+                : Int(amount.rounded())
             working.removeSubrange(match.range)
         }
 
@@ -61,14 +63,18 @@ extension DraftLineScanner {
             working.removeSubrange(match.range)
         }
 
-        if value == nil, let match = firstMatch(in: working, pattern: "(\\d+)\\s*(?:秒|s\\b|sec|seconds?)"), let parsed = Int(match.groups[0]) {
-            value = parsed
+        if value == nil,
+           let match = firstMatch(in: working, pattern: "(\\d+(?:\\.\\d+)?)\\s*(?:秒|s\\b|sec|seconds?)"),
+           let parsed = Double(match.groups[0]) {
+            value = Int(parsed.rounded())
             targetType = .durationSec
             working.removeSubrange(match.range)
         }
 
-        if value == nil, let match = firstMatch(in: working, pattern: "(\\d+)\\s*(?:分钟|min)"), let parsed = Int(match.groups[0]) {
-            value = parsed * 60
+        if value == nil,
+           let match = firstMatch(in: working, pattern: "(\\d+(?:\\.\\d+)?)\\s*(?:分钟|min)"),
+           let parsed = Double(match.groups[0]) {
+            value = Int((parsed * 60).rounded())
             targetType = .durationSec
             working.removeSubrange(match.range)
         }

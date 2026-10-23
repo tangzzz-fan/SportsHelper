@@ -6,13 +6,18 @@ public enum PlanJSONExtractor {
         guard !trimmed.isEmpty else { return nil }
 
         if let fenced = fencedBody(in: trimmed), let value = normalize(fenced) {
-            return value
+            return usable(value)
+        }
+        if trimmed.hasPrefix("["),
+           let array = balanced(in: trimmed, open: "[", close: "]"),
+           let value = normalize(array) {
+            return usable(value)
         }
         if let object = balanced(in: trimmed, open: "{", close: "}") {
-            return normalize(object)
+            return usable(object)
         }
-        if let array = balanced(in: trimmed, open: "[", close: "]") {
-            return normalize(array)
+        if let array = balanced(in: trimmed, open: "[", close: "]"), let value = normalize(array) {
+            return usable(value)
         }
         return nil
     }
@@ -72,8 +77,60 @@ public enum PlanJSONExtractor {
         guard text.hasPrefix("["), text.hasSuffix("]") else { return text }
 
         let inner = String(text.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard inner.contains("{") else { return nil }
         guard inner.hasPrefix("{"), inner.hasSuffix("}") else { return text }
         guard let object = balanced(in: inner, open: "{", close: "}"), object == inner else { return text }
         return object
+    }
+
+    private static func usable(_ candidate: String) -> String {
+        guard let data = candidate.data(using: .utf8),
+              (try? JSONSerialization.jsonObject(with: data)) == nil else { return candidate }
+        return repair(candidate)
+    }
+
+    private static func repair(_ text: String) -> String {
+        var result = ""
+        var inString = false
+        var escaped = false
+
+        for character in text {
+            if inString {
+                if escaped {
+                    escaped = false
+                    result.append(character)
+                } else if character == "\\" {
+                    escaped = true
+                    result.append(character)
+                } else if character == "\"" || character == "\u{201C}" || character == "\u{201D}" {
+                    inString = false
+                    result.append("\"")
+                } else {
+                    result.append(character)
+                }
+                continue
+            }
+
+            switch character {
+            case "\"", "\u{201C}", "\u{201D}":
+                inString = true
+                result.append("\"")
+            case "：":
+                result.append(":")
+            case "，":
+                result.append(",")
+            case "｛":
+                result.append("{")
+            case "｝":
+                result.append("}")
+            case "［":
+                result.append("[")
+            case "］":
+                result.append("]")
+            default:
+                result.append(character)
+            }
+        }
+        return result
     }
 }

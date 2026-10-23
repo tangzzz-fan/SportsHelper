@@ -26,14 +26,14 @@ public enum PlanImportService {
             )
         }
 
-        if PlanJSONExtractor.extract(from: trimmed) != nil {
-            if let plan = try? PlanDecoder.decode(trimmed) {
+        if let extracted = PlanJSONExtractor.extract(from: trimmed) {
+            if let plan = try? PlanDecoder.decode(extracted) {
                 return draft(plan: plan, issues: [], rawText: text, path: .strictJSON)
             }
-            if let lenient = try? PlanDecoder.decodeLenient(trimmed) {
+            if let lenient = try? PlanDecoder.decodeLenient(extracted) {
                 return draft(plan: lenient.plan, issues: lenient.issues, rawText: text, path: .lenientJSON)
             }
-            if let generic = PlanDraftParser.draft(fromJSON: trimmed, memory: memory) {
+            if let generic = PlanDraftParser.draft(fromJSON: extracted, memory: memory) {
                 return compiled(generic, rawText: text, path: .lenientJSON, exercises: exercises)
             }
             return ParsedPlanDraft(

@@ -6,7 +6,8 @@ public enum FreeTextPlanParser {
         memory: AliasMemory = .empty,
         exercises: UserExerciseCatalog = .empty
     ) -> ParsedPlanDraft {
-        guard let draft = PlanDraftParser.draft(from: text, memory: memory) else {
+        let normalized = TextNormalization.normalize(text)
+        guard let draft = PlanDraftParser.draft(from: normalized, memory: memory) else {
             return ParsedPlanDraft.empty(rawText: text)
         }
         let compiled = PlanDraftCompiler.compile(draft, exercises: exercises)
