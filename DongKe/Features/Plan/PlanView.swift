@@ -73,10 +73,10 @@ struct PlanView: View {
                     .padding(.top, 10)
 
                 HStack(spacing: 10) {
-                    entryButton(title: "动作库", symbol: "figure.strengthtraining.traditional") {
+                    entryButton(title: "动作库", symbol: Icons.library) {
                         showLibrary = true
                     }
-                    entryButton(title: "导入计划", symbol: "square.and.arrow.down") {
+                    entryButton(title: "导入计划", symbol: Icons.importPlan) {
                         showImport = true
                     }
                 }

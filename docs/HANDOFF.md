@@ -77,7 +77,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | `docs/design/` | 设计稿快照（`<日期>-<页面名>/index.html` + `brief.md` + `shots/`），只作实施依据，不参与文档对账 |
 | `.scratch/<feature>/issues/` | 本地 ticket 看板，一票一文件；`README.md` 是索引与当前前沿 |
 | `DongKeCore/` | Domain：模型、解析、排程、休息状态机、图示。只 import Foundation |
-| `DongKe/DesignSystem/` | 主题令牌与玻璃修饰器（`glassSurface`），页面不得出现字面量颜色 |
+| `DongKe/DesignSystem/` | 主题令牌与玻璃修饰器（`glassSurface`）；`Icons.swift` 是 SF Symbols 的唯一入口，页面里不得出现 `Image(systemName: "字面量")` |
 | `DongKe/` | App 层：Features / Services / Data / App |
 | `DongKeCoreTests/` | Swift Testing，纯逻辑，不依赖模拟器 UI |
 | `.workbuddy/memory/` | 工作日志，**已纳入 git**，换机随仓库带走 |
@@ -184,6 +184,19 @@ xcrun simctl io booted screenshot /tmp/shot.png
 入口在设置页底部，走 `DataResetService.clearAll`：删五张表（SetLog / Session / Plan / Profile / UserExercise）→ 清 `dk.` 前缀的全部 UserDefaults → 删 Keychain 里的 AI Key → 取消 `dk.plan.` 与 `dk.rest.` 待触发通知。完成后 `AppShell.handleEraseAll` 重新 load 各 store 并弹回引导。
 
 验证方式（模拟器可复现）：`DK_COMPLETE_ONBOARDING=1` 建数据 → 杀进程 → `DK_ERASE_ALL=1` 跑一次 → 杀进程 → 裸启动应回到引导第一屏。注意 `simctl` 有两台 booted 模拟器时一律**写 UDID**，`booted` 会解析到另一台。
+
+## 6.5 文件拆分（2026-10-23）
+
+SPEC §4「单文件 ≤300 行」已全量满足。拆分方式分两种，**都是纯移动、无行为改动**：
+
+| 类型 | 做法 | 例子 |
+|---|---|---|
+| 多个并列视图 | 按类型边界切成独立文件 | `ExerciseLibraryView` → `UserExerciseDetailView` / `ExerciseDetailView`；`ImportView` → `PlanReviewView` / `PlanEditSheet`；`TodayView` → `TodayView+Cards` / `ProgressBar` |
+| 单个大类型 | 用 `extension` 拆到 `+Flow` / `+State` / `+Dose` / `+Text` / `+Aliases` 等文件 | `WorkoutSession`、`DraftLineScanner`、`OnboardingView`、`PlanGenerator`（目录数据抽成 `PlanCatalog`） |
+
+**代价（必须知道）**：extension 分布在多个文件时，`private` 成员互不可见，所以被拆类型的部分成员从 `private` 放宽成了模块内可见（如 `TodayView.store`、`OnboardingView.draft/step`、`WorkoutSession.logs/rest`）。这是模块内部可见性，不对外暴露；但**别再往这些类型上加新的公开面**，要加就加在新的 extension 文件里。
+
+**仍欠**：SPEC §10 的「字号不得硬编码」未收口——全仓仍是 `.font(.system(size:))` 字面量。做这件事要先定一套语义字阶（display/title/body/caption…）再一次性迁移，半迁移比不迁移更糟，所以单列一票。
 
 ## 7. 换机后容易踩的三个坑
 

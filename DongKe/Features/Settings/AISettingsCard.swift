@@ -65,7 +65,7 @@ struct AISettingsCard: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: store.isConfigured ? "checkmark.circle" : "circle.dashed")
+            Image(systemName: store.isConfigured ? Icons.aiReady : Icons.aiMissing)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(store.isConfigured ? Theme.accent(for: colorScheme) : Color.secondary)
         }

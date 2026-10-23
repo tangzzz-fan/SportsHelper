@@ -83,7 +83,7 @@ struct WorkoutView: View {
     private var navBar: some View {
         HStack {
             Button(action: onClose) {
-                Image(systemName: "xmark")
+                Image(systemName: Icons.close)
                     .font(.system(size: 17, weight: .semibold))
                     .frame(width: 44, height: 44)
             }
