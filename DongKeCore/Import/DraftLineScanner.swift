@@ -26,6 +26,18 @@ public enum DraftLineScanner {
         var days: [DraftDay] = []
         var title: String?
         var cautions: [String] = []
+        var notes: [String] = []
+
+        var lines = expandingDayMarkers(text).components(separatedBy: .newlines)
+        let firstContent = lines.firstIndex {
+            !stripDecoration($0).trimmingCharacters(in: .whitespaces).isEmpty
+        } ?? 0
+        if let boundary = lines.indices.first(where: {
+            $0 > firstContent && (weekNumber(in: lines[$0]) ?? 1) >= 2
+        }) {
+            lines = Array(lines[..<boundary])
+            notes.append("这段内容含多周安排，已只保留第 1 周")
+        }
 
         func openDay(label: String, weekday: Weekday?) {
             days.append(DraftDay(order: days.count + 1, label: label.isEmpty ? "训练" : label, weekday: weekday))
@@ -37,12 +49,20 @@ public enum DraftLineScanner {
             days[days.count - 1].items.append(contentsOf: items)
         }
 
-        for rawLine in expandingDayMarkers(text).components(separatedBy: .newlines) {
+        for rawLine in lines {
             let line = stripDecoration(rawLine)
             guard !line.isEmpty, !isSeparator(line) else { continue }
 
+            if weekNumber(in: line) != nil { continue }
+
             if cautionPrefixes.contains(where: { line.hasPrefix($0) }) {
                 cautions.append(line)
+                continue
+            }
+
+            if outOfRangeDay(in: line) {
+                openDay(label: "训练", weekday: nil)
+                append(items(from: removingOutOfRangeDayToken(in: line), memory: memory))
                 continue
             }
 
@@ -87,7 +107,7 @@ public enum DraftLineScanner {
         }
 
         guard days.contains(where: { !$0.items.isEmpty }) else { return nil }
-        return PlanDraft(title: title, days: days, cautions: cautions, source: .lineScan)
+        return PlanDraft(title: title, days: days, cautions: cautions, notes: notes, source: .lineScan)
     }
 
     static func items(from line: String, memory: AliasMemory = .empty) -> [DraftItem] {

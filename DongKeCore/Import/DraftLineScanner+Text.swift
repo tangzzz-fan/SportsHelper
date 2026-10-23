@@ -76,6 +76,46 @@ extension DraftLineScanner {
     }
 
 
+    static func weekNumber(in line: String) -> Int? {
+        let trimmed = stripDecoration(line).trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, trimmed.count <= 16, hasDose(trimmed) == false else { return nil }
+
+        if let match = firstMatch(in: trimmed, pattern: "(?i)^week\\s*(\\d+)\\s*$"),
+           let value = Int(match.groups[0]) {
+            return value
+        }
+        if let match = firstMatch(in: trimmed, pattern: "^第\\s*(\\d+)\\s*周\\s*$"),
+           let value = Int(match.groups[0]) {
+            return value
+        }
+        if let match = firstMatch(in: trimmed, pattern: "^第\\s*([一二三四五六七八九十]+)\\s*周\\s*$") {
+            return TextNormalization.number(of: match.groups[0])
+        }
+        return nil
+    }
+
+    static func outOfRangeDay(in line: String) -> Bool {
+        if let match = firstMatch(in: line, pattern: "(?i)\\bday\\s*(\\d+)"),
+           let value = Int(match.groups[0]), value > 7 {
+            return true
+        }
+        if let match = firstMatch(in: line, pattern: "第\\s*(\\d+)\\s*[天日]"),
+           let value = Int(match.groups[0]), value > 7 {
+            return true
+        }
+        return false
+    }
+
+    static func removingOutOfRangeDayToken(in line: String) -> String {
+        var result = line
+        if let match = firstMatch(in: result, pattern: "(?i)\\bday\\s*\\d+") {
+            result.removeSubrange(match.range)
+        } else if let match = firstMatch(in: result, pattern: "第\\s*\\d+\\s*[天日]") {
+            result.removeSubrange(match.range)
+        }
+        return result.trimmingCharacters(in: .whitespaces)
+    }
+
     static func looksLikeDayLabel(_ line: String) -> Bool {
         guard hasDose(line) == false else { return false }
         guard line.count <= 12 else { return false }

@@ -19,31 +19,38 @@ public enum PlanDraftCompiler {
         now: Date = Date()
     ) -> CompiledDraft {
         var assumptions: [String] = []
+        assumptions.append(contentsOf: draft.notes)
 
         var assigned: [Weekday: [DraftItem]] = [:]
         var labels: [Weekday: String] = [:]
         var rounds: [Weekday: Int] = [:]
         var droppedItems = 0
+        var duplicateItems = 0
 
         for day in draft.days where day.items.isEmpty == false {
+            let uniqueItems = removingExactDuplicates(day.items, duplicates: &duplicateItems)
             if let weekday = day.weekday {
                 if assigned[weekday] != nil {
                     assumptions.append("\(weekday.chineseName)写了两次，已合并到一天")
                 }
-                assigned[weekday, default: []].append(contentsOf: day.items)
+                assigned[weekday, default: []].append(contentsOf: uniqueItems)
                 if labels[weekday] == nil { labels[weekday] = day.label }
                 rounds[weekday] = max(rounds[weekday] ?? 1, day.rounds ?? 1)
                 continue
             }
 
             guard let free = Weekday.allCases.first(where: { assigned[$0] == nil }) else {
-                droppedItems += day.items.count
+                droppedItems += uniqueItems.count
                 continue
             }
-            assigned[free] = day.items
+            assigned[free] = uniqueItems
             labels[free] = day.label
             rounds[free] = max(1, day.rounds ?? 1)
             assumptions.append("「\(day.label)」没写星期，按\(free.chineseName)排")
+        }
+
+        if duplicateItems > 0 {
+            assumptions.append("有 \(duplicateItems) 个动作完全重复，同一天里只保留了一次")
         }
 
         if droppedItems > 0 {
@@ -206,6 +213,26 @@ public enum PlanDraftCompiler {
             unmappedNames: unmapped,
             guessedItems: guessedItems
         )
+    }
+
+    private static func removingExactDuplicates(_ items: [DraftItem], duplicates: inout Int) -> [DraftItem] {
+        var seen: Set<String> = []
+        var result: [DraftItem] = []
+        for item in items {
+            if seen.insert(signature(of: item)).inserted {
+                result.append(item)
+            } else {
+                duplicates += 1
+            }
+        }
+        return result
+    }
+
+    private static func signature(of item: DraftItem) -> String {
+        let identity = item.catalogId ?? CustomExerciseId.id(for: item.rawName)
+        let name = ExerciseAliasResolver.normalize(item.rawName)
+        let type = item.targetType?.rawValue ?? ""
+        return "\(name)|\(identity)|\(item.sets ?? -1)|\(item.value ?? -1)|\(type)|\(item.perSide)"
     }
 
     private static func uniqued(_ values: [String]) -> [String] {

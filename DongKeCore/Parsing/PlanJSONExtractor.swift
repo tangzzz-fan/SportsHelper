@@ -4,8 +4,12 @@ public enum PlanJSONExtractor {
     public static func extract(from text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
+        if trimmed.hasPrefix("{"), balanced(in: trimmed, open: "{", close: "}") == nil { return nil }
+        if trimmed.hasPrefix("["), balanced(in: trimmed, open: "[", close: "]") == nil { return nil }
 
-        if let fenced = fencedBody(in: trimmed), let value = normalize(fenced) {
+        if let fenced = fencedBody(in: trimmed),
+           fenced.contains("{") || fenced.contains("["),
+           let value = normalize(fenced) {
             return usable(value)
         }
         if trimmed.hasPrefix("["),

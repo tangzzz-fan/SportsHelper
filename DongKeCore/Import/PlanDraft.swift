@@ -72,12 +72,20 @@ public struct PlanDraft: Equatable, Sendable {
     public var title: String?
     public var days: [DraftDay]
     public var cautions: [String]
+    public var notes: [String]
     public var source: DraftSource
 
-    public init(title: String? = nil, days: [DraftDay] = [], cautions: [String] = [], source: DraftSource) {
+    public init(
+        title: String? = nil,
+        days: [DraftDay] = [],
+        cautions: [String] = [],
+        notes: [String] = [],
+        source: DraftSource
+    ) {
         self.title = title
         self.days = days
         self.cautions = cautions
+        self.notes = notes
         self.source = source
     }
 

@@ -50,6 +50,11 @@ public enum PlanValidator {
                 issues.append(issue("\(dayPath).blocks", "训练日没有任何区块"))
             }
 
+            let dayItemCount = day.blocks.reduce(0) { $0 + $1.items.count }
+            if dayItemCount > 20 {
+                issues.append(issue("\(dayPath).blocks", "这一天有 \(dayItemCount) 个动作，动作过多，先只保留一周的计划"))
+            }
+
             for (blockOffset, block) in day.blocks.enumerated() {
                 let blockPath = "\(dayPath).blocks[\(blockOffset)]"
                 if !roundsRange.contains(block.rounds) {

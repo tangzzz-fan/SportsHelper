@@ -48,7 +48,54 @@ public enum PlanImportService {
             )
         }
 
+        if looksLikeTruncatedJSON(trimmed) {
+            return ParsedPlanDraft(
+                plan: nil,
+                issues: [ParseIssue(
+                    path: "root",
+                    severity: .error,
+                    message: "这段内容像是 JSON，但没粘完整——检查一下括号或代码块是否被截断"
+                )],
+                rawText: text,
+                path: .lenientJSON
+            )
+        }
+
+        let allLines = trimmed.components(separatedBy: .newlines)
+        let firstContent = allLines.firstIndex {
+            !$0.trimmingCharacters(in: .whitespaces).isEmpty
+        } ?? 0
+        var relevantLines = allLines
+        if let boundary = allLines.indices.first(where: {
+            $0 > firstContent && (DraftLineScanner.weekNumber(in: allLines[$0]) ?? 1) >= 2
+        }) {
+            relevantLines = Array(allLines[..<boundary])
+        }
+        let lineCount = relevantLines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.count
+        guard lineCount <= 500 else {
+            return ParsedPlanDraft(
+                plan: nil,
+                issues: [ParseIssue(
+                    path: "root",
+                    severity: .error,
+                    message: "内容太多（超过 500 行），先只粘贴一周的计划"
+                )],
+                rawText: text,
+                path: .blank
+            )
+        }
+
         return FreeTextPlanParser.parse(text, memory: memory, exercises: exercises)
+    }
+
+    private static func looksLikeTruncatedJSON(_ text: String) -> Bool {
+        if text.hasPrefix("```") {
+            return text.contains("{")
+        }
+        if text.hasPrefix("{") || text.hasPrefix("[{") {
+            return true
+        }
+        return text.contains("\"days\"") || text.contains("schemaVersion")
     }
 
     private static func compiled(

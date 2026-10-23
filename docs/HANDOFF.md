@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **287 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **10 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 56 条 |
+| 测试 | **317 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **10 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；单测 287 条 + UI 测试 10 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 317 条 + UI 测试 10 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 **必须分两次跑**，不要指望一条命令全绿：
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 287 tests`。UI 测试是 XCTest，看 `Executed 10 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 317 tests`。UI 测试是 XCTest，看 `Executed 10 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -265,6 +265,29 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 5. 代码围栏 / 前后带散文的**通用 JSON** 解析不了（提取到的正文没被复用）→ `PlanImportService` 三档解码统一用提取结果；全角引号、全角冒号逗号只在 JSON 解析失败后做一次「引号感知」修复，`usable()` 先试原样解析。
 
 **已知边界（测试里明写为当前行为）**：只有动作名、剂量全无、别名也查不到的行会被整行丢掉（`周一 壶铃摆动` → 无计划）。这与「我的动作不参与行检测」是同一处遗留。
+
+## 6.11 不完整与过量输入（2026-10-23）
+
+粘贴内容只有两种坏法：**没粘完**和**粘太多**。判据放在 Import 链路最外层，先挡再解析。
+
+| 输入 | 规则 | 用户看到 |
+|---|---|---|
+| 超过 64KB | 直接拒绝 | 「内容超过 64KB，请只粘贴计划本身」 |
+| 超过 500 行（只按第一周计） | 直接拒绝 | 「内容太多（超过 500 行），先只粘贴一周的计划」 |
+| 像 JSON 但括号/围栏没闭合 | 不落到自由文本 | 「像是 JSON，但没粘完整」 |
+| 多周计划（`第 2 周` / `Week 2` 起） | 只保留第 1 周，后面整段丢弃 | 假设里写「只保留第 1 周」 |
+| `Day 8` / `第 8 天` 等超出一周的日子 | 当额外一天解析，排不下就丢 | 假设里写「多出的 N 个动作已略去」 |
+| 同一天里完全相同的动作 | 只留第一次 | 假设里写「N 个动作完全重复」 |
+| 单日超过 20 个动作 | 校验报错 | 「动作过多，先只保留一周的计划」 |
+| 只有标题 / 只有注意事项 / 空内容 | 不生成计划 | 「未能从这段内容里识别出动作」 |
+
+判定细节：
+
+- 行数护栏按**第一周之前的行**算：600 行的 6 周计划不会被误杀（`PlanImportService` 与 `DraftLineScanner` 共用 `weekNumber`）。
+- 周标题只在整行就是 `第 N 周` / `Week N` 时才算；`增肌计划 第一周` 仍是标题。只有粘贴从「第 2 周」开始时，才把它当第一周保留。
+- 重复折叠的判据是「归一化动作名 + catalogId + 组数 + 次数 + 类型 + 每侧」，**剂量不同不算重复**，`哑铃划船 3×12` 与 `弹力带划船 3×12` 也不会被合并。
+- 截断判定：以 `{`、`[{` 开头，或以 ``` 开头且正文含 `{`，或正文含 `"days"` / `schemaVersion`。围栏里是纯文本时仍走自由文本。
+- 这些规则都锁在 `IncompleteImportTests` / `OversizedImportTests` 里，stub 构造器在 `ImportStubs.swift`（`day` / `week` / `repeated` / `exercises(count:)` / `genericJSON`）。
 
 ## 6.6 UI 测试（2026-10-23）
 

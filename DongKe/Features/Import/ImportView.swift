@@ -141,9 +141,19 @@ struct ImportView: View {
         .glassSurface(radius: Theme.Radius.glassCard)
     }
 
+    private func failureTitle(_ draft: ParsedPlanDraft) -> String {
+        if draft.issues.contains(where: { $0.message.contains("没粘完整") }) {
+            return "这段内容没粘完整"
+        }
+        if draft.issues.contains(where: { $0.message.contains("内容太多") || $0.message.contains("64KB") }) {
+            return "内容太多了"
+        }
+        return draft.path == .lenientJSON ? "这段 JSON 结构不对" : "没能识别出动作"
+    }
+
     private func failureCard(_ draft: ParsedPlanDraft) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(draft.path == .lenientJSON ? "这段 JSON 结构不对" : "没能识别出动作")
+            Text(failureTitle(draft))
                 .font(Typography.cardTitle)
             ForEach(draft.issues.filter { $0.severity == .error }) { issue in
                 Text("· \(issue.message)")
