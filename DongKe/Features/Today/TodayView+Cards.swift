@@ -18,6 +18,7 @@ extension TodayView {
                     .opacity(0.08)
                     .rotationEffect(.degrees(-4))
                     .offset(x: 78, y: 96)
+                    .allowsHitTesting(false)
             }
         }
         .ignoresSafeArea()
@@ -47,6 +48,7 @@ extension TodayView {
                 RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
                     .strokeBorder(Theme.accent(for: colorScheme).opacity(0.35), lineWidth: 1)
             )
+            .accessibilityIdentifier(A11y.Today.resume)
             .padding(.top, 2)
         }
         .padding(16)
@@ -104,6 +106,7 @@ extension TodayView {
                         lineWidth: 1
                     )
             }
+            .accessibilityIdentifier(A11y.Today.start)
             .padding(.top, 12)
         }
         .padding(18)

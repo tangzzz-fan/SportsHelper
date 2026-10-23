@@ -8,10 +8,10 @@
 |---|---|
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
-| 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests |
+| 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | 224 条 Swift Testing，**224 绿 0 红**（`ios-run.sh test`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条 |
+| 测试 | **227 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **8 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,9 +35,18 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；测试跑完 224 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 227 条 + UI 测试 8 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
-注意 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，真实结果看日志里的 `Test run with 224 tests`。
+**必须分两次跑**，不要指望一条命令全绿：
+
+```bash
+~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh test --project DongKe.xcodeproj --scheme DongKe -only-testing:DongKeCoreTests
+~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh test --project DongKe.xcodeproj --scheme DongKe -only-testing:DongKeUITests
+```
+
+原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
+
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 227 tests`。UI 测试是 XCTest，看 `Executed 8 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -130,7 +139,7 @@ SIMCTL_CHILD_DK_COMPLETE_ONBOARDING=1 xcrun simctl launch booted app.dongke.ios 
 SIMCTL_CHILD_DK_RESET_PROFILE=1 xcrun simctl launch booted app.dongke.ios       # 清掉档案，回到未引导
 SIMCTL_CHILD_DK_PREVIEW=summary xcrun simctl launch booted app.dongke.ios      # 完成总结（预置 4 组完成 + 1 组降阶）
 SIMCTL_CHILD_DK_PREVIEW=library | detail xcrun simctl launch booted app.dongke.ios  # 动作库 / 动作详情
-SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl launch booted app.dongke.ios  # 直接看校对页
+SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl launch booted app.dongke.ios  # 直接看校对页（示例文本只预填，不自动识别）
 SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios   # 塞一个「我的动作」（农夫行走）
 SIMCTL_CHILD_DK_PREVIEW=myexercise SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios  # 我的动作详情
 xcrun simctl spawn booted defaults write app.dongke.ios dk.alias.memo -dict "保加利亚分腿蹲" "squat"  # 预置别名记忆，验第三层
@@ -198,8 +207,26 @@ SPEC §4「单文件 ≤300 行」已全量满足。拆分方式分两种，**�
 
 **仍欠**：SPEC §10 的「字号不得硬编码」未收口——全仓仍是 `.font(.system(size:))` 字面量。做这件事要先定一套语义字阶（display/title/body/caption…）再一次性迁移，半迁移比不迁移更糟，所以单列一票。
 
+## 6.6 UI 测试（2026-10-23）
+
+`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），八条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存 / 训练→休息→跳过→总结 / 设置开关与清空。
+
+| 机制 | 说明 |
+|---|---|
+| 标识符 | `Shared/A11yIdentifiers.swift` 的 `A11y` 同时编进 App 与 UI 测试，改一边另一边编译期就报错，避免字符串漂移 |
+| 隔离 | `DK_UI_TEST=1` 让 `ModelContainer` 走内存存储，并在 `DongKeApp.init` 清掉全部 `dk.` UserDefaults ⇒ 每次启动都是干净的零数据 |
+| 预置 | `DK_COMPLETE_ONBOARDING=1` 在 init 里直接写档案（不再是 `.task` 里补写），所以首帧就落在今日页，不会闪一下引导 |
+| 点击 | 用例一律用 `tap(_:)` 助手，它按元素**中心坐标**点击。`element.tap()` 在带 `overlay` 的按钮上会做「避开遮挡」的坐标调整，实测会落到空白处（`today.start` 因此永远点不动），不要换回去 |
+| 等待 | 转场后先等元素消失（`waitUntilGone`）再点下一个，否则休息面板的淡出层会吃掉下一次点击 |
+
+## 6.7 引导不再是全屏弹层（2026-10-23）
+
+原来的 `AppShell` 同时挂了两个 `fullScreenCover`（引导 + 训练），SwiftUI 只认先注册的那个，**训练页永远弹不出来**（点「开始训练」毫无反应）。现在引导挪到 `RootView`：`profileStore.hasOnboarded == false` 就直接渲染 `OnboardingView`，否则渲染 `AppShell`。清空数据后 `profileStore.load()` 变空，根视图自动切回引导，不需要额外的状态位。
+
+`AppShell` 里因此只剩一个 `fullScreenCover(item: $session)`。**别再加第二个全屏弹层到这个视图上。**
+
 ## 7. 换机后容易踩的三个坑
 
-1. **`.xcodeproj` 不在库里**：只 clone 不跑 `xcodegen generate`，Xcode 打开一片空白。
+1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。
 2. **把历史红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序（该报告是 2026-10-22 的历史快照，当前已全绿）。
 3. **骨架门禁红被当成回归**：打样期数据只有 2 帧，动态动作欠第 3 帧。判红前先核对 `figure-specs` 数据版本，见 SPEC §11 最后一条。

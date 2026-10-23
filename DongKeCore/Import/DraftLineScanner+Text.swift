@@ -49,7 +49,10 @@ extension DraftLineScanner {
                 return day
             }
         }
-        if let match = firstMatch(in: line, pattern: "(?i)(?:day|第)\\s*([1-7])"), let raw = Int(match.groups[0]) {
+        if let match = firstMatch(in: line, pattern: "(?i)\\bday\\s*([1-7])"), let raw = Int(match.groups[0]) {
+            return Weekday(rawValue: raw)
+        }
+        if let match = firstMatch(in: line, pattern: "第\\s*([1-7])\\s*[天日]"), let raw = Int(match.groups[0]) {
             return Weekday(rawValue: raw)
         }
         return nil
@@ -61,7 +64,7 @@ extension DraftLineScanner {
             result.removeSubrange(match.range)
         } else if let match = firstMatch(in: result, pattern: "(?i)\\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)\\b") {
             result.removeSubrange(match.range)
-        } else if let match = firstMatch(in: result, pattern: "(?i)(?:day|第)\\s*[1-7]\\s*天?") {
+        } else if let match = firstMatch(in: result, pattern: "(?i)(?:day\\s*[1-7]|第\\s*[1-7]\\s*[天日])") {
             result.removeSubrange(match.range)
         }
         return result.trimmingCharacters(in: .whitespaces)
@@ -84,7 +87,6 @@ extension DraftLineScanner {
     static func looksLikeTitle(_ line: String) -> Bool {
         guard line.count >= 2, line.count <= 24 else { return false }
         guard hasDose(line) == false else { return false }
-        guard line.rangeOfCharacter(from: .decimalDigits) == nil else { return false }
         guard ExerciseAliasResolver.catalogId(for: line) == nil else { return false }
         return !containsAny(line, ["，", "。", "；", ",", ";"])
     }

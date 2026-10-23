@@ -14,7 +14,6 @@ struct AppShell: View {
     @Environment(SetLogStore.self) private var setLogs
     @Environment(ProfileStore.self) private var profileStore
     @Environment(PlanStore.self) private var planStore
-    @State private var showingOnboarding = false
     @State private var resumeCandidate: WorkoutCheckpoint?
     private let checkpoints = WorkoutCheckpointStore()
     @Environment(\.modelContext) private var modelContext
@@ -105,13 +104,6 @@ struct AppShell: View {
                 profileStore.reset()
             }
             #endif
-            showingOnboarding = shouldShowOnboarding()
-            #if DEBUG
-            if ProcessInfo.processInfo.environment["DK_COMPLETE_ONBOARDING"] == "1", !profileStore.hasOnboarded {
-                profileStore.save(OnboardingDraft().completedProfile(now: Date()))
-                showingOnboarding = false
-            }
-            #endif
             #if DEBUG
             if ProcessInfo.processInfo.environment["DK_SEED_SESSION"] == "1", store.sessions.isEmpty {
                 store.upsert(
@@ -125,23 +117,6 @@ struct AppShell: View {
             }
             #endif
         }
-        .fullScreenCover(isPresented: $showingOnboarding) {
-            OnboardingView(initialStep: previewOnboardingStep()) { profile in
-                profileStore.save(profile)
-                let generated = PlanGenerator.makePlan(profile: profile)
-                planStore.save(generated)
-                showingOnboarding = false
-                Task {
-                    if profile.reminderEnabled {
-                        await NotificationService.shared.requestAuthorization()
-                        await NotificationService.shared.reschedule(
-                            plan: generated,
-                            settings: ReminderSettingsStore.shared.settings
-                        )
-                    }
-                }
-            }
-        }
         .fullScreenCover(item: $session) { active in
             WorkoutView(session: active) {
                 session = nil
@@ -151,26 +126,8 @@ struct AppShell: View {
         .onAppear(perform: refreshResumeCandidate)
     }
 
-    private func previewOnboardingStep() -> OnboardingStep {
-        #if DEBUG
-        if let raw = ProcessInfo.processInfo.environment["DK_ONBOARD_STEP"], let value = Int(raw) {
-            return OnboardingStep(rawValue: value) ?? .basics
-        }
-        #endif
-        return .basics
-    }
-
     private var activePlan: WorkoutPlan {
         planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
-    }
-
-    private func shouldShowOnboarding() -> Bool {
-        if profileStore.hasOnboarded == false { return true }
-        #if DEBUG
-        return ProcessInfo.processInfo.environment["DK_PREVIEW"] == "onboarding"
-        #else
-        return false
-        #endif
     }
 
     private func openWorkout(_ link: WorkoutDeepLink) {
@@ -231,10 +188,10 @@ struct AppShell: View {
         store.reload()
         ReminderSettingsStore.shared.reload()
         AISettingsStore.shared.reloadFromDisk()
-        showingOnboarding = true
     }
 
-    private func refreshResumeCandidate() {        #if DEBUG
+    private func refreshResumeCandidate() {
+        #if DEBUG
         if ProcessInfo.processInfo.environment["DK_SEED_CHECKPOINT"] == "1", checkpoints.load() == nil {
             let plan = activePlan
             let dayIndex = plan.days.first(where: { !$0.isRestDay })?.dayIndex ?? 1

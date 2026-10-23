@@ -44,6 +44,7 @@ struct PlanView: View {
                     .font(.system(size: 34, weight: .bold))
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
+                    .accessibilityIdentifier(A11y.Plan.title)
 
                 Text(plan.meta.title)
                     .font(.footnote)
@@ -79,6 +80,7 @@ struct PlanView: View {
                     entryButton(title: "导入计划", symbol: Icons.importPlan) {
                         showImport = true
                     }
+                    .accessibilityIdentifier(A11y.Plan.importPlan)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 14)

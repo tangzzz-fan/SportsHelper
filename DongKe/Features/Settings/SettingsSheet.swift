@@ -44,6 +44,7 @@ struct SettingsSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") { dismiss() }
                         .foregroundStyle(Theme.accent(for: colorScheme))
+                        .accessibilityIdentifier(A11y.Settings.done)
                 }
             }
             .confirmationDialog(
@@ -97,6 +98,7 @@ struct SettingsSheet: View {
         .glassSurface(radius: Theme.Radius.card)
         .disabled(isErasing)
         .id("settings.bottom")
+        .accessibilityIdentifier(A11y.Settings.erase)
     }
 
     private var versionText: String {
@@ -137,6 +139,7 @@ struct SettingsSheet: View {
                 ))
                 .labelsHidden()
                 .tint(Theme.accent(for: colorScheme))
+                .accessibilityIdentifier(A11y.Settings.reminderToggle)
             }
             .padding(16)
 
@@ -185,6 +188,7 @@ struct SettingsSheet: View {
                 Text("\(notifications.scheduledCount) 条")
                     .font(.system(size: 15, weight: .medium))
                     .monospacedDigit()
+                    .accessibilityIdentifier(A11y.Settings.scheduledCount)
             }
 
             if notifications.status == .notDetermined {

@@ -13,7 +13,6 @@ struct ImportView: View {
     @State private var text = ""
     @State private var draft: ParsedPlanDraft?
     @State private var showReview = false
-    @State private var autoParsed = false
     @State private var copiedPrompt = false
     private let memo = AliasMemoStore()
 
@@ -62,6 +61,7 @@ struct ImportView: View {
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                     )
                     .disabled(!canParse)
+                    .accessibilityIdentifier(A11y.Import.parse)
 
                     if let draft, draft.plan == nil {
                         failureCard(draft)
@@ -114,14 +114,6 @@ struct ImportView: View {
                     }
                 }
             }
-            .task {
-                #if DEBUG
-                if ProcessInfo.processInfo.environment["DK_IMPORT_SAMPLE"] == "1", !autoParsed {
-                    autoParsed = true
-                    parse()
-                }
-                #endif
-            }
         }
     }
 
@@ -144,6 +136,7 @@ struct ImportView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .frame(minHeight: 200)
+                .accessibilityIdentifier(A11y.Import.editor)
         }
         .glassSurface(radius: Theme.Radius.glassCard)
     }

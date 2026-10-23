@@ -71,7 +71,7 @@ public enum DraftLineScanner {
                     continue
                 }
                 if looksLikeTitle(line) {
-                    title = cleanedName(line)
+                    title = title ?? line
                     continue
                 }
                 append(items(from: line, memory: memory))

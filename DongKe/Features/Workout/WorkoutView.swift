@@ -37,6 +37,7 @@ struct WorkoutView: View {
                     .opacity(0.06)
                     .offset(x: 140, y: -170)
                     .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
 
             VStack(spacing: 0) {
@@ -88,6 +89,7 @@ struct WorkoutView: View {
                     .frame(width: 44, height: 44)
             }
             .foregroundStyle(Theme.accent(for: colorScheme))
+            .accessibilityIdentifier(A11y.Workout.close)
 
             Spacer()
 
@@ -102,6 +104,7 @@ struct WorkoutView: View {
             .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(Theme.accent(for: colorScheme))
             .frame(width: 52, height: 44)
+            .accessibilityIdentifier(A11y.Workout.end)
         }
         .padding(.horizontal, 8)
         .glassSurface(radius: Theme.Radius.glassIsland)
@@ -150,6 +153,7 @@ struct WorkoutView: View {
                 Theme.accent(for: colorScheme),
                 in: RoundedRectangle(cornerRadius: 14, style: .continuous)
             )
+            .accessibilityIdentifier(A11y.Workout.completeSet)
             .overlay {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(
@@ -182,6 +186,7 @@ struct WorkoutView: View {
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PressableGlassStyle())
+            .accessibilityIdentifier(A11y.Workout.skipSet)
         }
         .padding(16)
         .glassSurface(radius: Theme.Radius.glassCard)
@@ -189,6 +194,7 @@ struct WorkoutView: View {
         .padding(.bottom, 16)
         .confirmationDialog("为什么跳过这组？", isPresented: $showSkipOptions, titleVisibility: .visible) {
             Button("没时间") { session.skipSet(reason: .noTime) }
+                .accessibilityIdentifier(A11y.Workout.skipReasonNoTime)
             Button("太累了") { session.skipSet(reason: .tooHard) }
             Button("身体不适") { session.skipSet(reason: .pain) }
             Button("缺器械") { session.skipSet(reason: .noEquipment) }

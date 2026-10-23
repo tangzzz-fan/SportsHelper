@@ -65,6 +65,7 @@ struct RestSheetView: View {
                     sheetButton("+15 秒") { session.extendRest() }
                     sheetButton(isPaused ? "继续" : "暂停") { session.togglePauseRest() }
                     sheetButton("跳过") { session.skipRest() }
+                        .accessibilityIdentifier(A11y.Workout.skipRest)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)

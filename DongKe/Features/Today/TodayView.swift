@@ -65,12 +65,14 @@ struct TodayView: View {
                             .foregroundStyle(Theme.accent(for: colorScheme))
                             .frame(width: 44, height: 44)
                     }
+                    .accessibilityIdentifier(A11y.Today.settings)
                 }
                 .padding(.horizontal, 8)
 
                 Text("今日")
                     .font(.system(size: 34, weight: .bold))
                     .padding(.horizontal, 16)
+                    .accessibilityIdentifier(A11y.Today.title)
 
                 Text(dateLine)
                     .font(.footnote)
@@ -82,6 +84,7 @@ struct TodayView: View {
                     reminderBanner(reminderHealth)
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
+                        .accessibilityIdentifier(A11y.Today.reminderBanner)
                 }
 
                 if let resumeHint {

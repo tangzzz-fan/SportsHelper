@@ -26,6 +26,7 @@ struct WorkoutSummaryView: View {
                 VStack(spacing: 6) {
                     Text("训练完成")
                         .font(.system(size: 30, weight: .bold))
+                        .accessibilityIdentifier(A11y.Workout.summaryTitle)
                     Text("\(title) · \(recap.durationText)")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -70,6 +71,7 @@ struct WorkoutSummaryView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 20)
+                .accessibilityIdentifier(A11y.Summary.done)
             }
         }
     }
@@ -90,6 +92,7 @@ struct WorkoutSummaryView: View {
                 Text(recap.percentText(recap.completionRate))
                     .font(.system(size: 44, weight: .semibold, design: .rounded))
                     .monospacedDigit()
+                    .accessibilityIdentifier(A11y.Summary.completion)
                 Text("\(recap.completedSets) / \(recap.plannedSets) 组")
                     .font(.caption)
                     .foregroundStyle(.secondary)

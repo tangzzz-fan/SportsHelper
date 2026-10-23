@@ -78,6 +78,7 @@ struct PlanReviewView: View {
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.accent(for: colorScheme))
                 .disabled(blocking.isEmpty == false)
+                .accessibilityIdentifier(A11y.Import.save)
             }
         }
         .sheet(item: $editing) { row in

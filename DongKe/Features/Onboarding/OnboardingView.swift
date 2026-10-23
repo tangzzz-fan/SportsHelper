@@ -90,6 +90,7 @@ struct OnboardingView: View {
                 in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
             )
             .disabled(!draft.canAdvance(from: step))
+            .accessibilityIdentifier(A11y.Onboarding.next)
 
             Button(step == .basics ? "跳过，用默认值" : "返回") {
                 if step == .basics {
@@ -100,6 +101,7 @@ struct OnboardingView: View {
             }
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            .accessibilityIdentifier(A11y.Onboarding.skip)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)

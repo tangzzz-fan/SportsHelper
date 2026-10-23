@@ -64,6 +64,17 @@
                ReferencedContainer = "container:DongKe.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "0DDB01FA4600953CEADDB6F2"
+               BuildableName = "DongKeUITests.xctest"
+               BlueprintName = "DongKeUITests"
+               ReferencedContainer = "container:DongKe.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>
