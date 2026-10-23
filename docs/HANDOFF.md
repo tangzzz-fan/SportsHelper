@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **317 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **10 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条 |
+| 测试 | **317 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **11 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；单测 317 条 + UI 测试 10 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 317 条 + UI 测试 11 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 **必须分两次跑**，不要指望一条命令全绿：
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 317 tests`。UI 测试是 XCTest，看 `Executed 10 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 317 tests`。UI 测试是 XCTest，看 `Executed 11 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -142,6 +142,7 @@ SIMCTL_CHILD_DK_RESET_PROFILE=1 xcrun simctl launch booted app.dongke.ios       
 SIMCTL_CHILD_DK_PREVIEW=summary xcrun simctl launch booted app.dongke.ios      # 完成总结（预置 4 组完成 + 1 组降阶）
 SIMCTL_CHILD_DK_PREVIEW=library | detail xcrun simctl launch booted app.dongke.ios  # 动作库 / 动作详情
 SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_SAMPLE=1 xcrun simctl launch booted app.dongke.ios  # 直接看校对页（示例文本只预填，不自动识别）
+SIMCTL_CHILD_DK_PREVIEW=import SIMCTL_CHILD_DK_IMPORT_PASTE='{"days":[{"day":"周一"' xcrun simctl launch booted app.dongke.ios  # 预填任意文本（验截断/超量提示）
 SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios   # 塞一个「我的动作」（农夫行走）
 SIMCTL_CHILD_DK_PREVIEW=myexercise SIMCTL_CHILD_DK_SEED_USER_EXERCISE=1 xcrun simctl launch booted app.dongke.ios  # 我的动作详情
 xcrun simctl spawn booted defaults write app.dongke.ios dk.alias.memo -dict "保加利亚分腿蹲" "squat"  # 预置别名记忆，验第三层
@@ -291,7 +292,7 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 
 ## 6.6 UI 测试（2026-10-23）
 
-`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存 / 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关与清空，另有一条在 AX3 字号下断言训练页四个控件可点。
+`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十一条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存（含「截断 JSON 提示没粘完整」）/ 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关与清空，另有一条在 AX3 字号下断言训练页四个控件可点。
 
 | 机制 | 说明 |
 |---|---|

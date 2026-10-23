@@ -29,7 +29,9 @@ struct ImportView: View {
     init(onSave: @escaping (WorkoutPlan) -> Void) {
         self.onSave = onSave
         #if DEBUG
-        if ProcessInfo.processInfo.environment["DK_IMPORT_SAMPLE"] == "1" {
+        if let pasted = ProcessInfo.processInfo.environment["DK_IMPORT_PASTE"] {
+            _text = State(initialValue: pasted)
+        } else if ProcessInfo.processInfo.environment["DK_IMPORT_SAMPLE"] == "1" {
             _text = State(initialValue: Self.sampleText)
         }
         #endif

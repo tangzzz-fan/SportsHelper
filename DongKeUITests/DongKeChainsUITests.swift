@@ -68,6 +68,24 @@ final class DongKeChainsUITests: DongKeUITestCase {
         button(A11y.Plan.importPlan)
     }
 
+    func testImportTruncatedJSONShowsIncompleteMessage() {
+        let truncated = #"{"days":[{"day":"周一","items":[{"name":"深蹲""#
+        launchApp(["DK_COMPLETE_ONBOARDING": "1", "DK_IMPORT_PASTE": truncated])
+
+        text(A11y.Today.title)
+        tapTab("计划")
+        tap(button(A11y.Plan.importPlan))
+
+        XCTAssertTrue(app.textViews[A11y.Import.editor].waitForExistence(timeout: 10))
+        tap(button(A11y.Import.parse))
+
+        XCTAssertTrue(
+            app.staticTexts["这段内容没粘完整"].waitForExistence(timeout: 5),
+            "截断的 JSON 没有提示「没粘完整」"
+        )
+        XCTAssertFalse(app.buttons[A11y.Import.save].exists, "截断内容不该进入校对页")
+    }
+
     func testWorkoutCompleteRestSkipEndSummary() {
         launchApp(["DK_COMPLETE_ONBOARDING": "1"])
 
