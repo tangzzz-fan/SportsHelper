@@ -107,6 +107,24 @@ final class DongKeChainsUITests: DongKeUITestCase {
         XCTAssertTrue(skipRest.waitForExistence(timeout: 10), "减半后没有进入组间休息")
     }
 
+    func testWorkoutControlsReachableAtAccessibilityTextSize() {
+        launchApp(
+            ["DK_COMPLETE_ONBOARDING": "1", "DK_PREVIEW": "workout"],
+            arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        )
+
+        let close = button(A11y.Workout.close)
+        let end = button(A11y.Workout.end)
+        let complete = button(A11y.Workout.completeSet)
+        let skip = button(A11y.Workout.skipSet)
+
+        for element in [close, end, complete, skip] {
+            XCTAssertTrue(element.isHittable, "最大辅助字号下这个控件点不到：\(element)")
+        }
+        XCTAssertTrue(app.frame.contains(end.frame), "「结束」超出屏幕")
+        XCTAssertTrue(app.frame.contains(skip.frame), "「跳过本组」超出屏幕")
+    }
+
     func testWorkoutCloseKeepsResumeCard() {        launchApp(["DK_COMPLETE_ONBOARDING": "1"])
 
         tap(button(A11y.Today.start))

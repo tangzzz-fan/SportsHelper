@@ -40,11 +40,11 @@ struct WorkoutSummaryView: View {
                         }
 
                         ring
-                            .padding(.top, 28)
+                            .padding(.top, typeSize.isAccessibilitySize ? 16 : 28)
 
                         statCard
                             .padding(.horizontal, 16)
-                            .padding(.top, 28)
+                            .padding(.top, typeSize.isAccessibilitySize ? 16 : 28)
 
                         Text("降阶的组计入完成率；未做与跳过的组不计。")
                             .font(.caption)
@@ -52,40 +52,50 @@ struct WorkoutSummaryView: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 12)
 
-                        Spacer(minLength: 16)
-
-                        Button(action: onDone) {
-                            Text("完成")
-                                .font(Typography.buttonLabel)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                        }
-                        .buttonStyle(PressableGlassStyle())
-                        .foregroundStyle(Theme.callToActionInk(for: colorScheme))
-                        .background(
-                            Theme.accent(for: colorScheme),
-                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.52), .white.opacity(0.06)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
-                                    lineWidth: 1
-                                )
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 20)
-                        .accessibilityIdentifier(A11y.Summary.done)
+                        Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    .frame(maxWidth: .infinity, minHeight: contentMinHeight(proxy.size.height))
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                .safeAreaInset(edge: .bottom) {
+                    doneButton
+                }
             }
         }
+    }
+
+    private func contentMinHeight(_ available: CGFloat) -> CGFloat {
+        typeSize.isAccessibilitySize ? 0 : max(0, available - 96)
+    }
+
+    private var doneButton: some View {
+        Button(action: onDone) {
+            Text("完成")
+                .font(Typography.buttonLabel)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+        }
+        .buttonStyle(PressableGlassStyle())
+        .foregroundStyle(Theme.callToActionInk(for: colorScheme))
+        .background(
+            Theme.accent(for: colorScheme),
+            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.white.opacity(0.52), .white.opacity(0.06)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 20)
+        .accessibilityIdentifier(A11y.Summary.done)
     }
 
     private var ring: some View {

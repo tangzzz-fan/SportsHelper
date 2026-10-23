@@ -6,6 +6,7 @@ struct WorkoutView: View {
     var onClose: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var showSkipOptions = false
     @State private var showDowngradeOptions = false
 
@@ -16,6 +17,10 @@ struct WorkoutView: View {
         let target = prescription.target
         let perSide = target.perSide ? " / 侧" : ""
         return "\(target.doseText)\(perSide) × \(prescription.sets) 组"
+    }
+
+    private var figureSize: CGSize {
+        typeSize.isAccessibilitySize ? CGSize(width: 132, height: 156) : CGSize(width: 220, height: 260)
     }
 
     private var cueLines: [String] {
@@ -61,39 +66,45 @@ struct WorkoutView: View {
             VStack(spacing: 0) {
                 navBar
 
-                Spacer(minLength: 0)
+                GeometryReader { proxy in
+                    ScrollView {
+                        Group {
+                            if let prescription {
+                                VStack(spacing: typeSize.isAccessibilitySize ? 10 : 18) {
+                                    ExerciseFigureView(catalogId: prescription.catalogId, figureSize: figureSize)
 
-                if let prescription {
-                    VStack(spacing: 18) {
-                        ExerciseFigureView(catalogId: prescription.catalogId)
-
-                        VStack(spacing: 2) {
-                            Text(prescription.name)
-                                .font(Typography.buttonLabel)
-                            Text(doseText)
-                                .font(Typography.body)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                            if cueLines.isEmpty == false {
-                                VStack(spacing: 3) {
-                                    ForEach(cueLines, id: \.self) { cue in
-                                        Text(cue)
-                                            .font(Typography.meta)
-                                            .foregroundStyle(.tertiary)
-                                            .multilineTextAlignment(.center)
+                                    VStack(spacing: 2) {
+                                        Text(prescription.name)
+                                            .font(Typography.buttonLabel)
+                                        Text(doseText)
+                                            .font(Typography.body)
+                                            .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
+                                        if cueLines.isEmpty == false {
+                                            VStack(spacing: 3) {
+                                                ForEach(cueLines, id: \.self) { cue in
+                                                    Text(cue)
+                                                        .font(Typography.meta)
+                                                        .foregroundStyle(.tertiary)
+                                                        .multilineTextAlignment(.center)
+                                                        .fixedSize(horizontal: false, vertical: true)
+                                                }
+                                            }
+                                            .padding(.top, 8)
+                                            .accessibilityIdentifier(A11y.Workout.cues)
+                                        }
                                     }
                                 }
-                                .padding(.top, 8)
-                                .accessibilityIdentifier(A11y.Workout.cues)
+                                .frame(maxWidth: .infinity)
+                                .frame(minHeight: proxy.size.height, alignment: .center)
+                            } else {
+                                finishedPlaceholder
+                                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                             }
                         }
                     }
-                } else {
-                    finishedPlaceholder
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-
-                Spacer(minLength: 0)
 
                 if !session.isResting {
                     controlDock
@@ -118,17 +129,21 @@ struct WorkoutView: View {
             Button(action: onClose) {
                 Image(systemName: Icons.close)
                     .font(Typography.buttonLabel)
-                    .frame(width: 44, height: 44)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .fixedSize()
             }
             .foregroundStyle(Theme.accent(for: colorScheme))
             .accessibilityIdentifier(A11y.Workout.close)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             Text(session.sessionTitle)
                 .font(Typography.buttonLabel)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .layoutPriority(0)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             Button("结束") {
                 session.endWorkout()

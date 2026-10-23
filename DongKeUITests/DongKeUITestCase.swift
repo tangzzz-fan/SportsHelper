@@ -14,12 +14,18 @@ class DongKeUITestCase: XCTestCase {
     }
 
     @discardableResult
-    func launchApp(_ environment: [String: String] = [:], file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
+    func launchApp(
+        _ environment: [String: String] = [:],
+        arguments: [String] = [],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["DK_UI_TEST"] = "1"
         for (key, value) in environment {
             app.launchEnvironment[key] = value
         }
+        app.launchArguments += arguments
         app.launch()
         self.app = app
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 20), "App 没能进到前台", file: file, line: line)
