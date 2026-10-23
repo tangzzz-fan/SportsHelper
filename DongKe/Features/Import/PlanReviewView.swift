@@ -267,8 +267,7 @@ struct PlanReviewView: View {
     }
 
     private func doseText(_ item: ExercisePrescription) -> String {
-        let unit = item.target.type == .durationSec ? "秒" : "次"
         let perSide = item.target.perSide ? " / 侧" : ""
-        return "\(item.sets) 组 × \(item.target.value) \(unit)\(perSide) · 休息 \(item.restSec) 秒"
+        return "\(item.sets) 组 × \(item.target.doseText)\(perSide) · 休息 \(item.restSec) 秒"
     }
 }

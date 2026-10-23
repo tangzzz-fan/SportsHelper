@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **227 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **9 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条 |
+| 测试 | **233 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **9 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -106,6 +106,8 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 ```
 
 要加一种新格式，只加一个适配器产出 `PlanDraft`，编译器与页面都不用动。要给某个 agent 定契约，就让它输出 `AIPromptBuilder.copyablePrompt(profile:)` 里那份提示词要求的 JSON——直连 AI 与「复制提示词」按钮**共用同一份** system prompt（ARCH §8.3），不再维护第二套模板。
+
+**剂量单位的三种形态都在 `SetTarget` 上**：`reps`（次）、`durationSec`（秒）、`distanceM`（米）。行扫描已经把 `5 公里 / 1.5 公里 / 800 米 / 3km` 解析成 `distanceM`（公里 ×1000 存米）；显示统一走 `SetTarget.doseText`（≥1000 米自动变「5 公里 / 1.5 公里」，否则「800 米」），耗时估算统一走 `estimatedWorkSeconds`（次数 ×3 秒、时长原值、距离每米 0.4 秒）。**新增目标类型时这两处必须一起改**，否则训练页会把它当「次」显示、时长估算按 3 秒算。
 
 ### 库外动作的三层处理（22–24）
 

@@ -143,7 +143,7 @@ public enum PlanGenerator {
         main += mainCandidates.filter { item in !main.contains(where: { $0.id == item.id }) }
 
         let targetSeconds = profile.sessionMinutes * 60
-        let workPerSet = dose.type == .durationSec ? dose.value : dose.value * 3
+        let workPerSet = dose.estimatedWorkSeconds
         let warmupCost = (warmup != nil) ? 40 + 20 : 0
         let coreItem = coreCandidates.first
         let coreSets = max(1, sets - 1)
@@ -263,7 +263,7 @@ public enum PlanGenerator {
         var seconds = 0
         for block in blocks {
             for item in block.items {
-                let workPerSet = item.target.type == .durationSec ? item.target.value : item.target.value * 3
+                let workPerSet = item.target.estimatedWorkSeconds
                 seconds += item.sets * (workPerSet + item.restSec)
             }
         }

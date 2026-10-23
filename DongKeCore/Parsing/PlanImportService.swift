@@ -141,7 +141,7 @@ public enum PlanEditing {
         for block in day.blocks {
             let rounds = max(1, block.rounds)
             let perRound = block.items.reduce(0) { total, item in
-                let work = item.target.type == .durationSec ? item.target.value : item.target.value * 3
+                let work = item.target.estimatedWorkSeconds
                 return total + item.sets * (work + item.restSec)
             }
             seconds += perRound * rounds

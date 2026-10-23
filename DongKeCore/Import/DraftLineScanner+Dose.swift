@@ -31,6 +31,16 @@ extension DraftLineScanner {
         }
 
         if value == nil,
+           let match = firstMatch(in: working, pattern: "(?i)(\\d+(?:\\.\\d+)?)\\s*(公里|千米|km|米|meters?|m\\b)"),
+           let amount = Double(match.groups[0]) {
+            let unit = match.groups[1].lowercased()
+            let meters = (unit == "公里" || unit == "千米" || unit == "km") ? amount * 1000 : amount
+            value = Int(meters.rounded())
+            targetType = .distanceM
+            working.removeSubrange(match.range)
+        }
+
+        if value == nil,
            let match = firstMatch(in: working, pattern: "(\\d+)\\s*(?:组|sets?)?\\s*[×xX*]\\s*(\\d+)\\s*(次|秒|reps?|s)?"),
            let parsedSets = Int(match.groups[0]) {
             sets = parsedSets

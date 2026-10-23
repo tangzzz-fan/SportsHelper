@@ -14,9 +14,8 @@ struct WorkoutView: View {
     private var doseText: String {
         guard let prescription else { return "" }
         let target = prescription.target
-        let unit = target.type == .durationSec ? "秒" : "次"
         let perSide = target.perSide ? " / 侧" : ""
-        return "\(target.value) \(unit)\(perSide) × \(prescription.sets) 组"
+        return "\(target.doseText)\(perSide) × \(prescription.sets) 组"
     }
 
     private var cueLines: [String] {
