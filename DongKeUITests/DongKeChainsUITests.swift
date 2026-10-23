@@ -90,8 +90,24 @@ final class DongKeChainsUITests: DongKeUITestCase {
         button(A11y.Today.start)
     }
 
-    func testWorkoutCloseKeepsResumeCard() {
+    func testWorkoutShowsCuesAndAsksBeforeHalving() {
         launchApp(["DK_COMPLETE_ONBOARDING": "1"])
+
+        tap(button(A11y.Today.start))
+
+        let cues = app.descendants(matching: .any).matching(identifier: A11y.Workout.cues).firstMatch
+        XCTAssertTrue(cues.waitForExistence(timeout: 10), "训练页没有显示动作要点")
+
+        tap(button(A11y.Workout.downgrade))
+
+        let half = button(A11y.Workout.downgradeHalf)
+        tap(half)
+
+        let skipRest = app.buttons.matching(identifier: A11y.Workout.skipRest).firstMatch
+        XCTAssertTrue(skipRest.waitForExistence(timeout: 10), "减半后没有进入组间休息")
+    }
+
+    func testWorkoutCloseKeepsResumeCard() {        launchApp(["DK_COMPLETE_ONBOARDING": "1"])
 
         tap(button(A11y.Today.start))
         completeOneSet()

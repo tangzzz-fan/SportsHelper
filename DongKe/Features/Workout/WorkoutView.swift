@@ -7,6 +7,7 @@ struct WorkoutView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var showSkipOptions = false
+    @State private var showDowngradeOptions = false
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
 
@@ -16,6 +17,24 @@ struct WorkoutView: View {
         let unit = target.type == .durationSec ? "秒" : "次"
         let perSide = target.perSide ? " / 侧" : ""
         return "\(target.value) \(unit)\(perSide) × \(prescription.sets) 组"
+    }
+
+    private var cueLines: [String] {
+        guard let id = prescription?.catalogId else { return [] }
+        guard let entry = ExerciseLibrary.all.first(where: { $0.id == id }) else { return [] }
+        return Array(entry.cues.prefix(2))
+    }
+
+    private var halfTargetTitle: String {
+        prescription?.target.type == .durationSec ? "减一半时间" : "减一半次数"
+    }
+
+    private var setCounterText: Text {
+        Text("第 \(session.currentSetIndex) 组")
+            .font(Typography.meta.weight(.semibold)) +
+        Text(" / 共 \(session.currentSetTotal) 组")
+            .font(Typography.meta)
+            .foregroundColor(.secondary)
     }
 
     var body: some View {
@@ -51,10 +70,24 @@ struct WorkoutView: View {
 
                         VStack(spacing: 2) {
                             Text(prescription.name)
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(Typography.buttonLabel)
                             Text(doseText)
-                                .font(.system(size: 17))
+                                .font(Typography.body)
                                 .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if cueLines.isEmpty == false {
+                                VStack(spacing: 3) {
+                                    ForEach(cueLines, id: \.self) { cue in
+                                        Text(cue)
+                                            .font(Typography.meta)
+                                            .foregroundStyle(.tertiary)
+                                            .multilineTextAlignment(.center)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                                .padding(.top, 8)
+                                .accessibilityIdentifier(A11y.Workout.cues)
+                            }
                         }
                     }
                 } else {
@@ -85,7 +118,7 @@ struct WorkoutView: View {
         HStack {
             Button(action: onClose) {
                 Image(systemName: Icons.close)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(Typography.buttonLabel)
                     .frame(width: 44, height: 44)
             }
             .foregroundStyle(Theme.accent(for: colorScheme))
@@ -94,16 +127,17 @@ struct WorkoutView: View {
             Spacer()
 
             Text(session.sessionTitle)
-                .font(.system(size: 17, weight: .semibold))
+                .font(Typography.buttonLabel)
 
             Spacer()
 
             Button("结束") {
                 session.endWorkout()
             }
-            .font(.system(size: 17, weight: .semibold))
+            .font(Typography.buttonLabel)
             .foregroundStyle(Theme.accent(for: colorScheme))
-            .frame(width: 52, height: 44)
+            .frame(minWidth: 52, minHeight: 44)
+            .fixedSize()
             .accessibilityIdentifier(A11y.Workout.end)
         }
         .padding(.horizontal, 8)
@@ -124,18 +158,9 @@ struct WorkoutView: View {
 
     private var controlDock: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 4) {
-                Text("第 \(session.currentSetIndex) 组")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.primary)
-                Text("/")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Text("共 \(session.currentSetTotal) 组")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            .monospacedDigit()
+            setCounterText
+                .monospacedDigit()
+                .fixedSize(horizontal: false, vertical: true)
 
             ProgressBar(progress: session.progress)
 
@@ -143,7 +168,8 @@ struct WorkoutView: View {
                 session.completeSet()
             } label: {
                 Text("完成本组")
-                    .font(.headline)
+                    .font(Typography.buttonLabel)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
             }
@@ -168,20 +194,21 @@ struct WorkoutView: View {
             .padding(.top, 16)
 
             Button {
-                session.downgradeSet()
+                showDowngradeOptions = true
             } label: {
                 Text("这组做不动")
-                    .font(.system(size: 17))
+                    .font(Typography.body)
                     .foregroundStyle(Theme.accent(for: colorScheme))
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PressableGlassStyle())
+            .accessibilityIdentifier(A11y.Workout.downgrade)
 
             Button {
                 showSkipOptions = true
             } label: {
                 Text("跳过本组")
-                    .font(.system(size: 15))
+                    .font(Typography.secondary)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
@@ -199,6 +226,13 @@ struct WorkoutView: View {
             Button("身体不适") { session.skipSet(reason: .pain) }
             Button("缺器械") { session.skipSet(reason: .noEquipment) }
             Button("取消", role: .cancel) {}
+        }
+        .confirmationDialog("这组做不动", isPresented: $showDowngradeOptions, titleVisibility: .visible) {
+            Button(halfTargetTitle) { session.downgradeSet() }
+                .accessibilityIdentifier(A11y.Workout.downgradeHalf)
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("只改这一组，后面照原计划；这一组记作降阶完成。")
         }
     }
 }

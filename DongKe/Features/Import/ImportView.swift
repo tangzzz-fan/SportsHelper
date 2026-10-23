@@ -40,7 +40,7 @@ struct ImportView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("粘贴训练计划")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(Typography.detailTitle)
                     Text("支持一段文字（「周一 深蹲 4组×12次，休息90秒」）或计划的 JSON。识别后先在下一页校对再保存。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -80,7 +80,7 @@ struct ImportView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: copiedPrompt ? Icons.copied : Icons.copy)
-                                .font(.system(size: 14, weight: .medium))
+                                .font(Typography.meta.weight(.medium))
                             Text(copiedPrompt ? "提示词已复制，粘给任意 AI" : "复制提示词，让 AI 按这个格式输出")
                                 .font(.footnote.weight(.medium))
                         }
@@ -125,13 +125,13 @@ struct ImportView: View {
         ZStack(alignment: .topLeading) {
             if text.isEmpty {
                 Text("把计划粘贴到这里…")
-                    .font(.system(size: 15))
+                    .font(Typography.secondary)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
             }
             TextEditor(text: $text)
-                .font(.system(size: 15))
+                .font(Typography.monoInput)
                 .scrollContentBackground(.hidden)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -144,7 +144,7 @@ struct ImportView: View {
     private func failureCard(_ draft: ParsedPlanDraft) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(draft.path == .lenientJSON ? "这段 JSON 结构不对" : "没能识别出动作")
-                .font(.system(size: 16, weight: .semibold))
+                .font(Typography.cardTitle)
             ForEach(draft.issues.filter { $0.severity == .error }) { issue in
                 Text("· \(issue.message)")
                     .font(.footnote)

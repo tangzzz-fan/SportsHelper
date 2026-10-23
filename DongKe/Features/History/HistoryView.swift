@@ -1,3 +1,4 @@
+import Charts
 import SwiftUI
 import DongKeCore
 
@@ -38,52 +39,55 @@ struct HistoryView: View {
             )
             .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text("记录")
-                    .font(.system(size: 34, weight: .bold))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("记录")
+                        .font(Typography.pageTitle)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
 
-                summaryCard
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    summaryCard
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
-                Text("最近训练")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 20)
-                    .padding(.bottom, 8)
+                    Text("最近训练")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 20)
+                        .padding(.bottom, 8)
 
-                if store.sessions.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("还没有训练记录")
-                            .font(.system(size: 16, weight: .medium))
-                        Text("完成一次训练后，这里会出现完成率与连续天数。")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(18)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .glassSurface(radius: Theme.Radius.glassCard)
-                    .padding(.horizontal, 16)
-                } else {
-                    VStack(spacing: 0) {
-                        ForEach(Array(store.sessions.enumerated()), id: \.element.id) { index, item in
-                            historyRow(item)
-                            if index < store.sessions.count - 1 {
-                                Divider()
-                                    .overlay(Color.primary.opacity(0.06))
-                                    .padding(.leading, 16)
+                    if store.sessions.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("还没有训练记录")
+                                .font(Typography.rowTitle)
+                            Text("完成一次训练后，这里会出现完成率与连续天数。")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .glassSurface(radius: Theme.Radius.glassCard)
+                        .padding(.horizontal, 16)
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(Array(store.sessions.enumerated()), id: \.element.id) { index, item in
+                                historyRow(item)
+                                if index < store.sessions.count - 1 {
+                                    Divider()
+                                        .overlay(Color.primary.opacity(0.06))
+                                        .padding(.leading, 16)
+                                }
                             }
                         }
+                        .glassSurface(radius: Theme.Radius.glassCard)
+                        .padding(.horizontal, 16)
                     }
-                    .glassSurface(radius: Theme.Radius.glassCard)
-                    .padding(.horizontal, 16)
-                }
 
-                Spacer()
+                }
             }
+            .scrollBounceBehavior(.basedOnSize)
+            .contentMargins(.bottom, 96, for: .scrollContent)
         }
     }
 
@@ -95,20 +99,29 @@ struct HistoryView: View {
                 Spacer()
             }
 
-            HStack(alignment: .bottom, spacing: 8) {
+            Chart {
                 ForEach(Array(Weekday.allCases.enumerated()), id: \.offset) { index, weekday in
-                    VStack(spacing: 6) {
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(weekBars[index] > 0 ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.10))
-                            .frame(height: max(4, CGFloat(weekBars[index]) * 44))
-                            .frame(maxWidth: .infinity)
-                        Text(String(weekday.chineseName.suffix(1)))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    BarMark(
+                        x: .value("星期", String(weekday.chineseName.suffix(1))),
+                        y: .value("完成率", max(0.09, weekBars[index]))
+                    )
+                    .foregroundStyle(
+                        weekBars[index] > 0 ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.10)
+                    )
+                    .cornerRadius(3)
                 }
             }
-            .frame(height: 64, alignment: .bottom)
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondary)
+                }
+            }
+            .frame(height: 72)
+            .accessibilityIdentifier(A11y.History.weekChart)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -118,7 +131,7 @@ struct HistoryView: View {
     private func metric(value: String, label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(size: 22, weight: .semibold))
+                .font(Typography.detailTitle)
                 .monospacedDigit()
             Text(label)
                 .font(.caption)
@@ -130,17 +143,21 @@ struct HistoryView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(formatter.string(from: item.date))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .layoutPriority(1)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             Text("\(Int((item.completionRate * 100).rounded()))%")
-                .font(.system(size: 15, weight: .semibold))
+                .font(Typography.secondary.weight(.semibold))
                 .monospacedDigit()
+                .fixedSize(horizontal: true, vertical: false)
                 .foregroundStyle(item.completionRate >= 1 ? Theme.accent(for: colorScheme) : .primary)
         }
         .padding(.horizontal, 16)

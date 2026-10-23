@@ -23,7 +23,7 @@ struct OnboardingView: View {
                     .padding(.top, 12)
 
                 Text(step.title)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(Typography.actionTitle)
                     .padding(.horizontal, 20)
                     .padding(.top, 22)
 

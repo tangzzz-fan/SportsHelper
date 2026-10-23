@@ -80,7 +80,7 @@ extension OnboardingView {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("训练提醒")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(Typography.rowTitle)
                         Text("按训练日提前 5 分钟")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -98,7 +98,7 @@ extension OnboardingView {
 
                 HStack {
                     Text("提醒时间")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(Typography.rowTitle)
                     Spacer()
                     DatePicker(
                         "",

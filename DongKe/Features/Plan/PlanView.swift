@@ -39,54 +39,57 @@ struct PlanView: View {
             )
             .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text("计划")
-                    .font(.system(size: 34, weight: .bold))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .accessibilityIdentifier(A11y.Plan.title)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("计划")
+                        .font(Typography.pageTitle)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .accessibilityIdentifier(A11y.Plan.title)
 
-                Text(plan.meta.title)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 2)
+                    Text(plan.meta.title)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 2)
 
-                VStack(spacing: 0) {
-                    ForEach(Array(weeks.enumerated()), id: \.offset) { index, entry in
-                        row(entry.weekday, entry.day)
-                        if index < weeks.count - 1 {
-                            Divider()
-                                .overlay(Color.primary.opacity(0.06))
-                                .padding(.leading, 16)
+                    VStack(spacing: 0) {
+                        ForEach(Array(weeks.enumerated()), id: \.offset) { index, entry in
+                            row(entry.weekday, entry.day)
+                            if index < weeks.count - 1 {
+                                Divider()
+                                    .overlay(Color.primary.opacity(0.06))
+                                    .padding(.leading, 16)
+                            }
                         }
                     }
-                }
-                .padding(.vertical, 4)
-                .glassSurface(radius: Theme.Radius.glassCard)
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-
-                Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 4)
+                    .glassSurface(radius: Theme.Radius.glassCard)
                     .padding(.horizontal, 16)
-                    .padding(.top, 10)
+                    .padding(.top, 20)
 
-                HStack(spacing: 10) {
-                    entryButton(title: "动作库", symbol: Icons.library) {
-                        showLibrary = true
+                    Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 10)
+
+                    HStack(spacing: 10) {
+                        entryButton(title: "动作库", symbol: Icons.library) {
+                            showLibrary = true
+                        }
+                        entryButton(title: "导入计划", symbol: Icons.importPlan) {
+                            showImport = true
+                        }
+                        .accessibilityIdentifier(A11y.Plan.importPlan)
                     }
-                    entryButton(title: "导入计划", symbol: Icons.importPlan) {
-                        showImport = true
-                    }
-                    .accessibilityIdentifier(A11y.Plan.importPlan)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-
-                Spacer()
             }
+            .scrollBounceBehavior(.basedOnSize)
+            .contentMargins(.bottom, 96, for: .scrollContent)
         }
         .sheet(isPresented: $showLibrary) {
             ExerciseLibraryView { showLibrary = false }
@@ -111,9 +114,9 @@ struct PlanView: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: symbol)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.secondary.weight(.medium))
                 Text(title)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.secondary.weight(.medium))
             }
             .foregroundStyle(Theme.accent(for: colorScheme))
             .frame(maxWidth: .infinity)
@@ -128,9 +131,10 @@ struct PlanView: View {
         let isTraining = !(day?.isRestDay ?? true)
         return HStack(spacing: 12) {
             Text(weekday.chineseName)
-                .font(.system(size: 15, weight: isToday ? .semibold : .regular))
+                .font(Typography.secondary.weight(isToday ? .semibold : .regular))
                 .foregroundStyle(isToday ? Theme.accent(for: colorScheme) : .secondary)
-                .frame(width: 44, alignment: .leading)
+                .frame(minWidth: 44, alignment: .leading)
+                .fixedSize(horizontal: true, vertical: false)
 
             Circle()
                 .fill(isTraining ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.15))
@@ -138,16 +142,19 @@ struct PlanView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(day?.title ?? "休息")
-                    .font(.system(size: 16, weight: isTraining ? .medium : .regular))
+                    .font(Typography.rowTitle.weight(isTraining ? .medium : .regular))
                     .foregroundStyle(isTraining ? .primary : .secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let time = day?.scheduledTime, isTraining {
                     Text(String(format: "%02d:%02d · 约 %d 分钟", time.hour, time.minute, day?.estimatedMinutes ?? 0))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .layoutPriority(1)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             if isToday {
                 Text("今天")

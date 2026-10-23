@@ -23,6 +23,15 @@ struct RestSheetView: View {
         String(format: "%02d:%02d", remaining / 60, remaining % 60)
     }
 
+    private var spokenRemaining: String {
+        let seconds = remaining / 10 * 10
+        let minutes = seconds / 60
+        let rest = seconds % 60
+        if minutes > 0, rest > 0 { return "\(minutes) 分 \(rest) 秒" }
+        if minutes > 0 { return "\(minutes) 分" }
+        return "\(rest) 秒"
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.38)
@@ -41,8 +50,13 @@ struct RestSheetView: View {
                     .padding(.top, 16)
 
                 Text(timeText)
-                    .font(.system(size: 88, weight: .light))
+                    .font(Typography.timer)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+                    .accessibilityLabel("休息剩余")
+                    .accessibilityValue(spokenRemaining)
                     .padding(.top, 4)
 
                 ZStack {
@@ -88,7 +102,7 @@ struct RestSheetView: View {
     private func sheetButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 17))
+                .font(Typography.body)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
         }

@@ -50,7 +50,7 @@ struct EditRowSheet: View {
                 Button("取消", action: onCancel)
                 Spacer()
                 Text(row.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(Typography.cardTitle)
                 Spacer()
                 Button("应用") {
                     onApply(EditRowResult(

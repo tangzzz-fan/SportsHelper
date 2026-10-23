@@ -75,7 +75,7 @@ struct PlanReviewView: View {
                 Button("保存") {
                     onSave(plan)
                 }
-                .font(.system(size: 17, weight: .semibold))
+                .font(Typography.buttonLabel)
                 .foregroundStyle(Theme.accent(for: colorScheme))
                 .disabled(blocking.isEmpty == false)
                 .accessibilityIdentifier(A11y.Import.save)
@@ -122,7 +122,7 @@ struct PlanReviewView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(plan.meta.title)
-                .font(.system(size: 22, weight: .semibold))
+                .font(Typography.detailTitle)
             Text("\(trainingDays.count) 个训练日 · \(pathText)")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -180,7 +180,7 @@ struct PlanReviewView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("\(day.weekday.chineseName) · \(day.title)")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(Typography.cardTitle)
                 Spacer()
                 Text("约 \(day.estimatedMinutes) 分钟")
                     .font(.caption)
@@ -225,7 +225,7 @@ struct PlanReviewView: View {
         return HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(guess?.originalName ?? item.name)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.secondary.weight(.medium))
                     .foregroundStyle(.primary)
                 Text(doseText(item))
                     .font(.caption)
@@ -259,7 +259,7 @@ struct PlanReviewView: View {
                     .background(Color.orange.opacity(0.12), in: Capsule())
             }
             Image(systemName: Icons.edit)
-                .font(.system(size: 13, weight: .semibold))
+                .font(Typography.meta.weight(.semibold))
                 .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 9)

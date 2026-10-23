@@ -9,9 +9,9 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
-| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **227 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **8 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条 |
+| 测试 | **227 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **9 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -188,6 +188,8 @@ xcrun simctl io booted screenshot /tmp/shot.png
 
 休息通知标识固定 `dk.rest.<sessionId>`（`RestNotificationBuilder.prefix`），排程前先清同前缀，绝不碰 `dk.plan.`。通知负载：训练提醒带 `dk.weekday`，休息通知带 `dk.dayIndex`，点击统一由 `NotificationRouter` 解成 `WorkoutDeepLink` 交给 AppShell。
 
+**AC-10 / AC-14 的落地形态**（2026-10-23）：训练页在剂量下方直接显示动作库前两条 `cues`（自定义动作没有 cues 就整块不显示，不占位）；「这组做不动」先弹 `confirmationDialog` 问「减一半次数 / 减一半时间」（按 `target.type` 切文案），确认后才 `downgradeSet()`——只改本组、记降阶，后面照原计划。**不要再改回"点了就减半"**，AC-14 要求"点并选"。
+
 ## 6.4 清空全部数据
 
 入口在设置页底部，走 `DataResetService.clearAll`：删五张表（SetLog / Session / Plan / Profile / UserExercise）→ 清 `dk.` 前缀的全部 UserDefaults → 删 Keychain 里的 AI Key → 取消 `dk.plan.` 与 `dk.rest.` 待触发通知。完成后 `AppShell.handleEraseAll` 重新 load 各 store 并弹回引导。
@@ -205,7 +207,30 @@ SPEC §4「单文件 ≤300 行」已全量满足。拆分方式分两种，**�
 
 **代价（必须知道）**：extension 分布在多个文件时，`private` 成员互不可见，所以被拆类型的部分成员从 `private` 放宽成了模块内可见（如 `TodayView.store`、`OnboardingView.draft/step`、`WorkoutSession.logs/rest`）。这是模块内部可见性，不对外暴露；但**别再往这些类型上加新的公开面**，要加就加在新的 extension 文件里。
 
-**仍欠**：SPEC §10 的「字号不得硬编码」未收口——全仓仍是 `.font(.system(size:))` 字面量。做这件事要先定一套语义字阶（display/title/body/caption…）再一次性迁移，半迁移比不迁移更糟，所以单列一票。
+**仍欠**：无。字号已在 §6.8 收口。
+
+## 6.8 字号与 Dynamic Type（2026-10-23）
+
+全仓 `.font(.system(size:))` 只有一处，就在 `DongKe/DesignSystem/Typography.swift` 的 `Typography.timer`（88pt，design-tokens 允许的唯一自定尺寸）。其余一律走 `Typography` 的语义常量，底层全是系统文本样式，所以自动跟随 Dynamic Type。
+
+| 令牌 | 系统样式 | 用在哪 |
+|---|---|---|
+| `pageTitle` | largeTitle + bold | 今日 / 计划 / 记录三个页标题 |
+| `actionTitle` | title + semibold | 总结页主结论、引导问句 |
+| `detailTitle` | title2 + semibold | 卡内大字（动作名、百分比）、校对页标题 |
+| `buttonLabel` | body + semibold | 按钮文字、导航栏动作 |
+| `rowTitle` / `cardTitle` | callout + medium / semibold | 设置行、列表行 / 卡片标题 |
+| `body` / `secondary` / `meta` | body / subheadline / footnote | 正文 / 辅助 / 元数据 |
+| `micro` / `capsLabel` | caption / caption2 + semibold | 徽标、英文小标签 |
+| `monoInput` | subheadline + monospaced | 粘贴框、接口输入框 |
+| `bigNumber` | largeTitle + semibold + monospaced | 完成率、连续天数等主数字 |
+| `timer` | 88pt + light + monospaced | 休息倒计时（唯一自定尺寸） |
+
+**偏离一处，已决定并记录**：`typography.style.pageTitle` 在 token 里写 `.title2`（22pt），但已验收的三个页标题一直是 34pt bold，降到 22 会让页面失去标题层级。实现保留 largeTitle（34pt），换字号体系时**不要"按 token 改小"**，否则三个页标题会一起缩水。
+
+**Dynamic Type 配套改动**：三个页签（今日 / 计划 / 记录）都套了 `ScrollView` + `contentMargins(.bottom, 96)`，否则 AX 字号下内容被底部页签岛永久压住、滚不到；总结页改成 `GeometryReader + ScrollView`（默认字号下仍垂直居中，超出可滚）；训练页组数行合并成单个 `Text` 插值并加 `fixedSize(horizontal: false, vertical: true)`，`结束` 按钮从固定 52pt 宽改成 `minWidth` + `fixedSize`（AX3 下原本被压成省略号）；休息倒计时补 `accessibilityLabel("休息剩余")` + 按 10 秒取整的 `accessibilityValue`，并封顶 `dynamicTypeSize(...accessibility2)`。
+
+AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large`）已逐页截图核对：训练页三项核心信息、总结页圆环与统计、三个页签的行文字均无截断、无省略号。
 
 ## 6.6 UI 测试（2026-10-23）
 

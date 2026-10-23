@@ -33,7 +33,7 @@ extension TodayView {
     func resumeCard(_ hint: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("上次训练没做完")
-                .font(.system(size: 16, weight: .semibold))
+                .font(Typography.cardTitle)
             Text(hint)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -61,7 +61,7 @@ extension TodayView {
         let resting = isRestToday
         return VStack(alignment: .leading, spacing: 12) {
             Text(resting ? "今天休息" : day.title)
-                .font(.system(size: 22, weight: .semibold))
+                .font(Typography.detailTitle)
 
             Text(resting
                  ? "下次训练 \(day.weekday.chineseName) \(timeText(day)) · \(items.count) 个动作"

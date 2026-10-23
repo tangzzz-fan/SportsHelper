@@ -16,7 +16,7 @@ struct AIGenerateCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("用 AI 生成")
-                .font(.system(size: 16, weight: .semibold))
+                .font(Typography.cardTitle)
             Text(ai.isConfigured
                  ? "按你的档案生成一周计划，生成后照常在下一页校对再保存。"
                  : "先填接口地址与 API Key，才能在这里直接生成；也可以复制提示词去网页版，再把结果粘回来。")

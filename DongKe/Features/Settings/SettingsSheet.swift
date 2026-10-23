@@ -62,10 +62,10 @@ struct SettingsSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("关于")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                 Spacer()
                 Text(versionText)
-                    .font(.system(size: 15))
+                    .font(Typography.secondary)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -85,7 +85,7 @@ struct SettingsSheet: View {
         } label: {
             HStack {
                 Text(isErasing ? "清空中…" : "清空全部数据")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                 Spacer()
             }
             .foregroundStyle(Theme.danger(for: colorScheme))
@@ -124,7 +124,7 @@ struct SettingsSheet: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("训练提醒")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(Typography.rowTitle)
                     Text("按计划在训练日提前提醒")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -147,7 +147,7 @@ struct SettingsSheet: View {
 
             HStack {
                 Text("提前")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                 Spacer()
                 Picker("提前", selection: Binding(
                     get: { settingsStore.settings.leadMinutes },
@@ -174,19 +174,19 @@ struct SettingsSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("通知权限")
-                    .font(.system(size: 15))
+                    .font(Typography.secondary)
                 Spacer()
                 Text(notifications.statusText)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.secondary.weight(.medium))
                     .foregroundStyle(notifications.status == .denied ? Color.red : Theme.accent(for: colorScheme))
             }
 
             HStack {
                 Text("已排程提醒")
-                    .font(.system(size: 15))
+                    .font(Typography.secondary)
                 Spacer()
                 Text("\(notifications.scheduledCount) 条")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(Typography.secondary.weight(.medium))
                     .monospacedDigit()
                     .accessibilityIdentifier(A11y.Settings.scheduledCount)
             }

@@ -59,14 +59,14 @@ struct AISettingsCard: View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("AI 直连")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                 Text("OpenAI 兼容接口，自己填地址与 Key")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
             Image(systemName: store.isConfigured ? Icons.aiReady : Icons.aiMissing)
-                .font(.system(size: 16, weight: .medium))
+                .font(Typography.rowTitle)
                 .foregroundStyle(store.isConfigured ? Theme.accent(for: colorScheme) : Color.secondary)
         }
     }
@@ -89,7 +89,7 @@ struct AISettingsCard: View {
                     TextField(prompt, text: text)
                 }
             }
-            .font(.system(size: 15, design: .monospaced))
+            .font(Typography.monoInput)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .keyboardType(usesURLKeyboard ? .URL : .default)

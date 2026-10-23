@@ -138,7 +138,7 @@ struct ExerciseLibraryView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                     .foregroundStyle(.primary)
                 Text(entry.tagText)
                     .font(.caption)
@@ -148,7 +148,7 @@ struct ExerciseLibraryView: View {
             Spacer()
 
             Image(systemName: Icons.disclosure)
-                .font(.system(size: 12, weight: .semibold))
+                .font(Typography.micro)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 14)
@@ -166,7 +166,7 @@ struct ExerciseLibraryView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(exercise.name)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(Typography.rowTitle)
                     .foregroundStyle(.primary)
                 Text("\(exercise.defaultSets) 组 × \(exercise.defaultValue) \(exercise.doseUnit)")
                     .font(.caption)
@@ -176,7 +176,7 @@ struct ExerciseLibraryView: View {
             Spacer()
 
             Image(systemName: Icons.disclosure)
-                .font(.system(size: 12, weight: .semibold))
+                .font(Typography.micro)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 14)

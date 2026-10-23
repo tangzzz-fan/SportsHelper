@@ -19,6 +19,9 @@ enum A11y {
         static let completeSet = "workout.completeSet"
         static let skipSet = "workout.skipSet"
         static let end = "workout.end"
+        static let cues = "workout.cues"
+        static let downgrade = "workout.downgrade"
+        static let downgradeHalf = "workout.downgrade.half"
         static let skipReasonNoTime = "workout.skipReason.noTime"
         static let skipRest = "workout.rest.skip"
         static let summaryTitle = "workout.summary.title"
@@ -38,6 +41,10 @@ enum A11y {
     enum Plan {
         static let importPlan = "plan.import"
         static let title = "plan.title"
+    }
+
+    enum History {
+        static let weekChart = "history.weekChart"
     }
 
     enum Settings {

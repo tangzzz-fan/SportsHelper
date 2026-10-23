@@ -15,7 +15,7 @@ struct ExerciseDetailView: View {
                         figureSize: CGSize(width: 190, height: 220)
                     )
                     Text(entry.name)
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(Typography.detailTitle)
                     Text(entry.tagText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -37,7 +37,7 @@ struct ExerciseDetailView: View {
                         .foregroundStyle(.secondary)
                     HStack(spacing: 10) {
                         Text(entry.regressionName)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(Typography.rowTitle)
                         Spacer()
                         if let id = entry.regressionId, let target = ExerciseLibrary.entry(for: id) {
                             NavigationLink {
@@ -46,7 +46,7 @@ struct ExerciseDetailView: View {
                                 HStack(spacing: 2) {
                                     Text("看这个")
                                     Image(systemName: Icons.disclosure)
-                                        .font(.system(size: 11, weight: .semibold))
+                                        .font(Typography.capsLabel)
                                 }
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(Theme.accent(for: colorScheme))
@@ -73,7 +73,7 @@ struct ExerciseDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: symbol)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(Typography.meta.weight(.semibold))
                     .foregroundStyle(Theme.accent(for: colorScheme))
                 Text(title)
                     .font(.footnote.weight(.semibold))
@@ -84,10 +84,10 @@ struct ExerciseDetailView: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     HStack(alignment: .top, spacing: 8) {
                         Text("·")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(Typography.secondary.weight(.semibold))
                             .foregroundStyle(.tertiary)
                         Text(line)
-                            .font(.system(size: 15))
+                            .font(Typography.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

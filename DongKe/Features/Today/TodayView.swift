@@ -54,61 +54,63 @@ struct TodayView: View {
         ZStack(alignment: .topLeading) {
             backgroundLayer
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Spacer()
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: Icons.settings)
-                            .font(.system(size: 17, weight: .regular))
-                            .foregroundStyle(Theme.accent(for: colorScheme))
-                            .frame(width: 44, height: 44)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: Icons.settings)
+                                .font(Typography.body)
+                                .foregroundStyle(Theme.accent(for: colorScheme))
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityIdentifier(A11y.Today.settings)
                     }
-                    .accessibilityIdentifier(A11y.Today.settings)
-                }
-                .padding(.horizontal, 8)
+                    .padding(.horizontal, 8)
 
-                Text("今日")
-                    .font(.system(size: 34, weight: .bold))
-                    .padding(.horizontal, 16)
-                    .accessibilityIdentifier(A11y.Today.title)
-
-                Text(dateLine)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 2)
-
-                if reminderHealth.needsAttention {
-                    reminderBanner(reminderHealth)
+                    Text("今日")
+                        .font(Typography.pageTitle)
                         .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .accessibilityIdentifier(A11y.Today.reminderBanner)
-                }
+                        .accessibilityIdentifier(A11y.Today.title)
 
-                if let resumeHint {
-                    resumeCard(resumeHint)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 18)
-                }
-
-                if let day = today {
-                    sessionCard(day)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 22)
-                }
-                if let next = nextTrainingDay, !isRestToday {
-                    Text("下次训练 \(next.weekday.chineseName) \(timeText(next))")
+                    Text(dateLine)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
-                        .padding(.top, 10)
-                }
+                        .padding(.top, 2)
 
-                Spacer()
+                    if reminderHealth.needsAttention {
+                        reminderBanner(reminderHealth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                            .accessibilityIdentifier(A11y.Today.reminderBanner)
+                    }
+
+                    if let resumeHint {
+                        resumeCard(resumeHint)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 18)
+                    }
+
+                    if let day = today {
+                        sessionCard(day)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 22)
+                    }
+                    if let next = nextTrainingDay, !isRestToday {
+                        Text("下次训练 \(next.weekday.chineseName) \(timeText(next))")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 10)
+                    }
+
+                }
+                .padding(.top, 4)
             }
-            .padding(.top, 4)
+            .scrollBounceBehavior(.basedOnSize)
+            .contentMargins(.bottom, 96, for: .scrollContent)
         }
         .sheet(isPresented: $showSettings) {
             SettingsSheet(

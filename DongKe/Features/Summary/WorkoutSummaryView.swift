@@ -7,6 +7,11 @@ struct WorkoutSummaryView: View {
     var onDone: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var ringDiameter: CGFloat {
+        typeSize.isAccessibilitySize ? 220 : 156
+    }
 
     var body: some View {
         ZStack {
@@ -20,58 +25,65 @@ struct WorkoutSummaryView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 12)
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
 
-                VStack(spacing: 6) {
-                    Text("训练完成")
-                        .font(.system(size: 30, weight: .bold))
-                        .accessibilityIdentifier(A11y.Workout.summaryTitle)
-                    Text("\(title) · \(recap.durationText)")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                        VStack(spacing: 6) {
+                            Text("训练完成")
+                                .font(Typography.actionTitle)
+                                .accessibilityIdentifier(A11y.Workout.summaryTitle)
+                            Text("\(title) · \(recap.durationText)")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
 
-                ring
-                    .padding(.top, 28)
+                        ring
+                            .padding(.top, 28)
 
-                statCard
-                    .padding(.horizontal, 16)
-                    .padding(.top, 28)
+                        statCard
+                            .padding(.horizontal, 16)
+                            .padding(.top, 28)
 
-                Text("降阶的组计入完成率；未做与跳过的组不计。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 12)
+                        Text("降阶的组计入完成率；未做与跳过的组不计。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 12)
 
-                Spacer(minLength: 16)
+                        Spacer(minLength: 16)
 
-                Button(action: onDone) {
-                    Text("完成")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                }
-                .buttonStyle(PressableGlassStyle())
-                .foregroundStyle(Theme.callToActionInk(for: colorScheme))
-                .background(
-                    Theme.accent(for: colorScheme),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.white.opacity(0.52), .white.opacity(0.06)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1
+                        Button(action: onDone) {
+                            Text("完成")
+                                .font(Typography.buttonLabel)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                        }
+                        .buttonStyle(PressableGlassStyle())
+                        .foregroundStyle(Theme.callToActionInk(for: colorScheme))
+                        .background(
+                            Theme.accent(for: colorScheme),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                         )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [.white.opacity(0.52), .white.opacity(0.06)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+                        .accessibilityIdentifier(A11y.Summary.done)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
-                .accessibilityIdentifier(A11y.Summary.done)
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
     }
@@ -90,16 +102,20 @@ struct WorkoutSummaryView: View {
 
             VStack(spacing: 2) {
                 Text(recap.percentText(recap.completionRate))
-                    .font(.system(size: 44, weight: .semibold, design: .rounded))
+                    .font(Typography.bigNumber)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .accessibilityIdentifier(A11y.Summary.completion)
                 Text("\(recap.completedSets) / \(recap.plannedSets) 组")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
         }
-        .frame(width: 156, height: 156)
+        .frame(width: ringDiameter, height: ringDiameter)
     }
 
     private var statCard: some View {
@@ -123,7 +139,7 @@ struct WorkoutSummaryView: View {
     private func stat(_ label: String, _ value: String, detail: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.system(size: 22, weight: .semibold))
+                .font(Typography.detailTitle)
                 .monospacedDigit()
             Text(label)
                 .font(.caption)

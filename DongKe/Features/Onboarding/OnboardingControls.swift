@@ -11,22 +11,22 @@ extension OnboardingView {
     ) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 16, weight: .medium))
+                .font(Typography.rowTitle)
             Spacer()
             HStack(spacing: 14) {
                 Button(action: onDecrease) {
                     Image(systemName: Icons.decrement)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(Typography.meta.weight(.semibold))
                         .frame(width: 32, height: 32)
                         .background(Color.primary.opacity(0.06), in: Circle())
                 }
                 Text(value)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(Typography.buttonLabel)
                     .monospacedDigit()
                     .frame(minWidth: 66)
                 Button(action: onIncrease) {
                     Image(systemName: Icons.increment)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(Typography.meta.weight(.semibold))
                         .frame(width: 32, height: 32)
                         .background(Color.primary.opacity(0.06), in: Circle())
                 }
@@ -79,7 +79,7 @@ struct Chip: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 15, weight: selected ? .semibold : .regular))
+                .font(Typography.secondary.weight(selected ? .semibold : .regular))
                 .foregroundStyle(selected ? Theme.accent(for: colorScheme) : .primary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
