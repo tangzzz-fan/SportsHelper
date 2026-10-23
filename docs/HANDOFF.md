@@ -250,8 +250,11 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 
 `AppShell` 里因此只剩一个 `fullScreenCover(item: $session)`。**别再加第二个全屏弹层到这个视图上。**
 
-## 7. 换机后容易踩的三个坑
+## 7. 换机后容易踩的坑
 
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。
 2. **把历史红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序（该报告是 2026-10-22 的历史快照，当前已全绿）。
 3. **骨架门禁红被当成回归**：打样期数据只有 2 帧，动态动作欠第 3 帧。判红前先核对 `figure-specs` 数据版本，见 SPEC §11 最后一条。
+4. **`git push` 直连 22 端口超时**：本机走代理。本地代理在 `127.0.0.1:7890` 时用
+   `git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`。
+   港区/公司网络换端口就换这一段，别去改 remote 地址。
