@@ -52,19 +52,32 @@ extension DraftLineScanner {
             working.removeSubrange(match.range)
         }
 
-        if sets == nil, let match = firstMatch(in: working, pattern: "(\\d+)\\s*(?:组|sets?|series)"), let parsed = Int(match.groups[0]) {
+        if sets == nil,
+           let match = firstMatch(in: working, pattern: "(?i)(\\d+)\\s*(?:组|sets?|series)"),
+           let parsed = Int(match.groups[0]) {
             sets = parsed
             working.removeSubrange(match.range)
         }
 
-        if value == nil, let match = firstMatch(in: working, pattern: "(\\d+)\\s*(?:次|reps?|repetitions?)"), let parsed = Int(match.groups[0]) {
+        if value == nil,
+           let match = firstMatch(in: working, pattern: "(?i)(\\d+)\\s*(?:次|下|reps?|repetitions?)"),
+           let parsed = Int(match.groups[0]) {
             value = parsed
             targetType = .reps
             working.removeSubrange(match.range)
         }
 
         if value == nil,
-           let match = firstMatch(in: working, pattern: "(\\d+(?:\\.\\d+)?)\\s*(?:秒|s\\b|sec|seconds?)"),
+           sets != nil,
+           let match = firstMatch(in: working, pattern: "(\\d+)\\s*个"),
+           let parsed = Int(match.groups[0]) {
+            value = parsed
+            targetType = .reps
+            working.removeSubrange(match.range)
+        }
+
+        if value == nil,
+           let match = firstMatch(in: working, pattern: "(?i)(\\d+(?:\\.\\d+)?)\\s*(?:秒|s\\b|sec|seconds?)"),
            let parsed = Double(match.groups[0]) {
             value = Int(parsed.rounded())
             targetType = .durationSec
@@ -72,7 +85,7 @@ extension DraftLineScanner {
         }
 
         if value == nil,
-           let match = firstMatch(in: working, pattern: "(\\d+(?:\\.\\d+)?)\\s*(?:分钟|min)"),
+           let match = firstMatch(in: working, pattern: "(?i)(\\d+(?:\\.\\d+)?)\\s*(?:分钟|min)"),
            let parsed = Double(match.groups[0]) {
             value = Int((parsed * 60).rounded())
             targetType = .durationSec

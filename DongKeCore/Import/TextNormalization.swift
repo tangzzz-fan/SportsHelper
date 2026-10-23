@@ -2,8 +2,20 @@ import Foundation
 
 enum TextNormalization {
     static func normalize(_ text: String) -> String {
-        chineseNumerals(halfWidthDigits(text))
+        chineseNumerals(halfWidthDigits(simplified(text)))
     }
+
+    static func simplified(_ text: String) -> String {
+        String(text.map { traditionalMap[$0] ?? $0 })
+    }
+
+    private static let traditionalMap: [Character: Character] = [
+        "啞": "哑", "鈴": "铃", "劃": "划", "撐": "撑", "橋": "桥", "舉": "举",
+        "繩": "绳", "帶": "带", "牆": "墙", "腳": "脚", "羅": "罗", "轉": "转",
+        "側": "侧", "開": "开", "蟲": "虫", "鳥": "鸟", "捲": "卷", "單": "单",
+        "車": "车", "負": "负", "壓": "压", "縮": "缩", "彈": "弹", "壺": "壶",
+        "體": "体", "髖": "髋", "彎": "弯", "鍊": "链", "臥": "卧", "組": "组", "輪": "轮", "靜": "静"
+    ]
 
     static func halfWidthDigits(_ text: String) -> String {
         var result = ""
