@@ -17,6 +17,11 @@ public struct SessionRecordSummary: Equatable, Sendable {
 }
 
 public enum HistoryStats {
+    public static func rate(_ part: Int, of whole: Int) -> Double? {
+        guard whole > 0 else { return nil }
+        return min(1, max(0, Double(max(0, part)) / Double(whole)))
+    }
+
     public static func weekStart(for date: Date, calendar: Calendar) -> Date {
         var calendar = calendar
         calendar.firstWeekday = 2
@@ -24,14 +29,17 @@ public enum HistoryStats {
         return calendar.date(from: components) ?? calendar.startOfDay(for: date)
     }
 
-    public static func completedThisWeek(
+    public static func completedDaysThisWeek(
         _ records: [SessionRecordSummary],
         now: Date,
         calendar: Calendar = Calendar(identifier: .gregorian)
     ) -> Int {
         let start = weekStart(for: now, calendar: calendar)
         let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start
-        return records.filter { $0.date >= start && $0.date < end }.count
+        let days = records
+            .filter { $0.isCompleted && $0.date >= start && $0.date < end }
+            .map { calendar.startOfDay(for: $0.date) }
+        return Set(days).count
     }
 
     public static func streak(
@@ -39,7 +47,7 @@ public enum HistoryStats {
         now: Date,
         calendar: Calendar = Calendar(identifier: .gregorian)
     ) -> Int {
-        let days = Set(records.map { calendar.startOfDay(for: $0.date) })
+        let days = Set(records.filter(\.isCompleted).map { calendar.startOfDay(for: $0.date) })
         guard !days.isEmpty else { return 0 }
 
         var cursor = calendar.startOfDay(for: now)
@@ -56,12 +64,5 @@ public enum HistoryStats {
             cursor = previous
         }
         return count
-    }
-
-    public static func completionRate(_ records: [SessionRecordSummary]) -> Double {
-        let planned = records.reduce(0) { $0 + $1.plannedSets }
-        let completed = records.reduce(0) { $0 + $1.completedSets }
-        guard planned > 0 else { return 0 }
-        return min(1, Double(completed) / Double(planned))
     }
 }

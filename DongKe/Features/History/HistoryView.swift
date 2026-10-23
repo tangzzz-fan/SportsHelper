@@ -94,7 +94,7 @@ struct HistoryView: View {
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline, spacing: 28) {
-                metric(value: "\(store.completedThisWeek) / \(weeklyTarget)", label: "本周")
+                metric(value: "\(store.completedDaysThisWeek) / \(weeklyTarget)", label: "本周")
                 metric(value: "\(store.streakDays) 天", label: "连续")
                 Spacer()
             }

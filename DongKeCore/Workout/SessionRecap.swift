@@ -72,7 +72,6 @@ public struct SessionRecap: Equatable, Sendable {
     }
 
     private func rate(_ value: Int) -> Double {
-        guard plannedSets > 0 else { return 0 }
-        return min(1, max(0, Double(value) / Double(plannedSets)))
+        HistoryStats.rate(value, of: plannedSets) ?? 0
     }
 }

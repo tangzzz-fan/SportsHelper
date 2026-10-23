@@ -75,11 +75,11 @@ extension TodayView {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(store.completedThisWeek) / \(plan.meta.daysPerWeek)")
+                    Text("\(store.completedDaysThisWeek) / \(plan.meta.daysPerWeek)")
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
                 }
-                ProgressBar(progress: min(1, Double(store.completedThisWeek) / Double(max(1, plan.meta.daysPerWeek))))
+                ProgressBar(progress: min(1, Double(store.completedDaysThisWeek) / Double(max(1, plan.meta.daysPerWeek))))
             }
             .padding(.top, 12)
 

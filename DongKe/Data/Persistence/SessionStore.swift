@@ -19,8 +19,8 @@ final class SessionStore {
         }
     }
 
-    var completedThisWeek: Int {
-        HistoryStats.completedThisWeek(summaries, now: Date())
+    var completedDaysThisWeek: Int {
+        HistoryStats.completedDaysThisWeek(summaries, now: Date())
     }
 
     var streakDays: Int {

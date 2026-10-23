@@ -1,4 +1,5 @@
 import Foundation
+import DongKeCore
 
 struct SessionSummary: Identifiable, Equatable {
     var id = UUID()
@@ -8,6 +9,6 @@ struct SessionSummary: Identifiable, Equatable {
     var plannedSets: Int
 
     var completionRate: Double {
-        plannedSets > 0 ? Double(completedSets) / Double(plannedSets) : 0
+        HistoryStats.rate(completedSets, of: plannedSets) ?? 0
     }
 }

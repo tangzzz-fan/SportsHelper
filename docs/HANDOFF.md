@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **233 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **9 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条 |
+| 测试 | **231 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **10 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；单测 227 条 + UI 测试 8 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 231 条 + UI 测试 10 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 **必须分两次跑**，不要指望一条命令全绿：
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 227 tests`。UI 测试是 XCTest，看 `Executed 8 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 231 tests`。UI 测试是 XCTest，看 `Executed 10 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -234,9 +234,21 @@ SPEC §4「单文件 ≤300 行」已全量满足。拆分方式分两种，**�
 
 AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large`）已逐页截图核对：训练页三项核心信息、总结页圆环与统计、三个页签的行文字均无截断、无省略号。
 
+## 6.9 完成口径（2026-10-23）
+
+「今天算不算练过」只有一个判据：`SessionRecordSummary.isCompleted`（`completedSets >= plannedSets`；降阶计入完成、跳过不计）。连续天数与「本周 N/3」都按**完成过的天**去重统计——做一半既不加连续，也不占周目标。
+
+| 位置 | 唯一实现 | 说明 |
+|---|---|---|
+| 比率与截断 | `HistoryStats.rate(_:of:)` | 分母 ≤0 返回 nil，结果夹在 0…1；`SessionSummary`（记录页）与 `SessionRecap`（总结页）都调它，页面不再自己除 |
+| 连续天数 | `HistoryStats.streak` | 只认完成日；今天还没完成时从昨天回溯 |
+| 本周完成 | `HistoryStats.completedDaysThisWeek` | 只数本周内的完成日；同一天练两次算一天 |
+
+`CompletionRateCalculator` 已删除：它和 `HistoryStats` 是两套口径（阈值 0.8 vs 全部完成），且 App 里零调用，是死代码。AC-17 要的是「完成当天全部组」，以 SPEC 为准。**不要再引入第二套 streak / 周计数**——别名表两份已经出过一次事。
+
 ## 6.6 UI 测试（2026-10-23）
 
-`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），八条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存 / 训练→休息→跳过→总结 / 设置开关与清空。
+`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存 / 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关与清空，另有一条在 AX3 字号下断言训练页四个控件可点。
 
 | 机制 | 说明 |
 |---|---|

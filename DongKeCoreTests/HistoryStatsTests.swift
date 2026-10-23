@@ -30,14 +30,32 @@ struct HistoryStatsTests {
         #expect(components.month == 10)
     }
 
-    @Test("only sessions inside the current week are counted")
+    @Test("only days completed inside the current week are counted")
     func completedThisWeek() {
         let records = [
             SessionRecordSummary(date: date(19), plannedSets: 9, completedSets: 9),
             SessionRecordSummary(date: date(22), plannedSets: 9, completedSets: 6),
             SessionRecordSummary(date: date(18), plannedSets: 9, completedSets: 9)
         ]
-        #expect(HistoryStats.completedThisWeek(records, now: date(22), calendar: calendar) == 2)
+        #expect(HistoryStats.completedDaysThisWeek(records, now: date(22), calendar: calendar) == 1)
+    }
+
+    @Test("a half-finished session does not make the week count up")
+    func completedThisWeekIgnoresPartial() {
+        let records = [
+            SessionRecordSummary(date: date(20), plannedSets: 9, completedSets: 8),
+            SessionRecordSummary(date: date(21), plannedSets: 9, completedSets: 0)
+        ]
+        #expect(HistoryStats.completedDaysThisWeek(records, now: date(22), calendar: calendar) == 0)
+    }
+
+    @Test("two completed sessions on one day count once for the week")
+    func completedThisWeekCountsDays() {
+        let records = [
+            SessionRecordSummary(date: date(22, hour: 8), plannedSets: 3, completedSets: 3),
+            SessionRecordSummary(date: date(22, hour: 20), plannedSets: 3, completedSets: 3)
+        ]
+        #expect(HistoryStats.completedDaysThisWeek(records, now: date(22), calendar: calendar) == 1)
     }
 
     @Test("streak counts consecutive days ending today")
@@ -78,18 +96,45 @@ struct HistoryStatsTests {
         #expect(HistoryStats.streak(records, now: date(22), calendar: calendar) == 1)
     }
 
-    @Test("empty history has no streak and no rate")
-    func emptyHistory() {
-        #expect(HistoryStats.streak([], now: date(22), calendar: calendar) == 0)
-        #expect(HistoryStats.completionRate([]) == 0)
+    @Test("a half-finished day does not extend the streak")
+    func streakSkipsPartialDays() {
+        let records = [
+            SessionRecordSummary(date: date(22), plannedSets: 9, completedSets: 6),
+            SessionRecordSummary(date: date(21), plannedSets: 3, completedSets: 3),
+            SessionRecordSummary(date: date(20), plannedSets: 3, completedSets: 3)
+        ]
+        #expect(HistoryStats.streak(records, now: date(22), calendar: calendar) == 2)
     }
 
-    @Test("completion rate weights planned sets, not sessions")
-    func completionRateWeightsSets() {
+    @Test("only half-finished days means no streak")
+    func partialOnlyDaysHaveNoStreak() {
         let records = [
-            SessionRecordSummary(date: date(22), plannedSets: 12, completedSets: 9),
-            SessionRecordSummary(date: date(21), plannedSets: 9, completedSets: 9)
+            SessionRecordSummary(date: date(22), plannedSets: 9, completedSets: 8),
+            SessionRecordSummary(date: date(21), plannedSets: 9, completedSets: 4)
         ]
-        #expect(abs(HistoryStats.completionRate(records) - 18.0 / 21.0) < 0.0001)
+        #expect(HistoryStats.streak(records, now: date(22), calendar: calendar) == 0)
+    }
+
+    @Test("a completed session next to a partial one still marks the day")
+    func dayCountsWhenAnySessionIsCompleted() {
+        let records = [
+            SessionRecordSummary(date: date(22, hour: 8), plannedSets: 9, completedSets: 2),
+            SessionRecordSummary(date: date(22, hour: 20), plannedSets: 9, completedSets: 9)
+        ]
+        #expect(HistoryStats.streak(records, now: date(22), calendar: calendar) == 1)
+    }
+
+    @Test("empty history has no streak")
+    func emptyHistory() {
+        #expect(HistoryStats.streak([], now: date(22), calendar: calendar) == 0)
+    }
+
+    @Test("rate is nil without a plan and clamped to one")
+    func rate() {
+        #expect(HistoryStats.rate(0, of: 0) == nil)
+        #expect(HistoryStats.rate(10, of: 10) == 1)
+        #expect(HistoryStats.rate(5, of: 10) == 0.5)
+        #expect(HistoryStats.rate(12, of: 10) == 1)
+        #expect(HistoryStats.rate(-3, of: 10) == 0)
     }
 }
