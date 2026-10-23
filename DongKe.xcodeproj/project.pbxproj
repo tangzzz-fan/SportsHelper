@@ -69,6 +69,7 @@
 		6D56107CAFD19405568CB248 /* HistoryStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08858064C4587155DEFFB92D /* HistoryStatsTests.swift */; };
 		6DA7B6FEFEBBDE472F9FF9CB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78924005EB823B3946C2AB57 /* HistoryView.swift */; };
 		71CE0FA9214CE7DA4126AD28 /* UserExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0036F18982FE6ABB6F67477 /* UserExerciseDetailView.swift */; };
+		7211E3919A78320D7C21A74B /* SetTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8213885D14997ACB22BF53E0 /* SetTarget.swift */; };
 		72C79F497D63B8481F6705D3 /* TimeOfDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57CFEC8D6EC9CB4D0AA3D84 /* TimeOfDay.swift */; };
 		75664CD2D8299584AE7DA025 /* TestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BF06BC639BB4568FD35A609 /* TestSupport.swift */; };
 		77A29C44949FCD89AD58E080 /* DongKeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC27B3FE5BB66F047654D9AC /* DongKeApp.swift */; };
@@ -269,6 +270,7 @@
 		7A914C997A43E378CED2EDEE /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
 		7E649B2E20E08FB5F5151D81 /* SamplePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamplePlan.swift; sourceTree = "<group>"; };
 		80FC712633E9DB5C59F407F8 /* ProfileEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEntity.swift; sourceTree = "<group>"; };
+		8213885D14997ACB22BF53E0 /* SetTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTarget.swift; sourceTree = "<group>"; };
 		821E0A91BCE94A72DB17773E /* ReminderTriggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderTriggerTests.swift; sourceTree = "<group>"; };
 		841D1C16419030DE9EA8A270 /* WorkoutCheckpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCheckpoint.swift; sourceTree = "<group>"; };
 		843E4DBF38DE397399E1D3EE /* PlanDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDecoder.swift; sourceTree = "<group>"; };
@@ -397,6 +399,7 @@
 				6D485A2D2B1F211B7907E5C1 /* PlanModels.swift */,
 				C9FAE79CB629F10529FD1AE3 /* ProfileModels.swift */,
 				985560A5C515142CFA28FF51 /* SessionModels.swift */,
+				8213885D14997ACB22BF53E0 /* SetTarget.swift */,
 				C57CFEC8D6EC9CB4D0AA3D84 /* TimeOfDay.swift */,
 				D3CEB601AFA0FB8E22A2B0C8 /* Weekday.swift */,
 			);
@@ -924,6 +927,7 @@
 				830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */,
 				A13E1F5C2A38031A677C05A4 /* SessionModels.swift in Sources */,
 				532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */,
+				7211E3919A78320D7C21A74B /* SetTarget.swift in Sources */,
 				72C79F497D63B8481F6705D3 /* TimeOfDay.swift in Sources */,
 				46C48B9F910BE38A4BEDB92B /* UserExercise.swift in Sources */,
 				9E51F2662155A4526C1FA167 /* Weekday.swift in Sources */,
