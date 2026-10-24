@@ -33,11 +33,11 @@ func send(_ request: URLRequest) async throws -> (Int, Data) {
 func generate(
     configuration: AIConfiguration,
     profile: UserProfile,
-    note: String
+    brief: PlanBrief
 ) async throws -> (draft: ParsedPlanDraft, mode: AIResponseMode) {
     let url = try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get()
     let key = try configuration.resolvedKey ?? { throw SmokeError(description: "缺少 API Key") }()
-    let messages = AIPromptBuilder.makeMessages(profile: profile, extraNote: note)
+    let messages = AIPromptBuilder.makeMessages(profile: profile, brief: brief)
 
     var mode: AIResponseMode? = .jsonSchema
     var lastRejection = ""
@@ -116,13 +116,18 @@ let configuration = AIConfiguration(
 
 print("端点：\(configuration.trimmedBaseURL)/chat/completions")
 print("模型：\(configuration.resolvedModel)")
+let brief = PlanBriefParser.parse(note)
+let resolved = brief.resolved(against: makeProfile())
 print("补充要求：\(note.isEmpty ? "（无）" : note)")
+print("解析为：\(resolved.weekdayText)，共 \(resolved.daysPerWeek) 天；每次 \(resolved.sessionMinutes) 分钟；\(resolved.equipmentText)；\(resolved.goal.chineseName)")
+if resolved.focus.isEmpty == false { print("重点：\(resolved.focus.joined(separator: "、"))") }
+if resolved.avoid.isEmpty == false { print("避开：\(resolved.avoid.joined(separator: "、"))") }
 
 let semaphore = DispatchSemaphore(value: 0)
 let started = Date()
 Task {
     do {
-        let result = try await generate(configuration: configuration, profile: makeProfile(), note: note)
+        let result = try await generate(configuration: configuration, profile: makeProfile(), brief: brief)
         report(result.draft, mode: result.mode, elapsed: Date().timeIntervalSince(started))
         semaphore.signal()
     } catch {

@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **371 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **11 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 40 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条 |
+| 测试 | **375 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **12 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；单测 371 条 + UI 测试 11 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 375 条 + UI 测试 12 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 **必须分两次跑**，不要指望一条命令全绿：
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 371 tests`。UI 测试是 XCTest，看 `Executed 11 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 375 tests`。UI 测试是 XCTest，看 `Executed 12 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -356,6 +356,19 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 - `每周三天` + `周一三五` 同时出现时，保留星期、丢弃天数；`resolved` 以星期为准。
 - 「隔天」不硬换算成 3 天或 4 天，写进 `unparsed` 让确认页选。
 - 测试 36 条（`PlanBriefParserTests` + `PlanBriefResolutionTests`）。
+
+## 6.15 一句话生成：确认页与接线（2026-10-24）
+
+流程现在是：句子 → `PlanBriefParser` → 「我理解为」确认页 → 可编辑 brief → `AIPromptBuilder` → `AIPlanClient`。
+
+- `AIGenerateCard` 的句子输入绑定在 `ImportView` 的 `aiSentence`，所以「复制提示词」与生成用的是同一份 brief，不再各说一套。
+- 确认页可改星期 / 时长 / 器械 / 目标；重点与避开只读；伤病与避开收进首屏约束卡；原话回显在标题下。
+- 嵌套 sheet 里 `.sheet(isPresented:) + 可选值` 会偶发不弹出，**必须用 `.sheet(item:)`**。
+- 底栏走 `safeAreaInset`；AX 字号下主/次按钮改成纵向堆叠，避免文字换行把底栏撑到半屏。
+- 测试钩子：`DK_BRIEF_SAMPLE` 预填句子、`DK_BRIEF_CONFIRM=1` 直接开确认页、`DK_AI_FAKE=1` 跳过网络返回档案生成的计划。
+- 测试 375 / UI 12；截图 `t37-brief-confirm.png`。
+
+**关于 AX3**：确认页没有强制 AX3，`BriefConfirmView` 只是在系统字号本身是无障碍档时切换底栏布局。之前看到 AX3 是因为截图命令手动设了 `xcrun simctl ui <UDID> content_size accessibility-extra-extra-extra-large`；现已复位 `large`，并删掉本次的 AX3 截图。以后不再用 AX3 做常规验收。
 
 ## 7. 换机后容易踩的坑
 

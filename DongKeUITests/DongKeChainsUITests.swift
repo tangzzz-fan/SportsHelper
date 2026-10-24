@@ -86,6 +86,35 @@ final class DongKeChainsUITests: DongKeUITestCase {
         XCTAssertFalse(app.buttons[A11y.Import.save].exists, "截断内容不该进入校对页")
     }
 
+    func testBriefConfirmBeforeGenerate() {
+        launchApp([
+            "DK_COMPLETE_ONBOARDING": "1",
+            "DK_BRIEF_SAMPLE": "每周二四，每次 45 分钟，有弹力带，想增肌",
+            "DK_AI_FAKE": "1"
+        ])
+
+        text(A11y.Today.title)
+        tapTab("计划")
+        tap(button(A11y.Plan.importPlan))
+
+        let generate = app.buttons[A11y.Import.aiGenerate]
+        XCTAssertTrue(generate.waitForExistence(timeout: 10), "一句话生成按钮没出现")
+        if generate.isHittable == false {
+            app.swipeUp()
+        }
+        tap(generate)
+
+        XCTAssertTrue(
+            app.staticTexts["先对一下，再生成"].waitForExistence(timeout: 5),
+            "没有先展示理解确认页"
+        )
+        XCTAssertTrue(app.buttons["周二"].exists, "没识别出周二")
+        XCTAssertTrue(app.buttons["45 分钟"].exists, "没识别出 45 分钟")
+
+        tap(button(A11y.Import.briefConfirm))
+        XCTAssertTrue(app.buttons[A11y.Import.save].waitForExistence(timeout: 15), "确认后没有进入校对页")
+    }
+
     func testWorkoutCompleteRestSkipEndSummary() {
         launchApp(["DK_COMPLETE_ONBOARDING": "1"])
 

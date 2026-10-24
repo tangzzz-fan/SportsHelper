@@ -11,6 +11,7 @@ struct ImportView: View {
     @Environment(ProfileStore.self) private var profiles
 
     @State private var text = ""
+    @State private var aiSentence = ""
     @State private var draft: ParsedPlanDraft?
     @State private var showReview = false
     @State private var copiedPrompt = false
@@ -33,6 +34,9 @@ struct ImportView: View {
             _text = State(initialValue: pasted)
         } else if ProcessInfo.processInfo.environment["DK_IMPORT_SAMPLE"] == "1" {
             _text = State(initialValue: Self.sampleText)
+        }
+        if let sample = ProcessInfo.processInfo.environment["DK_BRIEF_SAMPLE"] {
+            _aiSentence = State(initialValue: sample)
         }
         #endif
     }
@@ -69,14 +73,19 @@ struct ImportView: View {
                         failureCard(draft)
                     }
 
-                    AIGenerateCard { generated in
+                    AIGenerateCard(
+                        sentence: $aiSentence,
+                        memory: memo.load(),
+                        exercises: userExercises.catalog
+                    ) { generated in
                         draft = generated
                         showReview = true
                     }
 
                     Button {
                         UIPasteboard.general.string = AIPromptBuilder.copyablePrompt(
-                            profile: profiles.profile ?? UserProfile()
+                            profile: profiles.profile ?? UserProfile(),
+                            brief: PlanBriefParser.parse(aiSentence)
                         )
                         copiedPrompt = true
                     } label: {

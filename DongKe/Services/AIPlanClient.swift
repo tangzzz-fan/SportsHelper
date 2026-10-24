@@ -32,14 +32,29 @@ final class AIPlanClient: AIPlanGenerating {
         return URLSession(configuration: configuration)
     }
 
-    func generatePlan(profile: UserProfile, extraNote: String) async throws -> ParsedPlanDraft {
+    func generatePlan(
+        profile: UserProfile,
+        brief: PlanBrief,
+        memory: AliasMemory,
+        exercises: UserExerciseCatalog
+    ) async throws -> ParsedPlanDraft {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["DK_AI_FAKE"] == "1" {
+            let plan = PlanGenerator.makePlan(profile: profile)
+            let data = try JSONEncoder().encode(plan)
+            return try AIPlanInterpreter
+                .interpret(String(decoding: data, as: UTF8.self), memory: memory, exercises: exercises)
+                .get()
+        }
+        #endif
+
         let configuration = settings.configuration
         guard let key = configuration.resolvedKey else { throw AIClientError.missingKey }
         let request = Request(
             url: try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get(),
             key: key,
             model: configuration.resolvedModel,
-            messages: AIPromptBuilder.makeMessages(profile: profile, extraNote: extraNote)
+            messages: AIPromptBuilder.makeMessages(profile: profile, brief: brief)
         )
 
         var mode: AIResponseMode? = .jsonSchema
@@ -47,7 +62,7 @@ final class AIPlanClient: AIPlanGenerating {
         while let current = mode {
             switch try await attempt(request, mode: current) {
             case let .content(text):
-                return try AIPlanInterpreter.interpret(text).get()
+                return try AIPlanInterpreter.interpret(text, memory: memory, exercises: exercises).get()
             case let .formatRejected(snippet):
                 lastRejection = snippet
                 mode = current.next

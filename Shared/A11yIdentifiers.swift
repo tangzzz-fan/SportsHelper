@@ -36,6 +36,10 @@ enum A11y {
         static let editor = "import.editor"
         static let parse = "import.parse"
         static let save = "import.save"
+        static let aiSentence = "import.ai.sentence"
+        static let aiGenerate = "import.ai.generate"
+        static let briefConfirm = "import.brief.confirm"
+        static let briefCancel = "import.brief.cancel"
     }
 
     enum Plan {

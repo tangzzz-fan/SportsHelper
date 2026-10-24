@@ -83,6 +83,56 @@ struct AIPromptBuilderTests {
         #expect(brief.contains("不超过 30 组"))
     }
 
+    @Test func briefOverridesProfileAndKeepsInjuries() {
+        var profile = UserProfile()
+        profile.sessionMinutes = 30
+        profile.availableWeekdays = [.monday, .wednesday, .friday]
+        profile.equipment = [.bodyweight]
+        profile.injuries = "左膝不适"
+
+        let brief = PlanBriefParser.parse("每周二四，每次 45 分钟，有弹力带，想增肌，重点背部和肩，别跳跃")
+        let text = AIPromptBuilder.userBrief(profile: profile, brief: brief)
+
+        #expect(text.contains("周二、周四"))
+        #expect(text.contains("共 2 天"))
+        #expect(text.contains("45"))
+        #expect(text.contains("弹力带"))
+        #expect(text.contains(PlanGoal.buildMuscle.chineseName))
+        #expect(text.contains("背部"))
+        #expect(text.contains("肩部"))
+        #expect(text.contains("跳跃"))
+        #expect(text.contains("左膝不适"))
+        #expect(text.contains("用户原话"))
+        #expect(text.contains("meta.daysPerWeek 必须等于 2"))
+    }
+
+    @Test func emptyBriefFallsBackToProfile() {
+        let profile = UserProfile()
+        let text = AIPromptBuilder.userBrief(profile: profile, brief: PlanBriefParser.parse(""))
+        #expect(text.contains("按档案生成"))
+        #expect(text.contains("周一、周三、周五"))
+        #expect(text.contains("30 分钟"))
+    }
+
+    @Test func briefAndExtraNoteShareCopyablePrompt() {
+        var profile = UserProfile()
+        profile.injuries = "腰不好"
+        let brief = PlanBriefParser.parse("每周四天，每次 40 分钟，有哑铃")
+        let text = AIPromptBuilder.copyablePrompt(profile: profile, brief: brief)
+        #expect(text.hasPrefix("你是健身计划生成器"))
+        #expect(text.contains("共 4 天"))
+        #expect(text.contains("腰不好"))
+    }
+
+    @Test func avoidDoesNotReplaceInjuries() {
+        var profile = UserProfile()
+        profile.injuries = "右肩有伤"
+        let brief = PlanBriefParser.parse("不要深蹲")
+        let text = AIPromptBuilder.userBrief(profile: profile, brief: brief)
+        #expect(text.contains("深蹲"))
+        #expect(text.contains("右肩有伤"))
+    }
+
     @Test func copyablePromptKeepsBothHalves() {
         var profile = UserProfile()
         profile.sessionMinutes = 45

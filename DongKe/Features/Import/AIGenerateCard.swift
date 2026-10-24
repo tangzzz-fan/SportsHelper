@@ -2,6 +2,10 @@ import SwiftUI
 import DongKeCore
 
 struct AIGenerateCard: View {
+    @Binding var sentence: String
+    var memory: AliasMemory
+    var exercises: UserExerciseCatalog
+
     var onGenerated: (ParsedPlanDraft) -> Void
 
     @Environment(AISettingsStore.self) private var ai
@@ -12,18 +16,40 @@ struct AIGenerateCard: View {
     @State private var errorText: String?
     @State private var needsKeyFix = false
     @State private var showSettings = false
+    @State private var pendingSheet: BriefSheet?
     @State private var didAutoRun = false
+
+    private struct BriefSheet: Identifiable {
+        let id = UUID()
+        let brief: PlanBrief
+    }
+
+    init(
+        sentence: Binding<String>,
+        memory: AliasMemory = .empty,
+        exercises: UserExerciseCatalog = .empty,
+        onGenerated: @escaping (ParsedPlanDraft) -> Void
+    ) {
+        _sentence = sentence
+        self.memory = memory
+        self.exercises = exercises
+        self.onGenerated = onGenerated
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("用 AI 生成")
+            Text("用一句话生成")
                 .font(Typography.cardTitle)
-            Text(ai.isConfigured
-                 ? "按你的档案生成一周计划，生成后照常在下一页校对再保存。"
+            Text(canGenerate
+                 ? "说一句你的想法，先核对理解，再生成计划；生成后照常在校对页改。"
                  : "先填接口地址与 API Key，才能在这里直接生成；也可以复制提示词去网页版，再把结果粘回来。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if canGenerate {
+                sentenceEditor
+            }
 
             if let errorText {
                 Text(errorText)
@@ -52,26 +78,54 @@ struct AIGenerateCard: View {
         .sheet(isPresented: $showSettings) {
             AISettingsSheet()
         }
+        .sheet(item: $pendingSheet) { sheet in
+            BriefConfirmView(brief: sheet.brief, profile: profile) {
+                pendingSheet = nil
+            } onConfirm: { edited in
+                pendingSheet = nil
+                generate(brief: edited)
+            }
+        }
         .task {
             #if DEBUG
             guard didAutoRun == false else { return }
             didAutoRun = true
-            guard ProcessInfo.processInfo.environment["DK_AI_AUTOGEN"] == "1" else { return }
-            generate()
+            let environment = ProcessInfo.processInfo.environment
+            if environment["DK_BRIEF_CONFIRM"] == "1" {
+                pendingSheet = BriefSheet(brief: PlanBriefParser.parse(sentence))
+                return
+            }
+            guard environment["DK_AI_AUTOGEN"] == "1" else { return }
+            generate(brief: PlanBriefParser.parse(sentence))
             #endif
         }
     }
 
+    private var sentenceEditor: some View {
+        TextField("例如：想在家增肌，每周四天，每次 40 分钟，有哑铃", text: $sentence, axis: .vertical)
+            .font(Typography.body)
+            .lineLimit(2...4)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .background(
+                Color.primary.opacity(0.05),
+                in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+            )
+            .accessibilityIdentifier(A11y.Import.aiSentence)
+    }
+
     @ViewBuilder
     private var action: some View {
-        if ai.isConfigured {
-            Button(action: generate) {
+        if canGenerate {
+            Button(action: prepareBrief) {
                 HStack(spacing: 8) {
                     if isGenerating {
                         ProgressView()
                             .controlSize(.small)
                     }
-                    Text(isGenerating ? "生成中…" : "用 AI 生成计划")
+                    Text(isGenerating ? "生成中…" : "下一步：确认理解")
                         .font(.footnote.weight(.semibold))
                 }
                 .frame(maxWidth: .infinity)
@@ -84,6 +138,7 @@ struct AIGenerateCard: View {
                 in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
             )
             .disabled(isGenerating)
+            .accessibilityIdentifier(A11y.Import.aiGenerate)
         } else {
             Button {
                 showSettings = true
@@ -99,15 +154,43 @@ struct AIGenerateCard: View {
         }
     }
 
-    private func generate() {
+    private var profile: UserProfile {
+        profiles.profile ?? UserProfile()
+    }
+
+    private var canGenerate: Bool {
+        ai.isConfigured || usesFakeAI
+    }
+
+    private var usesFakeAI: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["DK_AI_FAKE"] == "1"
+        #else
+        false
+        #endif
+    }
+
+    private func prepareBrief() {
+        guard isGenerating == false else { return }
+        errorText = nil
+        needsKeyFix = false
+        pendingSheet = BriefSheet(brief: PlanBriefParser.parse(sentence))
+    }
+
+    private func generate(brief: PlanBrief) {
         guard isGenerating == false else { return }
         isGenerating = true
         errorText = nil
         needsKeyFix = false
-        let profile = profiles.profile ?? UserProfile()
+        let profile = self.profile
         Task {
             do {
-                let draft = try await AIPlanClient().generatePlan(profile: profile, extraNote: "")
+                let draft = try await AIPlanClient().generatePlan(
+                    profile: profile,
+                    brief: brief,
+                    memory: memory,
+                    exercises: exercises
+                )
                 onGenerated(draft)
             } catch let error as AIClientError {
                 if error == .unauthorized {

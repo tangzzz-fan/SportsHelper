@@ -55,6 +55,7 @@
 		4F8D679A3688ACEE276864B4 /* PlanStructureEdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FE090CC38440A20C32F275 /* PlanStructureEdgeCaseTests.swift */; };
 		51A18F54CA3948AC017479EE /* ExerciseFigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2163C75A915C2783591E25F8 /* ExerciseFigureView.swift */; };
 		532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53891C1FFE0EE91BE9ADA57 /* SessionRecap.swift */; };
+		5443E3AE27CB0B81D3A4913A /* BriefConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */; };
 		55C2AF0871494FDAA225F256 /* ExerciseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63534BDE9AD284C5DA36A07D /* ExerciseCatalog.swift */; };
 		589670919FEB504EAD6FA33A /* DongKeCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */; };
 		5A109BE3C4361BE4F1400740 /* UserExerciseEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 072B203C1325BFB3873E3159 /* UserExerciseEntity.swift */; };
@@ -262,6 +263,7 @@
 		48CBCF5D84E8B294BC8F7D5B /* ImportStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportStubs.swift; sourceTree = "<group>"; };
 		48CC4559934C56DB9672ED36 /* AIPromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPromptTests.swift; sourceTree = "<group>"; };
 		4A1B8615DEDA086F36B4B136 /* AliasMemoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasMemoStore.swift; sourceTree = "<group>"; };
+		4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BriefConfirmView.swift; sourceTree = "<group>"; };
 		4CC1DD2A03906061DF678382 /* WorkoutSession+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkoutSession+State.swift"; sourceTree = "<group>"; };
 		4CF95C008A8E4B440012D702 /* DraftLineScanner+Text.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DraftLineScanner+Text.swift"; sourceTree = "<group>"; };
 		4E47A64F111345BCC01DC050 /* UnknownExerciseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownExerciseTests.swift; sourceTree = "<group>"; };
@@ -512,6 +514,7 @@
 			isa = PBXGroup;
 			children = (
 				02B42B1F0F88B24A1DD63EC3 /* AIGenerateCard.swift */,
+				4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */,
 				0F112ABB0764F60FB6BE2EBF /* ImportView.swift */,
 				ACBB4A398AFB211439617B18 /* PlanEditSheet.swift */,
 				6BF8C5EA66A699E466280C56 /* PlanReviewView.swift */,
@@ -1034,6 +1037,7 @@
 				D7EEFDC65DEEDDED17412B78 /* AISettingsStore.swift in Sources */,
 				A7811DA285BF8E00EBA81E90 /* AliasMemoStore.swift in Sources */,
 				83034C0C6188573AE65AF0F5 /* AppShell.swift in Sources */,
+				5443E3AE27CB0B81D3A4913A /* BriefConfirmView.swift in Sources */,
 				AB78A68EF77ADDFADB055A7D /* DataResetService.swift in Sources */,
 				77A29C44949FCD89AD58E080 /* DongKeApp.swift in Sources */,
 				3A5AAB15FEF6502891225EEB /* ExerciseDetailView.swift in Sources */,

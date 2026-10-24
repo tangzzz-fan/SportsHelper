@@ -8,8 +8,21 @@ public enum AIPromptBuilder {
         ]
     }
 
+    public static func makeMessages(profile: UserProfile, brief: PlanBrief) -> [ChatMessage] {
+        [
+            ChatMessage(role: .system, content: systemPrompt()),
+            ChatMessage(role: .user, content: userBrief(profile: profile, brief: brief))
+        ]
+    }
+
     public static func copyablePrompt(profile: UserProfile, extraNote: String = "") -> String {
         makeMessages(profile: profile, extraNote: extraNote)
+            .map(\.content)
+            .joined(separator: "\n\n")
+    }
+
+    public static func copyablePrompt(profile: UserProfile, brief: PlanBrief) -> String {
+        makeMessages(profile: profile, brief: brief)
             .map(\.content)
             .joined(separator: "\n\n")
     }
@@ -49,6 +62,43 @@ public enum AIPromptBuilder {
         let note = extraNote.trimmingCharacters(in: .whitespacesAndNewlines)
         if note.isEmpty == false {
             lines.append("补充要求：\(note)。")
+        }
+        lines.append("请按以上条件生成一周计划。")
+        return lines.joined(separator: "\n")
+    }
+
+    public static func userBrief(profile: UserProfile, brief: PlanBrief) -> String {
+        let effective = brief.resolved(against: profile)
+        var lines: [String] = []
+        let weight = weightText(profile.weightKg)
+        lines.append("身高 \(profile.heightCm) cm，体重 \(weight) kg，年龄 \(profile.age) 岁，性别 \(profile.sex.chineseName)。")
+
+        let sentence = brief.sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+        if sentence.isEmpty {
+            lines.append("本次没有额外描述，按档案生成。")
+        } else {
+            lines.append("本次按用户原话生成；原话没提到的部分沿用档案。")
+        }
+
+        lines.append("目标：\(effective.goal.chineseName)；水平：\(profile.level.chineseName)。")
+        lines.append("每周可训练：\(effective.weekdayText)，共 \(effective.daysPerWeek) 天；每次约 \(effective.sessionMinutes) 分钟。")
+        lines.append("可用器械：\(effective.equipmentText)。")
+
+        if effective.focus.isEmpty == false {
+            lines.append("重点部位：\(effective.focus.joined(separator: "、"))。")
+        }
+
+        let injuries = effective.injuries.trimmingCharacters(in: .whitespacesAndNewlines)
+        if injuries.isEmpty == false {
+            lines.append("伤病限制（不可忽略）：\(injuries)。")
+        }
+        if effective.avoid.isEmpty == false {
+            lines.append("本次额外避开：\(effective.avoid.joined(separator: "、"))。")
+        }
+
+        lines.append("硬约束：每天动作数不超过 \(effective.maxExercises) 个，总组数不超过 \(effective.maxSets) 组，估算时长落在 \(effective.sessionMinutes) 分钟的 ±15% 内；meta.daysPerWeek 必须等于 \(effective.daysPerWeek)。")
+        if sentence.isEmpty == false {
+            lines.append("用户原话：\(sentence)。")
         }
         lines.append("请按以上条件生成一周计划。")
         return lines.joined(separator: "\n")
