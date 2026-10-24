@@ -19,6 +19,7 @@ extension OnboardingView {
                         .font(Typography.meta.weight(.semibold))
                         .frame(width: 32, height: 32)
                         .background(Color.primary.opacity(0.06), in: Circle())
+                        .contentShape(Circle())
                 }
                 Text(value)
                     .font(Typography.buttonLabel)
@@ -29,6 +30,7 @@ extension OnboardingView {
                         .font(Typography.meta.weight(.semibold))
                         .frame(width: 32, height: 32)
                         .background(Color.primary.opacity(0.06), in: Circle())
+                        .contentShape(Circle())
                 }
             }
         }

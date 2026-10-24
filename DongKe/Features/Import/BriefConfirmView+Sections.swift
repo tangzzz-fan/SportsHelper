@@ -153,6 +153,7 @@ extension BriefConfirmView {
             Text("改一下描述")
                 .font(Typography.secondary)
                 .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
@@ -201,6 +202,7 @@ extension BriefConfirmView {
                     selected ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.06),
                     in: Capsule()
                 )
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }

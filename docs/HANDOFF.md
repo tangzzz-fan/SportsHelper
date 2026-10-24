@@ -478,28 +478,81 @@ SpeechTranscribing（Core 协议）
 
 ## 6.21 测试范围：什么时候不用跑 UI 测试（2026-10-24）
 
-UI 测试要起模拟器、装 App、点按钮，一轮 16 条约 6 分钟；只改 `DongKeCore` 的解析规则却陪跑一遍，纯属浪费。判据落在一条上：**这次改动会不会让「用户点得到的东西」变样**。
+UI 测试要起模拟器、装 App、点按钮，一轮 16 条约 6 分钟；只改 `DongKeCore` 的解析规则却陪跑一遍，纯属浪费。**默认不跑，要跑显式加 `--with-ui`**。判据仍然落在一条上：**这次改动会不会让「用户点得到的东西」变样**。
 
 ```bash
-scripts/test-scope.sh            # 只看判定
-scripts/test-scope.sh --run      # 判定后直接跑对应档位
+scripts/test-scope.sh              # 只看判定
+scripts/test-scope.sh --run        # 跑单测（UI 不跑）
+scripts/test-scope.sh --with-ui    # 单测 + UI，约 6 分钟
 scripts/test-scope.sh --base HEAD~3
 ```
 
-| 判定的 scope | 触发路径 | 跑什么 |
-|---|---|---|
-| `ui` | `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/` | 单测 + UI 16 条 |
-| `core` | `DongKeCore/`、`DongKeCoreTests/`、`Tools/`，以及 `scripts/` 这类散件 | 只跑单测 |
-| `none` | `docs/`、`.scratch/`、`*.md` | 都不跑，仍要过 §4.3 门禁 |
+| 判定的 scope | 触发路径 | `--run` 跑什么 | `--with-ui` 追加 |
+|---|---|---|---|
+| `ui` | `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/` | 单测 | + UI 16 条 |
+| `core` | `DongKeCore/`、`DongKeCoreTests/`、`Tools/`，以及 `scripts/` 这类散件 | 单测 | 不追加 |
+| `none` | `docs/`、`.scratch/`、`*.md` | 都不跑，仍要过 §4.3 门禁 | 不追加 |
+
+判定为 `ui` 时脚本会打印 `ui-triggers:` 列出触发文件——**看到它就知道该不该补一次 UI**。建议在这些节点跑：
+
+- 提 PR / 提交前，改过视图、入口、设计系统或 `project.yml`
+- 改了 `contentShape`、`buttonStyle`、命中区这类「点得到点不到」的东西（见 §6.22）
+- 改了播报、语音输入的可见行为（UI 里有 `DK_VOICE_*` 注入钩子）
+- 一次没跑过、要上真机前
 
 几个刻意的取舍：
 
 - **`DongKe/Services` 算 ui**。`AIPlanClient`、`VoiceService`、`SystemSpeechTranscriber` 这些是 App 层，改动会改用户看到的行为（401 文案、播报有没有声、麦克风有没有反应），而它们没有独立单测。宁可多跑一次。
-- **`DongKeCore` 算 core**。SPEC §10 只要求「UI 只测三条主链路」，Core 的行为变化由 484 条单测兜。真怕漏，就手动跑一遍 UI——脚本给的是默认档，不是禁令。
+- **`DongKeCore` 算 core**。SPEC §10 只要求「UI 只测三条主链路」，Core 的行为变化由 487 条单测兜。真怕漏，就手动加 `--with-ui`——脚本给的是默认档，不是禁令。
 - **`DongKeCore` 改**也可能动文案（例如 `VoiceInputCopy`），但文案不靠 UI 测试验，靠 `#expect(failure.message.contains("麦克风"))` 这类断言。
 - **`none` 不等于免检**。门禁 grep、`xcodegen generate` 后工程是否干净，一样要跑。
 
 跑之前记得：`ios-run.sh` 会因「结论已出但进程不退场」把 UI 套件掐掉——Swift Testing 的 `Test run with N tests passed` 先出现，20 秒后它就杀进程，而这时 UI 才启动。`test-scope.sh --run` 已绕开这个坑（直接 `xcodebuild` + 日志判定 + `perl alarm` 上界）；手工跑时**不要用 `ios-run.sh` 跑 UI 套件**，直接在命令行 `xcodebuild ... -only-testing:DongKeUITests test`。
+
+## 6.22 按钮命中区：字上能点，字外点不动（2026-10-24）
+
+现象：休息日的「提前练一次」只有点到文字才进得去，点按钮左右两侧的空白没反应。
+
+根因在 SwiftUI 的命中测试规则——**`Text` 的可点区域就是字形本身**。`frame(maxWidth: .infinity)` 只改布局（让文字居中、让父容器知道要撑满），**不会扩大命中区**；`background` 同理，画得出但点不到。按钮看着有 334×52，实际能接住点击的只有中间那块字。
+
+修法：`.contentShape(Rectangle())`。它不改外观，只告诉命中测试「整块都算我」。
+
+- **统一收口在 `PressableGlassStyle`**（`DongKe/DesignSystem/GlassSurface.swift`）：21 处共用按钮样式的地方一次修好。
+- 另有 9 处硬编码按钮（`TodayView` 设置与提醒、`WorkoutView` 关闭与结束、`OnboardingControls` ±、`BriefConfirmView+Sections` 胶囊与次按钮、`ImportView` 手动添加、`OnboardingView` 跳过）逐个补 `.contentShape`。
+
+回头检查同类问题的三条经验：
+
+1. **不要按视图结构扫遮挡**。`allElementsBoundByIndex` 会把按钮里的 `Text`、祖先容器都算成「压在上面」，误报一堆。
+2. **直接量命中区**。`element.frame` 打印出来对比按钮视觉尺寸，差一大截就是没加 `contentShape`。
+3. **UI 测试断言行为，不断言结构**。`DongKeRestDayUITests` 只留两条：点文字能进、点下缘也能进。别写「没有任何元素与按钮框相交」。
+
+新加的按钮一律走 `PressableGlassStyle`，别直接用 `.buttonStyle(.plain)` 配 `Text` + `frame`。
+
+## 6.23 播报文案与训练计划对齐（2026-10-24）
+
+播报是系统 TTS 实时拼字，没有预录音频（唯一出声点 `DongKe/Services/SystemSpeechAnnouncer.swift`）。之前的文案与计划字段对不上，改了四处口径：
+
+| 改前 | 问题 | 改后 |
+|---|---|---|
+| `开始训练，居家减脂 · 4 周，共 9 组` | 报的是整份计划名，不是今天练什么 | `开始训练，上肢与核心，3 个动作，共 9 组` |
+| `第 1 组，共 3 组，俯卧撑，10 次` | 循环里每轮都从第 1 组重来 | `俯卧撑，第 1 组，共 3 组，10 次` |
+| 循环 3 轮 × 2 组时报「共 2 组」 | 实际要做 6 组 | 组序按动作累计，报「第 5 组，共 6 组」 |
+| `休息 90 秒，接下来：主训练` | 报区块名，听着不知道下一组做什么 | `休息，1 分 30 秒，接下来：平板支撑，40 秒` |
+
+三条口径（改代码前先看这个）：
+
+1. **「组」只在两个尺度上出现**：开始语是全天总量，每组是**该动作的累计**序号。同一句话里不混用。
+2. **动作名前置**。`俯卧撑，第 2 组，共 3 组，10 次`——连着听时先知道做什么，不会把「第 1 组」误听成全天进度。
+3. **跨区块休息报下一个动作，不是区块名**。区块名对训练中的人没有动作价值。
+
+循环 / 超级组的累计口径同时改了 `WorkoutFlowModel`（`setIndex` 与 `setCounts`）与 `WorkoutAnnouncementBuilder`，UI 的「第 N 组 / 共 M 组」跟着一起变——两边共用同一份口径，不会界面一套、播报另一套。
+
+核对工具：`scripts/voice-dump.sh`，直接编译 `DongKeCore` 打印三种计划形态的完整播报序列，改文案后必跑。
+
+```bash
+scripts/voice-dump.sh                        # 用已编译的二进制
+DK_VOICE_DUMP_REBUILD=1 scripts/voice-dump.sh # 强制重编
+```
 
 ## 7. 换机后容易踩的坑
 

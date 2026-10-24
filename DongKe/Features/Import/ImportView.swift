@@ -176,7 +176,10 @@ struct ImportView: View {
                 Text("手动添加动作")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .padding(.top, 2)
         }
         .padding(16)

@@ -167,6 +167,7 @@ struct WorkoutView: View {
                 Image(systemName: Icons.close)
                     .font(Typography.buttonLabel)
                     .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
                     .fixedSize()
             }
             .foregroundStyle(Theme.accent(for: colorScheme))
@@ -182,12 +183,16 @@ struct WorkoutView: View {
 
             Spacer(minLength: 8)
 
-            Button("结束") {
+            Button {
                 session.endWorkout()
+            } label: {
+                Text("结束")
+                    .font(Typography.buttonLabel)
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(minWidth: 52, minHeight: 44)
+                    .contentShape(Rectangle())
             }
-            .font(Typography.buttonLabel)
-            .foregroundStyle(Theme.accent(for: colorScheme))
-            .frame(minWidth: 52, minHeight: 44)
+            .buttonStyle(.plain)
             .fixedSize()
             .accessibilityIdentifier(A11y.Workout.end)
         }

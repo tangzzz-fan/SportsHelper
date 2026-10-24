@@ -88,6 +88,7 @@ extension View {
 struct PressableGlassStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .contentShape(Rectangle())
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .brightness(configuration.isPressed ? -0.04 : 0)
             .animation(.easeOut(duration: 0.16), value: configuration.isPressed)

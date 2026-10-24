@@ -64,6 +64,7 @@ struct TodayView: View {
                                 .font(Typography.body)
                                 .foregroundStyle(Theme.accent(for: colorScheme))
                                 .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
                         }
                         .accessibilityIdentifier(A11y.Today.settings)
                     }
@@ -140,12 +141,16 @@ struct TodayView: View {
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
-            Button(health.actionTitle) {
+            Button {
                 handleReminderAction(health)
+            } label: {
+                Text(health.actionTitle)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
-            .font(.footnote.weight(.semibold))
-            .foregroundStyle(Theme.accent(for: colorScheme))
-            .frame(minHeight: 44)
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)

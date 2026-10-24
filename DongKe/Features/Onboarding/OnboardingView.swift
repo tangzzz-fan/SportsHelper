@@ -92,15 +92,20 @@ struct OnboardingView: View {
             .disabled(!draft.canAdvance(from: step))
             .accessibilityIdentifier(A11y.Onboarding.next)
 
-            Button(step == .basics ? "跳过，用默认值" : "返回") {
+            Button {
                 if step == .basics {
                     finish(with: draft.profile)
                 } else {
                     back()
                 }
+            } label: {
+                Text(step == .basics ? "跳过，用默认值" : "返回")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
             }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
             .accessibilityIdentifier(A11y.Onboarding.skip)
         }
         .padding(.horizontal, 20)
