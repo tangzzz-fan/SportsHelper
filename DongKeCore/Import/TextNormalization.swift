@@ -14,7 +14,8 @@ enum TextNormalization {
         "繩": "绳", "帶": "带", "牆": "墙", "腳": "脚", "羅": "罗", "轉": "转",
         "側": "侧", "開": "开", "蟲": "虫", "鳥": "鸟", "捲": "卷", "單": "单",
         "車": "车", "負": "负", "壓": "压", "縮": "缩", "彈": "弹", "壺": "壶",
-        "體": "体", "髖": "髋", "彎": "弯", "鍊": "链", "臥": "卧", "組": "组", "輪": "轮", "靜": "静"
+        "體": "体", "髖": "髋", "彎": "弯", "鍊": "链", "臥": "卧", "組": "组", "輪": "轮", "靜": "静",
+        "週": "周", "練": "练", "時": "时", "鐘": "钟", "個": "个", "兩": "两", "傷": "伤"
     ]
 
     static func halfWidthDigits(_ text: String) -> String {
@@ -35,7 +36,7 @@ enum TextNormalization {
     }
 
     static func chineseNumerals(_ text: String) -> String {
-        let pattern = "([一二三四五六七八九十两]{1,3})(\\s*)(组|轮|次|秒|分钟|分)"
+        let pattern = "([一二三四五六七八九十两]{1,3})(\\s*)(组|轮|次|秒|分钟|分|小时|天)"
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
         let source = text as NSString
         var result = ""
