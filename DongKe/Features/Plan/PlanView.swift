@@ -8,11 +8,13 @@ struct PlanView: View {
     @Environment(PlanStore.self) private var planStore
     @Environment(ProfileStore.self) private var profiles
     @Environment(NotificationService.self) private var notifications
+    @Environment(SetLogStore.self) private var setLogStore
     @State private var showLibrary = false
     @State private var showImport = false
     @State private var showAI = false
     @State private var showAdjust = false
     @State private var selectedDay: PlanDay?
+    @State private var proposal: PlanProposal?
 
     init(plan: WorkoutPlan) {
         self.plan = plan
@@ -51,11 +53,17 @@ struct PlanView: View {
                         .padding(.top, 8)
                         .accessibilityIdentifier(A11y.Plan.title)
 
-                    Text(plan.meta.title)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 2)
+                    HStack(spacing: 6) {
+                        Text(plan.meta.title)
+                        if plan.revision > 1 {
+                            Text("第 \(plan.revision) 版")
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 2)
 
                     VStack(spacing: 0) {
                         ForEach(Array(weeks.enumerated()), id: \.offset) { index, entry in
@@ -80,6 +88,12 @@ struct PlanView: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
                     .padding(.top, 10)
+
+                    if let proposal {
+                        DoseProposalCard(proposal: proposal, onAccept: accept, onReject: reject)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 14)
+                    }
 
                     aiEntry
                         .padding(.horizontal, 16)
@@ -155,6 +169,38 @@ struct PlanView: View {
                 }
             }
         }
+        .task(id: plan.revision) {
+            refreshProposal()
+        }
+    }
+
+    private func refreshProposal() {
+        guard let found = DoseAdjustment.propose(plan: plan, logs: setLogStore.recentLogs()) else {
+            proposal = nil
+            return
+        }
+        proposal = ProposalMemo.shared.isRejected(found) ? nil : found
+    }
+
+    private func accept() {
+        guard let proposal else { return }
+        let next = DoseAdjustment.apply(proposal, to: plan)
+        planStore.save(next)
+        self.proposal = nil
+        Task {
+            if notifications.status == .authorized || notifications.status == .provisional {
+                await notifications.reschedule(
+                    plan: next,
+                    settings: ReminderSettingsStore.shared.settings
+                )
+            }
+        }
+    }
+
+    private func reject() {
+        guard let proposal else { return }
+        ProposalMemo.shared.rememberRejection(proposal)
+        self.proposal = nil
     }
 
     private var aiEntry: some View {

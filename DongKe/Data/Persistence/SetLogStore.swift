@@ -41,21 +41,31 @@ final class SetLogStore {
             predicate: #Predicate { $0.sessionId == sessionId },
             sortBy: [SortDescriptor(\.completedAt)]
         )
-        return ((try? context.fetch(descriptor)) ?? []).compactMap { entity in
-            guard let status = SetStatus(rawValue: entity.statusRaw) else { return nil }
-            return SetLog(
-                id: entity.id,
-                sessionId: entity.sessionId,
-                prescriptionId: entity.prescriptionId,
-                setIndex: entity.setIndex,
-                status: status,
-                plannedValue: entity.plannedValue,
-                actualValue: entity.actualValue,
-                skipReason: entity.skipReasonRaw.flatMap(SkipReason.init(rawValue:)),
-                rpe: entity.rpe,
-                completedAt: entity.completedAt
-            )
-        }
+        return ((try? context.fetch(descriptor)) ?? []).compactMap(Self.log(from:))
+    }
+
+    func recentLogs(limit: Int = 600) -> [SetLog] {
+        var descriptor = FetchDescriptor<SetLogEntity>(
+            sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+        return ((try? context.fetch(descriptor)) ?? []).compactMap(Self.log(from:))
+    }
+
+    private static func log(from entity: SetLogEntity) -> SetLog? {
+        guard let status = SetStatus(rawValue: entity.statusRaw) else { return nil }
+        return SetLog(
+            id: entity.id,
+            sessionId: entity.sessionId,
+            prescriptionId: entity.prescriptionId,
+            setIndex: entity.setIndex,
+            status: status,
+            plannedValue: entity.plannedValue,
+            actualValue: entity.actualValue,
+            skipReason: entity.skipReasonRaw.flatMap(SkipReason.init(rawValue:)),
+            rpe: entity.rpe,
+            completedAt: entity.completedAt
+        )
     }
 
     func tally(for sessionId: UUID) -> SetLogTally {
