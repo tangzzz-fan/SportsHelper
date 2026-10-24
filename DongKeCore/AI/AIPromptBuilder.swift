@@ -39,6 +39,9 @@ public enum AIPromptBuilder {
         lines.append("目标：\(profile.goal.chineseName)；水平：\(profile.level.chineseName)。")
         lines.append("每周可训练：\(weekdayText(profile.availableWeekdays))；每次约 \(profile.sessionMinutes) 分钟。")
         lines.append("可用器械：\(equipmentText(profile.equipment))。")
+        let maxExercises = max(3, min(8, profile.sessionMinutes / 5))
+        let maxSets = max(6, min(30, profile.sessionMinutes / 2))
+        lines.append("每次动作数不超过 \(maxExercises) 个，总组数不超过 \(maxSets) 组，估算时长落在 \(profile.sessionMinutes) 分钟的 ±15% 内。")
         let injuries = profile.injuries.trimmingCharacters(in: .whitespacesAndNewlines)
         if injuries.isEmpty == false {
             lines.append("伤病限制：\(injuries)。")

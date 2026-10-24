@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **333 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **11 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 38 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条 |
+| 测试 | **335 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **11 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 40 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -35,7 +35,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
 
-预期：生成工程成功；单测 333 条 + UI 测试 11 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测 335 条 + UI 测试 11 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
 **必须分两次跑**，不要指望一条命令全绿：
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 333 tests`。UI 测试是 XCTest，看 `Executed 11 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 335 tests`。UI 测试是 XCTest，看 `Executed 11 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -327,6 +327,24 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 原来的 `AppShell` 同时挂了两个 `fullScreenCover`（引导 + 训练），SwiftUI 只认先注册的那个，**训练页永远弹不出来**（点「开始训练」毫无反应）。现在引导挪到 `RootView`：`profileStore.hasOnboarded == false` 就直接渲染 `OnboardingView`，否则渲染 `AppShell`。清空数据后 `profileStore.load()` 变空，根视图自动切回引导，不需要额外的状态位。
 
 `AppShell` 里因此只剩一个 `fullScreenCover(item: $session)`。**别再加第二个全屏弹层到这个视图上。**
+
+## 6.13 AI 真实链路实测（2026-10-24）
+
+`.env.example` 里曾放真实 Key，已拆成 `.env`（600，gitignore）+ 占位示例。变量统一为 `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL`，模型 `deepseek-flash`。
+
+两条复现路径：
+
+- `scripts/ai-smoke.sh "重点练手臂"`：`swiftc` 编译 `DongKeCore` + `Tools/AISmoke`，直接跑 `AIPromptBuilder → ChatRequestBodyBuilder → AIResponseMapper → AIPlanInterpreter`，不依赖模拟器。
+- `scripts/ai-sim.sh [UDID]`：把 `.env` 经 `SIMCTL_CHILD_DK_AI_*` 注入 App（仅 DEBUG），`DK_AI_AUTOGEN=1` 自动触发一次生成，停在核对页。
+
+实测（deepseek-flash）：
+
+- `json_schema` 返回 400 `This response_format type is unavailable now`，命中 `AIResponseMapper` 的降级条件 → `json_object` 成功；三级降级顺序不用改。
+- 3 天计划 23–29 秒、17–23KB；App 内同样在 60 秒超时内完成。
+- 首版一天 9–12 个动作、3 天 57 组，30 分钟装不下 → `AIPromptBuilder.userBrief` 增加每日上限：动作 ≤ `sessionMinutes/5`（30 分钟 = 6）、组数 ≤ `sessionMinutes/2`（= 15），并要求估算时长落在 ±15%。复测 18 动作 / 45 组。
+- 截图：`docs/design/2026-10-22-liquid-glass/shots/t36-ai-deepseek-live.png`。
+
+**注意**：`.env` 不进仓；`DK_AI_*` 只在 DEBUG 生效，且会把 Key 写进模拟器钥匙串。换 Key 或换机器时去设置页「清除 Key」。
 
 ## 7. 换机后容易踩的坑
 

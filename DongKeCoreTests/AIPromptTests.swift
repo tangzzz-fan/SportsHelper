@@ -66,6 +66,23 @@ struct AIPromptBuilderTests {
         #expect(brief.contains("伤病") == false)
     }
 
+    @Test func userBriefCapsDailyVolumeBySessionLength() {
+        var profile = UserProfile()
+        profile.sessionMinutes = 30
+        let brief = AIPromptBuilder.userBrief(profile: profile, extraNote: "")
+        #expect(brief.contains("不超过 6 个"))
+        #expect(brief.contains("不超过 15 组"))
+        #expect(brief.contains("±15%"))
+    }
+
+    @Test func volumeCapScalesWithLongerSessions() {
+        var profile = UserProfile()
+        profile.sessionMinutes = 60
+        let brief = AIPromptBuilder.userBrief(profile: profile, extraNote: "")
+        #expect(brief.contains("不超过 8 个"))
+        #expect(brief.contains("不超过 30 组"))
+    }
+
     @Test func copyablePromptKeepsBothHalves() {
         var profile = UserProfile()
         profile.sessionMinutes = 45

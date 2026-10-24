@@ -12,6 +12,7 @@ struct AIGenerateCard: View {
     @State private var errorText: String?
     @State private var needsKeyFix = false
     @State private var showSettings = false
+    @State private var didAutoRun = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -50,6 +51,14 @@ struct AIGenerateCard: View {
         .glassSurface(radius: Theme.Radius.glassCard)
         .sheet(isPresented: $showSettings) {
             AISettingsSheet()
+        }
+        .task {
+            #if DEBUG
+            guard didAutoRun == false else { return }
+            didAutoRun = true
+            guard ProcessInfo.processInfo.environment["DK_AI_AUTOGEN"] == "1" else { return }
+            generate()
+            #endif
         }
     }
 

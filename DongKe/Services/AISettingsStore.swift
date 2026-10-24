@@ -31,6 +31,16 @@ final class AISettingsStore {
             defaults.set(AIConfiguration.defaultModel, forKey: "dk.ai.model")
             try? secrets.store("sk-preview-key", for: "ai.apiKey")
         }
+        let environment = ProcessInfo.processInfo.environment
+        if let base = environment["DK_AI_BASE_URL"], base.isEmpty == false {
+            defaults.set(base, forKey: baseURLKey)
+        }
+        if let model = environment["DK_AI_MODEL"], model.isEmpty == false {
+            defaults.set(model, forKey: modelKey)
+        }
+        if let key = environment["DK_AI_KEY"], key.isEmpty == false {
+            try? secrets.store(key, for: keyAccount)
+        }
         #endif
         self.baseURL = defaults.string(forKey: baseURLKey) ?? ""
         self.model = defaults.string(forKey: modelKey) ?? AIConfiguration.defaultModel
