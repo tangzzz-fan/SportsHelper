@@ -1,5 +1,29 @@
 # SportsHelper 项目长期记忆
 
+## 文件长度上限 500 行（2026-10-25 董事长改，原 300）
+
+**不含空行**，按 `grep -cve '^[[:space:]]*$'` 统计。门禁扫 `DongKe/ DongKeCore/ DongKeCoreTests/ DongKeUITests/ Shared/` 五个目录：
+
+```bash
+for f in $(find DongKe DongKeCore DongKeCoreTests DongKeUITests Shared -name '*.swift'); do n=$(grep -cve '^[[:space:]]*$' "$f"); [ "$n" -gt 500 ] && echo "$n $f"; done
+```
+
+改了这条要同步三处：ARCHITECTURE §4.3-1、§4.3 门禁段、Feature 完成判据表；SPEC §4 与 §10。
+
+**已拆开的文件不回并**——按职责边界切的，不是为凑行数。上传上限放宽不等于鼓励写大文件：单文件仍应一个主职责。
+
+## 跟练类内容（五禽戏 / 八段锦 / 太极）不是动作库扩容（2026-10-25）
+
+用户说「我想跟着练五禽戏」时，**现有链路会静默给一份深蹲计划**：`focus`/`goal`/`weekdays` 全落空，`unparsed` 不记未知名词，`isVague` 只认「随便/你定/都行」，确认页因此什么都不提示。这是「做了别的还不说」，比不支持更伤信任。
+
+三条规矩：
+
+1. **不要塞进 `WorkoutPlan`**。单组动作会被播报念成「第 1 组，共 1 组」，10 个动作进 `SetLog` 会弄脏完成率/降阶率口径——那是相对 GymMane 唯一的硬差异点。
+2. **真做跟练要新类型 `Routine`**（段序列：名称/时长/口令），复用计时器与 `endAt` 回前台重算，但不接 `WorkoutFlowModel`，不进统计分母。
+3. **五禽戏不是一套动作**：国家体育总局版 10 式 / 华佗非遗版（流派各异，刘时荣一路 40 式）/ 少林版。做之前必须指定唯一标准答案。
+
+决策与触发条件见 `.scratch/follow-along/issues/01-跟练分路的决策.md`、backlog §7。
+
 ## 测试范围（2026-10-24 用户明确要求）
 
 **UI 测试默认不跑**——一轮 6 分钟。日常只跑单测，UI 显式 `--with-ui` 才跑：
