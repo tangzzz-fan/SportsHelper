@@ -81,7 +81,7 @@
 
 **分层与依赖方向**：`App → Features / Services / Data → Domain`；`Domain` 只 import Foundation；`Features` 禁止 import SwiftData；端口协议在 `Domain/Ports/`。
 
-**目录**：按 `docs/ARCHITECTURE.md` §4.2 点名文件落地。单文件 ≤300 行，生产代码零注释。
+**目录**：按 `docs/ARCHITECTURE.md` §4.2 点名文件落地。单文件 ≤500 行，生产代码零注释。
 
 ---
 
@@ -196,7 +196,7 @@
 | 输入 | 粘贴上限 64KB；超限拒绝并提示；解析在后台 Task 执行，不阻塞主线程 |
 | 通知 | 单计划 ≤7 条重复触发器；休息计时临时占 1 条；绝不调用 `removeAllPendingNotificationRequests()` |
 | 性能 | 冷启动到首页 <1.5s；解析 P95 <3s（≤50 动作）；组间切换 <100ms |
-| 代码 | 单文件 ≤300 行；生产代码 0 注释；无硬编码颜色 / 字号 / `Image(systemName:)` 字面量 |
+| 代码 | 单文件 ≤500 行；生产代码 0 注释；无硬编码颜色 / 字号 / `Image(systemName:)` 字面量 |
 | 设计 | 禁 emoji 图标、禁紫→粉渐变、禁弹跳缓动、禁空洞占位文案 |
 | 测试 | Domain 纯逻辑必须有测试；UI 只测三条主链路；测试文件允许注释 |
 

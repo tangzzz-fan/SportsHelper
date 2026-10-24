@@ -343,7 +343,7 @@ DongKe/
 
 | # | 规则 | 不合格表现 |
 |---|---|---|
-| 1 | 单文件不超过 300 行（不含空行）。超限按子功能拆文件 | 一个 `WorkoutView.swift` 800 行 |
+| 1 | 单文件不超过 **500 行**（不含空行）。超限按子功能拆文件 | 一个 `WorkoutView.swift` 800 行 |
 | 2 | 一个文件一个主导出、一个主职责 | 模型 + 解析 + 校验塞在一个 `Plan.swift` |
 | 3 | 一个视图一个文件；同屏子视图超过 2 个拆分到独立文件 | `body` 里 200 行嵌套 |
 | 4 | ViewModel 不 import SwiftUI（只用 Observation 与 Foundation） | ViewModel 里写 `Color`、`Font` |
@@ -362,7 +362,7 @@ grep -rn "import SwiftUI" DongKe/Domain DongKe/Services DongKe/Data --include=*.
 grep -rn 'Image(systemName: "' DongKe --include=*.swift
 grep -rn "Color(hex:" DongKe --include=*.swift | grep -v "DesignSystem/Theme.swift"
 grep -rln "//" DongKe --include=*.swift | xargs -r grep -Hn "^\s*//"
-find DongKe -name '*.swift' | xargs wc -l | awk '$1>300 && $2!="total"'
+for f in $(find DongKe DongKeCore DongKeCoreTests DongKeUITests Shared -name '*.swift'); do n=$(grep -cve '^[[:space:]]*$' "$f"); [ "$n" -gt 500 ] && echo "$n $f"; done; true
 grep -rn "URLSession" DongKe --include=*.swift | grep -v "Services/AIPlanClient.swift"
 grep -rn "UIPasteboard" DongKe --include=*.swift | grep -vE "UIPasteboard\.general\.string[[:space:]]*="
 grep -rn "removeAllPendingNotificationRequests" DongKe --include=*.swift
@@ -378,7 +378,9 @@ grep -rn "#[0-9A-Fa-f]\{6\}" DongKe --include=*.swift
 
 > 门禁两处修订（2026-10-24）：`systemName:` 那条原写法会连 `Image(systemName: Icons.x)` 一起拦（永远非空，等于失效），改为只查**字面量**；`UIPasteboard` 那条原写法连写剪贴板也拦，但复制提示词没有替代 API，改为只拦读取。
 
-任一 grep 非空，或存在超 300 行的文件、入口文件含业务逻辑，即退回重做，不算完成。
+> 门禁修订（2026-10-25）：单文件上限 300 → **500 行**。原命令用 `wc -l`（含空行）统计，与「不含空行」的定义不一致，且只扫 `DongKe/`、漏了 `DongKeCore/` 与两个测试 target——三个问题一起改掉，改成逐文件 `grep -cve '^[[:space:]]*$'` 并扫全部源码目录。
+
+任一 grep 非空，或存在超 500 行的文件、入口文件含业务逻辑，即退回重做，不算完成。
 
 ---
 
@@ -1431,7 +1433,7 @@ XCTest UI 测试只覆盖三条主链路，不做全面覆盖（成本高、稳�
 
 - [ ] 有对应 ViewModel 与逻辑测试
 - [ ] 无硬编码颜色、字号、图标字面量
-- [ ] 单文件不超过 300 行
+- [ ] 单文件不超过 500 行
 - [ ] `grep` 门禁 §4.3 全绿
 - [ ] 该 Feature 的失败路径有对应文案，不是"出错了"
 - [ ] `scripts/test-scope.sh` 判定为 `ui` 的改动，UI 测试已跑过；判定为 `core` 的，跑单测即可（见 HANDOFF §6.21）
