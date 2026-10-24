@@ -63,6 +63,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var plannedValue: Int
     public var actualValue: Int
     public var skipReason: SkipReason?
+    public var rpe: Int?
     public var completedAt: Date
 
     public init(
@@ -74,6 +75,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         plannedValue: Int,
         actualValue: Int,
         skipReason: SkipReason? = nil,
+        rpe: Int? = nil,
         completedAt: Date
     ) {
         self.id = id
@@ -84,6 +86,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.plannedValue = plannedValue
         self.actualValue = actualValue
         self.skipReason = skipReason
+        self.rpe = rpe
         self.completedAt = completedAt
     }
 }

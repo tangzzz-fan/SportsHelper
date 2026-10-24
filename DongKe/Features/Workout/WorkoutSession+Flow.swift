@@ -2,7 +2,7 @@ import Foundation
 import DongKeCore
 
 extension WorkoutSession {
-    func completeSet(now: Date = Date()) {
+    func completeSet(bonus: Int = 0, rpe: Int? = nil, now: Date = Date()) {
         guard case let .set(prescriptionId, setIndex, target, restAfterSec)? = currentStep else {
             advance()
             return
@@ -13,7 +13,8 @@ extension WorkoutSession {
             setIndex: setIndex,
             status: .done,
             plannedValue: target.value,
-            actualValue: target.value,
+            actualValue: target.value + max(0, bonus),
+            rpe: rpe,
             completedAt: now
         ), now: now)
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)

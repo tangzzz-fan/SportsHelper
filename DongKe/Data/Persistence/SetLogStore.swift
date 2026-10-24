@@ -29,7 +29,8 @@ final class SetLogStore {
             plannedValue: log.plannedValue,
             actualValue: log.actualValue,
             skipReasonRaw: log.skipReason?.rawValue,
-            completedAt: log.completedAt
+            completedAt: log.completedAt,
+            rpe: log.rpe
         )
         context.insert(entity)
         try? context.save()
@@ -51,6 +52,7 @@ final class SetLogStore {
                 plannedValue: entity.plannedValue,
                 actualValue: entity.actualValue,
                 skipReason: entity.skipReasonRaw.flatMap(SkipReason.init(rawValue:)),
+                rpe: entity.rpe,
                 completedAt: entity.completedAt
             )
         }
