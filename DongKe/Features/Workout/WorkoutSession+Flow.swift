@@ -50,7 +50,7 @@ extension WorkoutSession {
             reason: reason,
             at: now
         ), now: now)
-        advance()
+        advance(silent: true)
         saveCheckpoint(now: now)
     }
 
@@ -60,11 +60,15 @@ extension WorkoutSession {
         if next != rest { rest = next }
         if effects.contains(.playHaptic) {
             restFinishedToken += 1
+            voice?.restFinished(nextStepIndex: stepIndex + 1)
         }
         if effects.contains(.autoAdvanceToNextSet) {
             rest = .idle
             advance()
             saveCheckpoint(now: now)
+        }
+        if case .running = rest {
+            voice?.restTick(secondsLeft: Int(remainingRest(now: now).rounded(.up)))
         }
     }
 

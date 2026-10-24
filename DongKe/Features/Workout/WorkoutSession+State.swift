@@ -7,6 +7,7 @@ extension WorkoutSession {
         finishedAt = now
         persist(finishedAt: now)
         saveCheckpoint(now: now)
+        voice?.finished(completedSets: completedSets)
     }
 
     func appendLog(_ log: SetLog, now: Date) {
@@ -74,6 +75,12 @@ extension WorkoutSession {
         var effects: [RestEffect] = []
         rest = RestTimerStateMachine.reduce(rest, .start(seconds: seconds, now: now), &effects)
         saveCheckpoint(now: now)
+        voice?.restStarted(seconds: seconds, nextBlockTitle: blockTitleForRest)
+    }
+
+    var blockTitleForRest: String? {
+        if case let .blockBreak(_, nextTitle)? = currentStep { return nextTitle }
+        return nil
     }
 
     func syncRestNotification() {
@@ -90,7 +97,7 @@ extension WorkoutSession {
         }
     }
 
-    func advance() {
+    func advance(silent: Bool = false) {
         rest = .idle
         guard stepIndex + 1 < flow.steps.count else {
             saveCheckpoint()
@@ -99,6 +106,7 @@ extension WorkoutSession {
         stepIndex += 1
         autoStartRestIfBreak(now: Date())
         saveCheckpoint()
+        voice?.stepChanged(to: stepIndex, silent: silent)
     }
 
     func autoStartRestIfBreak(now: Date) {

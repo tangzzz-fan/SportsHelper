@@ -20,6 +20,7 @@ final class WorkoutSession: Identifiable {
     var restKicker = "组间休息"
     var finishedAt: Date?
     var restFinishedToken = 0
+    var voice: WorkoutVoiceSession?
 
     init(
         plan: WorkoutPlan,

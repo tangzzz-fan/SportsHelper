@@ -117,12 +117,12 @@ struct WorkoutAnnouncementTests {
         #expect(text == "休息，2 分钟，接下来：核心")
     }
 
-    @Test("0 秒区块切换不播")
-    func zeroBlockBreakIsSilent() {
+    @Test("区块切换不走 set 播报入口，由休息入口负责")
+    func blockBreakIsNotASetAnnouncement() {
         let plan = makePlan(days: makeSevenDays(
             training: [1],
             blocks: [
-                makeBlock(id: "b1", items: [makeItem(id: "i1", sets: 1)], restBetweenItems: 0),
+                makeBlock(id: "b1", items: [makeItem(id: "i1", sets: 1)], restBetweenItems: 90),
                 makeBlock(id: "b2", items: [makeItem(id: "i2", sets: 1)])
             ]
         ))
@@ -198,6 +198,16 @@ struct WorkoutAnnouncementTests {
         #expect(nextName == nil)
     }
 
+    @Test("下一个仍是同一个动作时不重复报名")
+    func sameExerciseNextIsOmitted() throws {
+        let builder = builder(items: [makeItem(id: "i1", sets: 2)])
+        guard case let .setStart(_, _, _, _, nextName)? = builder.announcement(forStepAt: 0) else {
+            Issue.record("第一个 set 应产出 setStart")
+            return
+        }
+        #expect(nextName == nil)
+    }
+
     @Test("循环区块里「下一个」是本轮的下一个动作")
     func circuitNextIsWithinRound() {
         let items = [makeItem(id: "i1", name: "深蹲", sets: 1), makeItem(id: "i2", name: "划船", sets: 1)]
@@ -212,22 +222,6 @@ struct WorkoutAnnouncementTests {
             return
         }
         #expect(nextName == "划船")
-    }
-
-    @Test("循环区块的轮间休息按休息播报")
-    func roundBreakIsRest() {
-        let items = [makeItem(id: "i1", sets: 1), makeItem(id: "i2", sets: 1)]
-        let plan = makePlan(days: makeSevenDays(
-            training: [1],
-            blocks: [makeBlock(kind: .circuit, rounds: 2, items: items, restBetweenRounds: 60)]
-        ))
-        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
-        let flow = WorkoutFlowModel(plan: plan, dayIndex: 1)
-        let breakIndex = flow.steps.firstIndex {
-            if case .roundBreak = $0 { true } else { false }
-        }
-
-        #expect(builder.announcement(forStepAt: breakIndex!)?.text == "休息，1 分钟")
     }
 
     @Test("休息日的流程里只有完成，没有 set 播报")

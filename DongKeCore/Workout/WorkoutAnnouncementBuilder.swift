@@ -40,24 +40,24 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         .sessionStart(title: title, totalSets: plannedSets)
     }
 
+    public func step(at index: Int) -> FlowStep? {
+        steps.indices.contains(index) ? steps[index] : nil
+    }
+
     public func announcement(forStepAt index: Int) -> WorkoutAnnouncement? {
         guard steps.indices.contains(index) else { return nil }
         switch steps[index] {
         case let .set(prescriptionId, setIndex, target, _):
             guard let exercise = exercises[prescriptionId] else { return nil }
+            let upcoming = nextExerciseName(after: index)
             return .setStart(
                 name: exercise.name,
                 setIndex: setIndex,
                 totalSets: exercise.totalSets,
                 dose: Self.doseText(target),
-                nextName: nextExerciseName(after: index)
+                nextName: upcoming == exercise.name ? nil : upcoming
             )
-        case let .roundBreak(seconds):
-            return restStart(seconds: seconds)
-        case let .blockBreak(seconds, nextBlockTitle):
-            guard seconds > 0 else { return nil }
-            return .blockBreak(seconds: seconds, nextBlockTitle: nextBlockTitle)
-        case .finished:
+        case .roundBreak, .blockBreak, .finished:
             return nil
         }
     }

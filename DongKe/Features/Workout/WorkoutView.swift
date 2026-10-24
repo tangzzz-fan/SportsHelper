@@ -7,8 +7,10 @@ struct WorkoutView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showSkipOptions = false
     @State private var showDowngradeOptions = false
+    @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
 
@@ -122,6 +124,41 @@ struct WorkoutView: View {
         .onChange(of: session.restFinishedToken) { _, _ in
             Haptics.restFinished()
         }
+        .onAppear(perform: startVoiceIfNeeded)
+        .onDisappear(perform: stopVoice)
+        .onChange(of: scenePhase) { _, _ in
+            VoiceService.shared.refreshPolicy()
+        }
+        .onChange(of: voiceSettings.isEnabled) { _, enabled in
+            if enabled {
+                startVoiceIfNeeded()
+            } else {
+                VoiceService.shared.refreshPolicy()
+            }
+        }
+    }
+
+    private func startVoiceIfNeeded() {
+        guard session.showsSummary == false, VoiceService.isEnabledByUser else { return }
+        if session.voice != nil {
+            VoiceService.shared.refreshPolicy()
+            return
+        }
+        let coordinator = VoiceService.shared.activeCoordinator()
+        let voice = WorkoutVoiceSession(
+            plan: session.plan,
+            dayIndex: session.dayIndex,
+            coordinator: coordinator
+        )
+        session.voice = voice
+        voice.start()
+        voice.stepChanged(to: session.stepIndex)
+    }
+
+    private func stopVoice() {
+        session.voice?.stop()
+        session.voice = nil
+        VoiceService.shared.shutdown()
     }
 
     private var navBar: some View {

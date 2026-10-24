@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **426 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **13 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 24 条、播报闸门 11 条 |
+| 测试 | **442 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **13 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 426 tests`。UI 测试是 XCTest，看 `Executed 13 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 442 tests`。UI 测试是 XCTest，看 `Executed 13 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -420,7 +420,33 @@ let result = try await transport.generate(request)   // result.text / result.mod
 - 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；UI 测试 `testSettingsVoiceTogglePersists` 验持久化。
 - 文案上限 40 字：超长先丢「下一个」，再丢「共 N 组」，动作名与剂量最后才动——别在 08 里改成按字数硬截。
 
-**还没接的**：训练页的实际触发（进组 / 休息归零 / 退出训练停止）是 09，`SpeechCueCoordinator` 现在没有任何生产调用方。
+**还没接的**：无——09 已把触发接进 `WorkoutSession`。剩下 `06 语音输入` 与 `10 真机验收`。
+
+## 6.19 播报挂进训练流程（2026-10-24）
+
+```swift
+session.voice = WorkoutVoiceSession(plan:dayIndex:coordinator:)   // WorkoutView.onAppear
+voice.start() / stepChanged(to:) / restStarted(seconds:nextBlockTitle:) / restTick(secondsLeft:) / restFinished(nextStepIndex:) / finished(completedSets:)
+```
+
+挂钩点全在 `WorkoutSession` 的四个方法里，不在视图：`advance()`、`startRest()`、`refresh()`、`finish()`。这样按钮、通知深链、断点续练三条入口都覆盖到；挂 `onChange` 会漏掉通知触发的那两条。
+
+- 倒数只在 `.running` 时 tick，靠 `lastCountdown` 去重（0.25s 一轮不会重复念「3」）；`restStarted` 重置，+15 秒后重新从 3 报。
+- 跳过组走 `advance(silent: true)`；完成后 `finished()` 会把会话置为不再活跃，后续 step 不再出声。
+- 总结页静音靠 `workoutBody` 的 `onDisappear`；`showsSummary` 时 `onAppear` 直接不启动。
+
+**必须记住的坑**：`onAppear` 时 `UIApplication.shared.applicationState` **还不是 `.active`**，闸门会把第一句吞掉（第一次端到端就是这样零日志）。`VoiceService.activeCoordinator()` 现在显式按 `isForeground: true` 起步，之后交给 `scenePhase` 纠正。
+
+**端到端自检**（假 speaker 写文件，不碰真音频）：
+
+```bash
+SIMCTL_CHILD_DK_COMPLETE_ONBOARDING=1 SIMCTL_CHILD_DK_PREVIEW=workout \
+SIMCTL_CHILD_DK_VOICE_ENABLED=1 SIMCTL_CHILD_DK_VOICE_FAKE=1 \
+xcrun simctl launch <UDID> app.dongke.ios
+cat "$(xcrun simctl get_app_container <UDID> app.dongke.ios data)/tmp/dk-voice.log"
+```
+
+预期看到 `开始训练，…` 与 `第 1 组，共 3 组，俯卧撑，10 次`。`DK_VOICE_FAKE` 只替换 speaker，闸门与文案走真实代码。
 
 ## 7. 换机后容易踩的坑
 
