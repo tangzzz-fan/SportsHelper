@@ -37,6 +37,8 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: 用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。
   DongKeCoreTests:
     type: bundle.unit-test
     platform: iOS

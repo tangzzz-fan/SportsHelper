@@ -15,4 +15,6 @@ enum Icons {
     static let aiMissing = "circle.dashed"
     static let cue = "checkmark.circle"
     static let mistake = "exclamationmark.triangle"
+    static let mic = "mic"
+    static let micStop = "stop.circle"
 }

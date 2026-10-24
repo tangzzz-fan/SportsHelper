@@ -420,7 +420,7 @@ let result = try await transport.generate(request)   // result.text / result.mod
 - 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；UI 测试 `testSettingsVoiceTogglePersists` 验持久化。
 - 文案上限 40 字：超长先丢「下一个」，再丢「共 N 组」，动作名与剂量最后才动——别在 08 里改成按字数硬截。
 
-**还没接的**：无——09 已把触发接进 `WorkoutSession`。剩下 `06 语音输入` 与 `10 真机验收`。
+**还没接的**：无——09 已把触发接进 `WorkoutSession`。剩下 `10 真机验收`。
 
 ## 6.19 播报挂进训练流程（2026-10-24）
 
@@ -447,6 +447,59 @@ cat "$(xcrun simctl get_app_container <UDID> app.dongke.ios data)/tmp/dk-voice.l
 ```
 
 预期看到 `开始训练，…` 与 `第 1 组，共 3 组，俯卧撑，10 次`。`DK_VOICE_FAKE` 只替换 speaker，闸门与文案走真实代码。
+
+## 6.20 语音输入：说一句填进输入框（2026-10-24）
+
+```swift
+SpeechTranscribing（Core 协议）
+  → SystemSpeechTranscriber（App：SFSpeechRecognizer zh-CN + AVAudioEngine）
+  → VoiceInputMachine（Core，@Observable，状态机 + 60 秒 / 200 字上限）
+  → VoiceInputBar（麦克风按钮，挂在 AIGenerateCard 输入框下面）
+```
+
+- **两套权限折成五态**：`SpeechAuthorization` 把「语音识别」与「麦克风」并成一个枚举（`.speechDenied` / `.microphoneDenied` / `.restricted` / `.notDetermined` / `.authorized`）。文案只在 Core 写一次；`opensSettings` 只有权限类为真——「没听到」和「中断」不该把人送去设置页瞎点。
+- **离线优先，联网先问**：`supportsOnDeviceRecognition` 为真时强制 `requiresOnDeviceRecognition = true`；为假时进 `.awaitingOnlineConsent`，说清「音频由 Apple 处理，本 App 不留录音」，同意才走在线。同意记在 `dk.voice.onlineConsent`，同意过就不再问第二次。
+- **离线包缺失只有运行时才知道**：`supportsOnDeviceRecognition` 只是能力位，中文离线模型没下载时 `start` 会抛 `onDeviceUnavailable`。机器捕获后同样转成询问；已同意过的直接改走在线，不打断。
+- **60 秒 / 200 字**：`tick()` 由视图每 250ms 调一次，到点自动收尾并保留已识别文本；超过 200 字时置 `didHitLengthLimit`，`capHint` 换成「已到上限」。标记跟着最新结果走——识别器自己修正回短句时提示要消失。
+- **不打断音乐**：录音用 `.record` + `.mixWithOthers`，结束时 `setActive(false, options: .notifyOthersOnDeactivation)`。
+
+**必须记住的坑**：`SFSpeechRecognizer` 的 partial 是**全量替换**，不是增量追加。写 `+=` 会得到「想在家想在家增肌」。
+
+**测法**：
+
+| 层 | 手段 |
+|---|---|
+| 状态机 | `FakeSpeechTranscriber` + `VoiceTestClock`（42 条）：授权五态、部分结果、超时、空结果、超长截断、在线同意、运行时降级、重复点按 |
+| UI | `DK_VOICE_TRANSCRIPT` 注入一句话（3 条）：回填、权限拒绝给「去设置」、离线缺失先问再回填 |
+
+`DK_VOICE_STUB` 可取 `denySpeech` / `denyMic` / `restricted` / `onDeviceMissing` / `empty` / `stall`。系统转写器的错误映射只认两件事：`wasOnDevice` 与 `kAFAssistantErrorDomain` / `kLSRErrorDomain` 的 1101 / 1107。
+
+**还没接的**：真机上的中文离线识别、蓝牙耳机拾音、来电打断——归 10 验收清单。
+
+## 6.21 测试范围：什么时候不用跑 UI 测试（2026-10-24）
+
+UI 测试要起模拟器、装 App、点按钮，一轮 16 条约 6 分钟；只改 `DongKeCore` 的解析规则却陪跑一遍，纯属浪费。判据落在一条上：**这次改动会不会让「用户点得到的东西」变样**。
+
+```bash
+scripts/test-scope.sh            # 只看判定
+scripts/test-scope.sh --run      # 判定后直接跑对应档位
+scripts/test-scope.sh --base HEAD~3
+```
+
+| 判定的 scope | 触发路径 | 跑什么 |
+|---|---|---|
+| `ui` | `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/` | 单测 + UI 16 条 |
+| `core` | `DongKeCore/`、`DongKeCoreTests/`、`Tools/`，以及 `scripts/` 这类散件 | 只跑单测 |
+| `none` | `docs/`、`.scratch/`、`*.md` | 都不跑，仍要过 §4.3 门禁 |
+
+几个刻意的取舍：
+
+- **`DongKe/Services` 算 ui**。`AIPlanClient`、`VoiceService`、`SystemSpeechTranscriber` 这些是 App 层，改动会改用户看到的行为（401 文案、播报有没有声、麦克风有没有反应），而它们没有独立单测。宁可多跑一次。
+- **`DongKeCore` 算 core**。SPEC §10 只要求「UI 只测三条主链路」，Core 的行为变化由 484 条单测兜。真怕漏，就手动跑一遍 UI——脚本给的是默认档，不是禁令。
+- **`DongKeCore` 改**也可能动文案（例如 `VoiceInputCopy`），但文案不靠 UI 测试验，靠 `#expect(failure.message.contains("麦克风"))` 这类断言。
+- **`none` 不等于免检**。门禁 grep、`xcodegen generate` 后工程是否干净，一样要跑。
+
+跑之前记得：`ios-run.sh` 会因「结论已出但进程不退场」把 UI 套件掐掉——Swift Testing 的 `Test run with N tests passed` 先出现，20 秒后它就杀进程，而这时 UI 才启动。`test-scope.sh --run` 已绕开这个坑（直接 `xcodebuild` + 日志判定 + `perl alarm` 上界）；手工跑时**不要用 `ios-run.sh` 跑 UI 套件**，直接在命令行 `xcodebuild ... -only-testing:DongKeUITests test`。
 
 ## 7. 换机后容易踩的坑
 

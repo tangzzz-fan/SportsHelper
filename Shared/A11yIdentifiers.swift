@@ -40,6 +40,13 @@ enum A11y {
         static let aiGenerate = "import.ai.generate"
         static let briefConfirm = "import.brief.confirm"
         static let briefCancel = "import.brief.cancel"
+        static let voiceStart = "import.voice.start"
+        static let voiceStop = "import.voice.stop"
+        static let voiceCancel = "import.voice.cancel"
+        static let voiceSettings = "import.voice.settings"
+        static let voiceOnlineAccept = "import.voice.online.accept"
+        static let voiceOnlineDecline = "import.voice.online.decline"
+        static let voiceHint = "import.voice.hint"
     }
 
     enum Plan {

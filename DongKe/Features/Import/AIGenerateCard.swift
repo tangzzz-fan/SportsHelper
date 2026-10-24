@@ -49,6 +49,7 @@ struct AIGenerateCard: View {
 
             if canGenerate {
                 sentenceEditor
+                VoiceInputBar(text: $sentence)
             }
 
             if let errorText {
