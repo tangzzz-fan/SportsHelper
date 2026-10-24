@@ -19,6 +19,11 @@ struct ExerciseDetailView: View {
                     Text(entry.tagText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    if entry.primaryMuscleText.isEmpty == false {
+                        Text("主要练：\(entry.primaryMuscleText)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                     if FigureLibrary.bundled.hasArtwork(for: entry.id) {
                         if FigureLibrary.bundled.figure(for: entry.id).frames.count > 1 {
                             Text("轻点图示可播放动作循环")

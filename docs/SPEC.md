@@ -108,7 +108,7 @@
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**动作库**：`DongKeCore/Models/ExerciseCatalog.swift` 及其 `ExerciseCatalogLower/Upper/Core.swift` 里的 47 条 `ExerciseEntry`（名称 / 肌群 / 器械 / 静力标记 / 3 条要点 / 2 条常见错误 / 低阶替代 / 换动作 / `affectedParts` / `relievedParts` / `purposes`）。**图示**：`DongKeCore/Figure/GeneratedFigureData.swift`（构建期由 `gen_figures.py` 把素材 SVG 转成矢量路径：35 个动作各 3 帧 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。字段口径见 `ARCHITECTURE.md` §5.6。
+**动作库**：`DongKeCore/Models/ExerciseCatalog.swift` 及其 `ExerciseCatalogLower/Upper/Core.swift` 里的 47 条 `ExerciseEntry`（名称 / 分组 / 器械 / 静力标记 / 3 条要点 / 2 条常见错误 / 低阶替代 / 换动作 / `affectedParts` / `relievedParts` / `purposes` / `primaryMuscles`）。**主肌群**由 `DongKeCore/Models/Muscle.swift` 的 `PrimaryMuscleMap` 集中映射，九值：股四头 / 腘绳 / 臀 / 小腿 / 胸 / 背 / 肩 / 臂 / 核心；复合动作只记主肌群，不记次要肌群（俯卧撑记胸不记臂）。**可用力量动作少于 2 个的肌群不参与剂量提案**——当前是腘绳、小腿、臂。**图示**：`DongKeCore/Figure/GeneratedFigureData.swift`（构建期由 `gen_figures.py` 把素材 SVG 转成矢量路径：35 个动作各 3 帧 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。字段口径见 `ARCHITECTURE.md` §5.6。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 
