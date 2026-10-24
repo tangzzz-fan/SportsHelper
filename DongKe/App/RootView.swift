@@ -6,14 +6,19 @@ struct RootView: View {
     @Environment(PlanStore.self) private var planStore
     @Environment(NotificationService.self) private var notifications
 
+    @Bindable private var largeText = LargeTextStore.shared
+
     var body: some View {
-        if showsOnboarding {
-            OnboardingView(initialStep: initialStep) { profile in
-                finish(with: profile)
+        Group {
+            if showsOnboarding {
+                OnboardingView(initialStep: initialStep) { profile in
+                    finish(with: profile)
+                }
+            } else {
+                AppShell()
             }
-        } else {
-            AppShell()
         }
+        .largeTextFloor(largeText)
     }
 
     private var showsOnboarding: Bool {

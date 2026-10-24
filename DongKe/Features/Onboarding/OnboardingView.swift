@@ -6,7 +6,9 @@ struct OnboardingView: View {
 
     @State var draft = OnboardingDraft()
     @State var step: OnboardingStep
+    @Bindable var largeText = LargeTextStore.shared
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
 
     init(initialStep: OnboardingStep = .basics, onFinish: @escaping (UserProfile) -> Void) {
         self.onFinish = onFinish

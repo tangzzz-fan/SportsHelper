@@ -70,6 +70,7 @@ enum A11y {
         static let reminderToggle = "settings.reminderToggle"
         static let scheduledCount = "settings.scheduledCount"
         static let voiceToggle = "settings.voiceToggle"
+        static let largeTextToggle = "settings.largeTextToggle"
         static let done = "settings.done"
         static let erase = "settings.erase"
     }

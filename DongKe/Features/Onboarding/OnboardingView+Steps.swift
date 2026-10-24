@@ -8,6 +8,13 @@ extension OnboardingView {
         switch step {
         case .basics:
             VStack(spacing: 12) {
+                chipRow(
+                    title: "字要大一点吗",
+                    options: [(false, "标准"), (true, "大字")],
+                    isSelected: { $0 == largeText.isEnabled }
+                ) { wantsLarge in
+                    largeText.isEnabled = wantsLarge
+                }
                 stepperCard("身高", value: "\(draft.profile.heightCm) cm") {
                     draft.profile.heightCm = clamp(draft.profile.heightCm - 1, 120, 230)
                 } onIncrease: {

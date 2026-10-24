@@ -14,6 +14,7 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @Bindable private var voice = VoiceSettingsStore.shared
+    @Bindable private var largeText = LargeTextStore.shared
 
     @State private var showEraseConfirm = false
     @State private var isErasing = false
@@ -26,6 +27,7 @@ struct SettingsSheet: View {
                         reminderCard
                         statusCard
                         voiceCard
+                        largeTextCard
                         AISettingsCard()
                         aboutCard
                         dangerCard
@@ -169,6 +171,29 @@ struct SettingsSheet: View {
             .padding(16)
             .opacity(settingsStore.settings.enabled ? 1 : 0.45)
             .disabled(!settingsStore.settings.enabled)
+        }
+        .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var largeTextCard: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("大字模式")
+                        .font(Typography.rowTitle)
+                    Text("字更大、一屏要读的东西更少；系统字号已经更大时按系统的")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Toggle("", isOn: $largeText.isEnabled)
+                    .labelsHidden()
+                    .tint(Theme.accent(for: colorScheme))
+                    .accessibilityIdentifier(A11y.Settings.largeTextToggle)
+                    .accessibilityLabel("大字模式")
+            }
+            .padding(16)
         }
         .glassSurface(radius: Theme.Radius.card)
     }

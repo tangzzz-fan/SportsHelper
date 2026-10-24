@@ -3,39 +3,61 @@ import DongKeCore
 
 
 extension OnboardingView {
+    @ViewBuilder
     func stepperCard(
         _ title: String,
         value: String,
         onDecrease: @escaping () -> Void,
         onIncrease: @escaping () -> Void
     ) -> some View {
-        HStack {
-            Text(title)
-                .font(Typography.rowTitle)
-            Spacer()
-            HStack(spacing: 14) {
-                Button(action: onDecrease) {
-                    Image(systemName: Icons.decrement)
-                        .font(Typography.meta.weight(.semibold))
-                        .frame(width: 32, height: 32)
-                        .background(Color.primary.opacity(0.06), in: Circle())
-                        .contentShape(Circle())
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(title)
+                        .font(Typography.rowTitle)
+                    stepperControls(value: value, onDecrease: onDecrease, onIncrease: onIncrease)
                 }
-                Text(value)
-                    .font(Typography.buttonLabel)
-                    .monospacedDigit()
-                    .frame(minWidth: 66)
-                Button(action: onIncrease) {
-                    Image(systemName: Icons.increment)
-                        .font(Typography.meta.weight(.semibold))
-                        .frame(width: 32, height: 32)
-                        .background(Color.primary.opacity(0.06), in: Circle())
-                        .contentShape(Circle())
+            } else {
+                HStack {
+                    Text(title)
+                        .font(Typography.rowTitle)
+                    Spacer()
+                    stepperControls(value: value, onDecrease: onDecrease, onIncrease: onIncrease)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private func stepperControls(
+        value: String,
+        onDecrease: @escaping () -> Void,
+        onIncrease: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 10) {
+            Button(action: onDecrease) {
+                Image(systemName: Icons.decrement)
+                    .font(Typography.meta.weight(.semibold))
+                    .frame(width: 44, height: 44)
+                    .background(Color.primary.opacity(0.06), in: Circle())
+                    .contentShape(Circle())
+            }
+            Text(value)
+                .font(Typography.buttonLabel)
+                .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 76)
+            Button(action: onIncrease) {
+                Image(systemName: Icons.increment)
+                    .font(Typography.meta.weight(.semibold))
+                    .frame(width: 44, height: 44)
+                    .background(Color.primary.opacity(0.06), in: Circle())
+                    .contentShape(Circle())
+            }
+        }
     }
 
     func chipRow<T: Hashable>(
