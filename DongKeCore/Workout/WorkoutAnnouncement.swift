@@ -8,6 +8,7 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
     case restFinished(nextName: String?, nextDose: String?)
     case blockBreak(seconds: Int, nextLabel: String)
     case finished(completedSets: Int, plannedSets: Int)
+    case setPrompt(WorkoutPrompt)
 
     public static let textLimit = 40
 
@@ -49,6 +50,15 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
                 (Self.durationText(seconds), true),
                 (label.isEmpty ? "" : "接下来：\(label)", false)
             ])
+        case let .setPrompt(prompt):
+            switch prompt {
+            case let .focus(cue):
+                return cue
+            case let .remaining(secondsLeft):
+                return "\(secondsLeft)"
+            case let .encourage(secondsLeft):
+                return Self.compose([("加油", true), ("最后 \(secondsLeft) 秒", true)])
+            }
         case let .finished(completedSets, plannedSets):
             let percent = plannedSets > 0
                 ? Int((Double(completedSets) / Double(plannedSets) * 100).rounded())

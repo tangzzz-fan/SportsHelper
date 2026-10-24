@@ -5,6 +5,7 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         public var name: String
         public var totalSets: Int
         public var target: SetTarget
+        public var catalogId: String
     }
 
     private let steps: [FlowStep]
@@ -26,7 +27,8 @@ public struct WorkoutAnnouncementBuilder: Sendable {
                     collected[item.itemId] = Exercise(
                         name: item.name,
                         totalSets: max(1, item.sets),
-                        target: item.target
+                        target: item.target,
+                        catalogId: item.catalogId
                     )
                 }
             }
@@ -73,6 +75,20 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         case .roundBreak, .blockBreak, .finished:
             return nil
         }
+    }
+
+    public func prompts(at index: Int, allowsEncouragement: Bool) -> [TimedPrompt] {
+        guard steps.indices.contains(index),
+              case let .set(prescriptionId, setIndex, target, _) = steps[index],
+              let exercise = exercises[prescriptionId]
+        else { return [] }
+        let total = setCounts[prescriptionId] ?? exercise.totalSets
+        return WorkoutPromptPlanner.prompts(
+            target: target,
+            cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first,
+            isLastSet: setIndex >= total - 1,
+            allowsEncouragement: allowsEncouragement
+        )
     }
 
     public func restStart(seconds: Int) -> WorkoutAnnouncement? {

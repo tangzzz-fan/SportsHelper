@@ -8,6 +8,10 @@ public final class WorkoutVoiceSession {
     private var lastCountdown: Int?
     private var lastExerciseName: String?
     private var isActive = false
+    private var pendingPrompts: [TimedPrompt] = []
+    private var firedPrompts: Set<Int> = []
+
+    public var allowsEncouragement = false
 
     public init(plan: WorkoutPlan, dayIndex: Int, coordinator: SpeechCueCoordinator) {
         self.builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: dayIndex)
@@ -30,11 +34,23 @@ public final class WorkoutVoiceSession {
         guard isActive, index != lastStepIndex else { return }
         lastStepIndex = index
         guard silent == false, case .set? = builder.step(at: index) else { return }
+        pendingPrompts = builder.prompts(at: index, allowsEncouragement: allowsEncouragement)
+        firedPrompts = []
         let announcement = builder.announcement(forStepAt: index)
         if case let .setStart(name, _, _, _, _)? = announcement {
             lastExerciseName = name
         }
         cues.announce(announcement)
+    }
+
+    public func setElapsed(_ seconds: Int) {
+        guard isActive, pendingPrompts.isEmpty == false else { return }
+        let due = pendingPrompts.filter {
+            $0.atSecond <= seconds && firedPrompts.contains($0.atSecond) == false
+        }
+        guard let latest = due.last else { return }
+        for prompt in due { firedPrompts.insert(prompt.atSecond) }
+        cues.announce(.setPrompt(latest.prompt))
     }
 
     public func restStarted(seconds: Int, at stepIndex: Int? = nil) {
@@ -77,6 +93,8 @@ public final class WorkoutVoiceSession {
         isActive = false
         lastStepIndex = nil
         lastCountdown = nil
+        pendingPrompts = []
+        firedPrompts = []
         cues.stop()
     }
 }

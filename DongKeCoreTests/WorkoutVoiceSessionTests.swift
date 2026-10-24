@@ -201,6 +201,66 @@ struct WorkoutVoiceSessionTests {
             "完成 1 组，完成率 50%"
         ])
     }
+
+    @Test("静态动作在三分之一处念要领，最后三秒报剩余，各只念一次")
+    func promptsDuringHold() {
+        let (voice, speaker) = makeVoice(items: [
+            makeItem(id: "i1", sets: 1, value: 30, rest: 0, targetType: .durationSec)
+        ])
+        voice.start()
+        voice.stepChanged(to: 0)
+        let afterSetStart = speaker.spoken.count
+
+        voice.setElapsed(9)
+        #expect(speaker.spoken.count == afterSetStart)
+
+        voice.setElapsed(10)
+        #expect(speaker.spoken.last == ExerciseLibrary.entry(for: "squat")?.cues.first)
+
+        voice.setElapsed(27)
+        #expect(speaker.spoken.last == "3")
+
+        let afterPrompts = speaker.spoken.count
+        voice.setElapsed(28)
+        voice.setElapsed(29)
+        #expect(speaker.spoken.count == afterPrompts)
+    }
+
+    @Test("次数型动作组内不念，免得数数打断节奏")
+    func noPromptsForReps() {
+        let (voice, speaker) = makeVoice(items: [makeItem(id: "i1", sets: 1, value: 12)])
+        voice.start()
+        voice.stepChanged(to: 0)
+        let afterSetStart = speaker.spoken.count
+
+        for second in 1...30 {
+            voice.setElapsed(second)
+        }
+        #expect(speaker.spoken.count == afterSetStart)
+    }
+
+    @Test("换到下一组时重新排提示，不沿用上一组")
+    func promptsResetPerSet() {
+        let (voice, speaker) = makeVoice(items: [
+            makeItem(id: "i1", sets: 2, value: 30, rest: 0, targetType: .durationSec)
+        ])
+        voice.start()
+        voice.stepChanged(to: 0)
+        voice.setElapsed(27)
+        #expect(speaker.spoken.last == "3")
+
+        let firstStep = WorkoutFlowModel(plan: makePlan(days: makeSevenDays(
+            training: [1],
+            blocks: [makeBlock(items: [makeItem(id: "i1", sets: 2, value: 30, rest: 0, targetType: .durationSec)])]
+        )), dayIndex: 1)
+        let secondSetIndex = firstStep.steps.indices.first { index in
+            if case let .set(_, setIndex, _, _) = firstStep.steps[index] { setIndex == 2 } else { false }
+        }
+        voice.stepChanged(to: secondSetIndex ?? 1)
+        let afterSecondStart = speaker.spoken.count
+        voice.setElapsed(27)
+        #expect(speaker.spoken.count == afterSecondStart + 1)
+    }
 }
 
 @MainActor
