@@ -64,14 +64,12 @@ struct PlanSafetyCard: View {
             } else {
                 warningCard
             }
-            if reliefs.isEmpty == false {
-                reliefCard
-            }
+            PlanReliefCard(reliefs: reliefs, soreParts: soreParts)
         }
     }
 
     private var names: String {
-        BodyPart.allCases.filter { soreParts.contains($0) }.map(\.chineseName).joined(separator: "、")
+        soreParts.chineseNames
     }
 
     private var cleanCard: some View {
@@ -120,24 +118,41 @@ struct PlanSafetyCard: View {
             return "\(issue.exerciseName) · \(day) · 建议减量"
         }
     }
+}
 
-    private var reliefCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("下面这几个对\(names)有帮助")
-                .font(.footnote.weight(.semibold))
-            Text(reliefs.map(\.name).joined(separator: "、"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Text("保持 5 秒左右，不用加负荷；疼痛加重就停。")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+struct PlanReliefCard: View {
+    let reliefs: [ExerciseEntry]
+    let soreParts: Set<BodyPart>
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        if reliefs.isEmpty == false {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("下面这几个对\(soreParts.chineseNames)有帮助")
+                    .font(.footnote.weight(.semibold))
+                Text(reliefs.map(\.name).joined(separator: "、"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("从 5 秒开始，无痛完成就加到 10 秒；不用加负荷，疼痛加重就停。")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                Theme.halo(for: colorScheme).opacity(0.5),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .accessibilityIdentifier(A11y.Import.safetyRelief)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.halo(for: colorScheme).opacity(0.5), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .accessibilityIdentifier(A11y.Import.safetyRelief)
+    }
+}
+
+extension Set where Element == BodyPart {
+    var chineseNames: String {
+        BodyPart.allCases.filter { contains($0) }.map(\.chineseName).joined(separator: "、")
     }
 }
 

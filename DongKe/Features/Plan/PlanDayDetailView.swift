@@ -43,6 +43,10 @@ struct PlanDayDetailView: View {
                     }
 
                     if !soreParts.isEmpty, day.isRestDay == false {
+                        PlanReliefCard(
+                            reliefs: PlanSafetyChecker.reliefs(for: soreParts),
+                            soreParts: soreParts
+                        )
                         Text(PlanSafetyChecker.disclaimer)
                             .font(.caption2)
                             .foregroundStyle(.tertiary)

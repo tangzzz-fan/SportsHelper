@@ -11,6 +11,7 @@
 		00C4A5F1D63BE6FCBC339D29 /* DraftLineScanner+Dose.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13DF6068B0809CC07BD531A /* DraftLineScanner+Dose.swift */; };
 		0300AF2CD7A10A23D9A96F1D /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4225C0A8CB6D9B69C8615DE4 /* NotificationService.swift */; };
 		05A4DA61416682AED2B5896B /* OnboardingView+Steps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C271913BAF298C641B1AE8A7 /* OnboardingView+Steps.swift */; };
+		05DD54E313333CE6696FDB77 /* DongKeSorePartUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05AFD0BEBE5F88427304062E /* DongKeSorePartUITests.swift */; };
 		06988F438944C6FB9EB8BB0A /* SpeechTranscribing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B96976FA8249583E45F1CC /* SpeechTranscribing.swift */; };
 		0735F2CADC0BE5E3E1D060DC /* AIPlanInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099FB584AA3D573A00D50258 /* AIPlanInterpreter.swift */; };
 		08640E78C3F1C4AFDD65D845 /* PlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 168C6D3E33852EFB889A046D /* PlanGenerator.swift */; };
@@ -271,6 +272,7 @@
 		03643DAA4EC8E11D9610D7E6 /* RestSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestSheetView.swift; sourceTree = "<group>"; };
 		04E26A133B3A13BA93DBA66D /* ExerciseNounTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseNounTests.swift; sourceTree = "<group>"; };
 		0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DongKeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		05AFD0BEBE5F88427304062E /* DongKeSorePartUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DongKeSorePartUITests.swift; sourceTree = "<group>"; };
 		066C1D6F10CA0FACB51A0367 /* ExerciseCatalogLower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogLower.swift; sourceTree = "<group>"; };
 		072B203C1325BFB3873E3159 /* UserExerciseEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExerciseEntity.swift; sourceTree = "<group>"; };
 		07835A2181449460CC9EC8AB /* NotificationPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanTests.swift; sourceTree = "<group>"; };
@@ -812,6 +814,7 @@
 			children = (
 				84B06CC50B6D81C962D85D7B /* DongKeChainsUITests.swift */,
 				A9A30EF4194F1125C884539D /* DongKeRestDayUITests.swift */,
+				05AFD0BEBE5F88427304062E /* DongKeSorePartUITests.swift */,
 				AF977E8D6E65F06845A3831D /* DongKeUITestCase.swift */,
 				7247305B23B0BEBDF93C64B0 /* DongKeVoiceUITests.swift */,
 			);
@@ -1249,6 +1252,7 @@
 				CF3BDDBBAFB3D62709217804 /* A11yIdentifiers.swift in Sources */,
 				AE9EC45592FE302CAF08E869 /* DongKeChainsUITests.swift in Sources */,
 				3132BE1243791634D19391CC /* DongKeRestDayUITests.swift in Sources */,
+				05DD54E313333CE6696FDB77 /* DongKeSorePartUITests.swift in Sources */,
 				97C3E981486C5FB5AE6556FE /* DongKeUITestCase.swift in Sources */,
 				8C404DD0E04B7CE527E7844D /* DongKeVoiceUITests.swift in Sources */,
 			);

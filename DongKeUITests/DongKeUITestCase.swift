@@ -72,6 +72,15 @@ class DongKeUITestCase: XCTestCase {
         return element
     }
 
+    func scrollUntilHittable(_ element: XCUIElement, attempts: Int = 5, file: StaticString = #filePath, line: UInt = #line) {
+        var remaining = attempts
+        while element.isHittable == false, remaining > 0 {
+            app.swipeUp()
+            remaining -= 1
+        }
+        XCTAssertTrue(element.isHittable, "滚动后仍然点不到目标元素", file: file, line: line)
+    }
+
     func tapTab(_ title: String, file: StaticString = #filePath, line: UInt = #line) {
         tap(labeled(title), file: file, line: line)
     }
