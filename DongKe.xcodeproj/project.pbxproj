@@ -22,6 +22,8 @@
 		14E571A347030A6F8F9F816B /* AliasMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BBC30A47CBCB1FFBA3559E /* AliasMemory.swift */; };
 		16EE6EBB8A094075AC8C5054 /* PlanDraftParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32ED59B5C1D381FD9B98AB62 /* PlanDraftParser.swift */; };
 		18B67E5BD328436B3D565038 /* WorkoutFlowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2B7CF7245BF49C1982A0E /* WorkoutFlowModel.swift */; };
+		1A53C4EC2BE1FBD009B415C9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 310CFBA5BDEC46822C67998E /* PrivacyInfo.xcprivacy */; };
+		1B09D690DAD249E81BEBCD5D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1353FFC1AA42CC0828B2F4C6 /* Assets.xcassets */; };
 		1C8EFDDD44CFD1AAA3E11362 /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23CB30472A893A7C9508EFA /* ChatMessage.swift */; };
 		1D3BDD0DD2F49F5D68CBA568 /* JSONPayloadEdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E768556C34D46182E21898D /* JSONPayloadEdgeCaseTests.swift */; };
 		1E7DFD9223C03DB8790CD53E /* PlanTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */; };
@@ -266,6 +268,7 @@
 		102F550CF1AA854CF2A097D6 /* ReminderHealthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderHealthTests.swift; sourceTree = "<group>"; };
 		115DAE6E4CF1FE72FBCF20DB /* OnboardingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingControls.swift; sourceTree = "<group>"; };
 		11C85C4AD10CD5B680095721 /* WeekdayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekdayTests.swift; sourceTree = "<group>"; };
+		1353FFC1AA42CC0828B2F4C6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		13738439C5FE4788D6F3DEE3 /* FigurePlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FigurePlayback.swift; sourceTree = "<group>"; };
 		14AD7D1A02E9336E21785472 /* PlanBriefParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanBriefParser.swift; sourceTree = "<group>"; };
 		1547F50AF8C9C7FCB7A58D13 /* PlanJSONExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanJSONExtractorTests.swift; sourceTree = "<group>"; };
@@ -286,6 +289,7 @@
 		2C99021BEC59DCE24315BB6C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		2CC81821D3B3678AE19232E6 /* FreeTextPlanParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeTextPlanParser.swift; sourceTree = "<group>"; };
 		2F35ACCDD574601A0799FE51 /* LineScanEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineScanEdgeCaseTests.swift; sourceTree = "<group>"; };
+		310CFBA5BDEC46822C67998E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		32ED59B5C1D381FD9B98AB62 /* PlanDraftParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDraftParser.swift; sourceTree = "<group>"; };
 		34D0865D917976B35B540784 /* VoiceInputLimit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputLimit.swift; sourceTree = "<group>"; };
 		34EE64634EB6C313DD4EDA9F /* SetLogEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetLogEntity.swift; sourceTree = "<group>"; };
@@ -735,6 +739,8 @@
 		7A49239A495A2E9FE47AC44C /* DongKe */ = {
 			isa = PBXGroup;
 			children = (
+				1353FFC1AA42CC0828B2F4C6 /* Assets.xcassets */,
+				310CFBA5BDEC46822C67998E /* PrivacyInfo.xcprivacy */,
 				E61FC66EB51376798B3F6105 /* App */,
 				7EE364F8BFC6C3858434B1B0 /* Data */,
 				E3488B1D42A94BFEFE060AC1 /* DesignSystem */,
@@ -945,6 +951,7 @@
 			buildConfigurationList = 7ED51D067105B7716C420481 /* Build configuration list for PBXNativeTarget "DongKe" */;
 			buildPhases = (
 				E422F397C669F036DD2537C7 /* Sources */,
+				36E24BF26EE2C9B2195477BE /* Resources */,
 				34F4B022A3FFA60CB96DD365 /* Frameworks */,
 				966BAA8017881FF71EB67E15 /* Embed Frameworks */,
 			);
@@ -1026,6 +1033,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		36E24BF26EE2C9B2195477BE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B09D690DAD249E81BEBCD5D /* Assets.xcassets in Resources */,
+				1A53C4EC2BE1FBD009B415C9 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5532B51C986253999B9060A0 /* Sources */ = {
@@ -1454,6 +1473,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1493,6 +1514,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

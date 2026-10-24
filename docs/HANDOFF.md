@@ -9,9 +9,9 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
-| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 13 页清单**全部落地**：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成 + 一句话语音 / 文字）、理解确认、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空）+ 训练播报（ticket 07–09）与语音输入（ticket 06）。工程侧补上了 `Assets.xcassets`（AppIcon，`Tools/IconRender` 可重渲）与 `PrivacyInfo.xcprivacy`（见 §6.24） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **442 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **13 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条 |
+| 测试 | **487 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **16 条 UI 测试**（`-only-testing:DongKeUITests`，默认不跑，见 §6.21）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条、语音输入 42 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -553,6 +553,30 @@ scripts/test-scope.sh --base HEAD~3
 scripts/voice-dump.sh                        # 用已编译的二进制
 DK_VOICE_DUMP_REBUILD=1 scripts/voice-dump.sh # 强制重编
 ```
+
+## 6.24 AppIcon 与隐私清单（2026-10-24）
+
+上架（甚至 TestFlight / Archive）前必须有的两件，之前一直缺：
+
+**`DongKe/Assets.xcassets`**：目前只有 `AppIcon.appiconset`，单张 1024×1024（Xcode 会自己生成各档尺寸）。主题是「AI 制定 → 按它执行」：青绿渐变底（`Theme.tint` / `Theme.tintDark` 同款色值）+ 三行清单（首行打勾 = 正在执行）+ 右上角火花（AI 生成的标记）+ 背景一道极淡的进度环。60px 小尺寸下三行与火花仍可辨。嫌不好看就换 PNG，**名字和 `Contents.json` 别动**；要重渲改 `Tools/IconRender/main.swift` 后：
+
+```bash
+swiftc -O -o /tmp/icon-render Tools/IconRender/main.swift
+/tmp/icon-render DongKe/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+```
+
+**出口合规**：`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO`（`project.yml`）。App 只用系统 HTTPS/TLS 访问用户自配的 AI 端点，不含自有或强加密，属于标准豁免，不用每年交年度自查报告。**若将来引入自研加密（如自定义协议加密层），这条要改回并补申报。**
+
+**`DongKe/PrivacyInfo.xcprivacy`**：Apple 2024 起强制。申报了两条——
+
+| 项 | 值 | 为什么 |
+|---|---|---|
+| `NSPrivacyAccessedAPITypes` | `UserDefaults` + 理由 `CA92.1` | 断点续练、别名记忆、播报开关都存 UserDefaults，只读本 App 自己的数据 |
+| `NSPrivacyCollectedDataTypes` | `UserContent`（不关联身份、不用于追踪、目的 `AppFunctionality`） | 一句话生成的句子会发到**用户自己填的** AI 端点。训练记录、档案只存本机 SwiftData，不发出去，所以不申报 |
+
+`NSPrivacyTracking` 为 false，`NSPrivacyTrackingDomains` 为空——没有任何追踪。
+
+**两条要人工过目**：一是 UserContent 这条申报的是「会发到用户自配端点」，如果将来加了自家服务端或统计 SDK，这条要跟着改；二是 App Store Connect 的「App 隐私」营养标签要和这份清单口径一致，别一边说收一边说不收。
 
 ## 7. 换机后容易踩的坑
 
