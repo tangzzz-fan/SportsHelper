@@ -5,11 +5,15 @@ public enum DraftTableAdapter {
         var title: String?
         var days: [DraftDay] = []
         var header: [String]?
-        var openDayIndex: Int?
+        var weekdayColumn: Int?
+        var themeColumn: Int?
+        var fallbackDayIndex: Int?
         var pendingWeekday: Weekday?
         var pendingLabel: String?
 
-        for rawLine in text.components(separatedBy: .newlines) {
+        let lines = text.components(separatedBy: .newlines)
+
+        for (offset, rawLine) in lines.enumerated() {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             guard !line.isEmpty else { continue }
 
@@ -20,24 +24,42 @@ public enum DraftTableAdapter {
 
                 if header == nil {
                     header = cells
+                    weekdayColumn = column(in: cells, keys: ["星期", "周几", "weekday", "day", "日期"])
+                    themeColumn = column(in: cells, keys: ["主题", "部位", "title", "focus"])
                     continue
                 }
                 guard let header, let item = makeItem(cells: cells, header: header, memory: memory) else { continue }
 
-                if openDayIndex == nil {
+                if let weekday = rowWeekday(cells: cells, column: weekdayColumn) {
+                    if let index = days.firstIndex(where: { $0.weekday == weekday }) {
+                        days[index].items.append(item)
+                    } else {
+                        days.append(DraftDay(
+                            order: days.count + 1,
+                            label: rowTheme(cells: cells, column: themeColumn) ?? "训练",
+                            weekday: weekday
+                        ))
+                        days[days.count - 1].items.append(item)
+                    }
+                    continue
+                }
+
+                if fallbackDayIndex == nil {
                     days.append(DraftDay(
                         order: days.count + 1,
                         label: pendingLabel ?? "训练",
                         weekday: pendingWeekday
                     ))
-                    openDayIndex = days.count - 1
+                    fallbackDayIndex = days.count - 1
                 }
-                days[openDayIndex!].items.append(item)
+                days[fallbackDayIndex!].items.append(item)
                 continue
             }
 
             header = nil
-            openDayIndex = nil
+            weekdayColumn = nil
+            themeColumn = nil
+            fallbackDayIndex = nil
 
             if let weekday = DraftLineScanner.weekday(in: line) {
                 pendingWeekday = weekday
@@ -47,9 +69,13 @@ public enum DraftTableAdapter {
                 continue
             }
 
-            if let label = dayLabel(from: line) {
-                pendingWeekday = nil
-                pendingLabel = label
+            if let label = headingLabel(from: line) {
+                if nextContentIsTable(lines, after: offset) {
+                    if title == nil { title = label }
+                } else {
+                    pendingWeekday = nil
+                    pendingLabel = label
+                }
                 continue
             }
 
@@ -59,7 +85,7 @@ public enum DraftTableAdapter {
         }
 
         guard days.contains(where: { !$0.items.isEmpty }) else { return nil }
-        return PlanDraft(title: title, days: days, cautions: [], source: .markdownTable)
+        return PlanDraft(title: title, days: days, cautions: [], notes: [], source: .markdownTable)
     }
 
     private static func splitRow(_ line: String) -> [String] {
@@ -76,7 +102,39 @@ public enum DraftTableAdapter {
         }
     }
 
-    private static func dayLabel(from line: String) -> String? {
+    private static func rowWeekday(cells: [String], column: Int?) -> Weekday? {
+        guard let column, cells.indices.contains(column) else { return nil }
+        let text = cells[column].trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return nil }
+
+        if let weekday = DraftLineScanner.weekday(in: text) { return weekday }
+        if let number = Int(text), (1...7).contains(number) {
+            return Weekday(rawValue: number)
+        }
+        let single: [String: Weekday] = [
+            "一": .monday, "二": .tuesday, "三": .wednesday, "四": .thursday,
+            "五": .friday, "六": .saturday, "日": .sunday, "天": .sunday
+        ]
+        return single[text]
+    }
+
+    private static func rowTheme(cells: [String], column: Int?) -> String? {
+        guard let column, cells.indices.contains(column) else { return nil }
+        let value = DraftLineScanner.cleanedName(cells[column])
+        return value.isEmpty ? nil : value
+    }
+
+    private static func nextContentIsTable(_ lines: [String], after index: Int) -> Bool {
+        guard index + 1 < lines.count else { return false }
+        for offset in (index + 1)..<lines.count {
+            let line = lines[offset].trimmingCharacters(in: .whitespaces)
+            if line.isEmpty { continue }
+            return line.hasPrefix("|")
+        }
+        return false
+    }
+
+    private static func headingLabel(from line: String) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         guard trimmed.hasPrefix("#") else { return nil }
         let label = DraftLineScanner.cleanedName(trimmed)
@@ -89,7 +147,6 @@ public enum DraftTableAdapter {
         let repsIndex = column(in: header, keys: ["次数", "rep", "repetition", "times", "次"])
         let durationIndex = column(in: header, keys: ["秒", "时长", "duration", "hold", "sec", "time"])
         let restIndex = column(in: header, keys: ["休息", "rest", "interval", "间隔"])
-        let notesIndex = column(in: header, keys: ["备注", "note", "说明", "comment"])
 
         let fallbackNameIndex = nameIndex ?? header.indices.first { index in
             cells.indices.contains(index) && cells[index].isEmpty == false && Int(cells[index]) == nil

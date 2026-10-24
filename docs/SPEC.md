@@ -27,7 +27,7 @@
 | P0 | F4 训练执行 | 逐组推进、组间休息倒计时、+15s / 跳过 / 降阶、锁屏后回前台按绝对时间重算 | 4.32 |
 | P0 | F5 粘贴导入 | JSON 严格解析 + 自由文本启发式；解析结果必须人工校正后才能保存 | 4.32 |
 | P0 | F6 打卡与完成率 | 每组完成即落库；完成率 = 完成组数 / 计划组数；历史按周展示 | 3.73 |
-| P0 | F7 动作图示 | 18 个核心动作：参数化线稿人形 3 关键帧 + 3 条要点 + 1 条低阶替代 | 2.80 |
+| P0 | F7 动作图示 | 39 个核心动作：素材矢量线稿 3 关键帧 + 3 条要点 + 1 条低阶替代（31 个有专属图，8 个走占位） | 2.80 |
 | P0 | F10 直连 AI（BYOK） | 用户在设置里填 Base URL + Key，App 内生成计划；Key 存 Keychain | 1.37 |
 | P0 | F11 一句话生成 | 描述一句 → 本地解析成可确认的约束 → 用户确认后才发请求；句子覆盖天数 / 时长 / 器械 / 目标，伤病只增不减且不写回档案 | — |
 | P0 | F12 训练语音播报 | 关键节点（开始 / 每组 / 休息归零 / 换动作 / 完成）+ 休息最后 3 秒倒数朗读；默认关、仅前台、尊重静音键 | — |
@@ -37,7 +37,7 @@
 | 裁决 | 结论 | 理由 |
 |------|------|------|
 | 直连 AI | **进 MVP**，收敛为 OpenAI 兼容单端点 + 非流式 | 用户明确要求「可以直连」；不做生成引擎，只做「调用 + 解析」 |
-| 动作库规模 | **内置 18 个**（schema 已锁定的 catalogId）+ 用户可增「我的动作」 | 60 个矢量图会把 MVP 拖长；18 个覆盖居家核心动作。库外动作三级兜底：猜（标橙待确认）/ 记（别名记忆）/ 存（我的动作，`custom_<slug>`），见 HANDOFF §6.0 |
+| 动作库规模 | **内置 39 个**（`ExerciseCatalog.swift` 里的 catalogId）+ 用户可增「我的动作」 | 初版锁定 18 个，2026-10-24 扩到 39（补热身 / 拉伸 / 康复向）。库外动作三级兜底：猜（标橙待确认）/ 记（别名记忆）/ 存（我的动作，`custom_<slug>`），见 HANDOFF §6.0 |
 | 久坐提醒 | **移出 MVP，列 P1** | 用户原始诉求只提训练提醒；避免范围蔓延 |
 | 最低 iOS | **18.0** | SwiftData 成熟度与覆盖率的最优解（覆盖 93% 在用 iPhone） |
 | 动作素材 | **开源素材库 `bryllim/workout-guide` 的单色线条插画**（CC BY-SA 4.0，18/18 覆盖） | 用户裁决接受动画素材；本轮不上架，share-alike 处置延后，素材走 `FigureSource` 可换源（下一顺位：公有领域 `yuhonas/free-exercise-db`） |
@@ -108,7 +108,7 @@
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**Bundle 只读资源**：`exercises.json`（18 条动作：名称 / 别名 / 肌群 / 器械 / 难度 / 3–5 条要点 / 2–3 条常见错误 / `figureSpecId` / 默认目标）、`figure-data.json`（构建期由素材 SVG 生成：18 个动作各 3 帧矢量路径 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。
+**动作库**：`DongKeCore/Models/ExerciseCatalog.swift` 里的 39 条 `ExerciseEntry`（名称 / 肌群 / 器械 / 静力标记 / 3 条要点 / 2 条常见错误 / 低阶替代 / `affectedParts` / `purposes`）。**图示**：`DongKeCore/Figure/GeneratedFigureData.swift`（构建期由 `gen_figures.py` 把素材 SVG 转成矢量路径：31 个动作各 3 帧 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。字段口径见 `ARCHITECTURE.md` §5.1。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 
@@ -215,7 +215,7 @@
 | SwiftData 深关系链级联删除缺陷 | SwiftData | 多关系级联删除已知问题 | 计划扁平存 JSON；不建 `@Relationship`；显式按序删除 |
 | 全角引号 / 尾随逗号 / 代码围栏 | 粘贴解析 | AI 输出常见脏格式 | 引号感知括号配对；先清洗再解码；每条一个测试 |
 | 模拟器 Keychain 跨运行保留 | Security | 模拟器 Keychain 不随 App 删除清空 | 测试 teardown 删除自己的 key |
-| 素材门禁红被误判为回归 | 生成产物 `figure-data.json` | 生成器静默产出空帧或退化包围盒时，界面表现为「某动作图是空的」而非构建失败 | 门禁在生成期而非运行期：条目数必须 19（18 + `_generic`）、每个动作 3 帧、路径非空、包围盒有限且为正；任何一条不满足即构建失败 |
+| 素材门禁红被误判为回归 | 生成产物 `figure-data.json` | 生成器静默产出空帧或退化包围盒时，界面表现为「某动作图是空的」而非构建失败 | 门禁在生成期而非运行期：条目数必须等于 `gen_figures.py` 里 `MAPPING` 的条数 + 1（当前 32 = 31 + `_generic`）、每个动作 3 帧、路径非空、包围盒有限且为正；任何一条不满足即构建失败 |
 | SVG 画布留白导致图示忽大忽小 | 素材 `512×512` 方图 | 各动作人形占画面比例不同（俯卧撑横、深蹲竖） | 渲染期按路径 `boundingRect` 等比 fit，包围盒取三帧并集，画面尺寸不随帧变化 |
 
 ---
@@ -251,3 +251,4 @@ xcrun simctl launch booted app.dongke.ios
 | 2026-10-22 | 动作图示由「自绘 12 关节骨架」改为开源素材库实心剪影（3 帧 SVG → 构建期转 Path），静力动作取第 1 帧，素材走 `FigureSource` 可换源；界面确立真玻璃材质，iOS 26 原生 / iOS 18 近似双路径；§8 圆角补玻璃浮层档位 | 用户裁决：接受动画素材、要求玻璃质感、且部署版本维持 iOS 18 | 图示管线与界面材质整体替换，旧骨架体系作废 |
 | 2026-10-22 | 主色定为深青绿 `#0E7C66` / `#34B39A`；动作图示定为自绘参数化骨架（不用第三方素材）；SetLog 改三态；通知权限在引导第 5 屏后请求；跳过并顺延列 P1 | 最终冻结裁决 | 与 design-tokens v2 对齐，消除授权与额度风险 |
 | 2026-10-24 | 增补 F11 一句话生成、F12 训练语音播报；§7 加第 13 页「理解确认」；§9 加 AC-23 / AC-24 | 用户提出「描述一句就生成计划」「语音播报」，经四项决策（文字+语音输入、生成前确认、关键节点+3 秒倒数、默认关仅前台）确认 | 新增两条 P0 与一个 sheet 页；不改既有 AC 编号，PRD 仍作存档依据不追编号 |
+| 2026-10-24 | 动作库 18→39；图示门禁 19→32；§6 资源描述从 `exercises.json` 改为代码内 `ExerciseCatalog` | 补齐热身 / 拉伸 / 康复向动作，图示同步扩到 31 个 | 影响 F7、§2 范围裁决、§6 数据表、§11 已知坑；字段口径收进 `ARCHITECTURE.md` §5.1 |

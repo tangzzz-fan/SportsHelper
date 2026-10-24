@@ -35,21 +35,13 @@ enum PlanCatalog {
         Item(id: "mountain_climber", name: "登山跑", equipment: .bodyweight, isStatic: false, isDynamic: true, joint: .core)
     ]
 
-    static let blockedByInjury: [(keywords: [String], ids: Set<String>)] = [
-        (["膝", "knee"], ["lunge", "squat", "wall_sit", "jumping_jack"]),
-        (["腰", "下背", "lower back", "lowerback"], ["superman", "russian_twist", "dead_bug"]),
-        (["肩", "shoulder"], ["push_up", "shoulder_press"]),
-        (["腕", "手腕", "wrist"], ["push_up", "plank", "side_plank", "mountain_climber"]),
-        (["踝", "脚踝", "ankle"], ["jumping_jack", "high_knees", "calf_raise", "mountain_climber"])
-    ]
-
     static func blockedIds(for injuries: String) -> Set<String> {
-        let text = injuries.lowercased()
-        guard !text.isEmpty else { return [] }
-        var blocked: Set<String> = []
-        for rule in blockedByInjury where rule.keywords.contains(where: { text.contains($0) }) {
-            blocked.formUnion(rule.ids)
-        }
-        return blocked
+        let parts = BodyPartDetector.parts(in: injuries)
+        guard parts.isEmpty == false else { return [] }
+        return Set(
+            ExerciseLibrary.all
+                .filter { $0.affectedParts.isDisjoint(with: parts) == false }
+                .map(\.id)
+        )
     }
 }

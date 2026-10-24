@@ -7,18 +7,41 @@ import math
 
 NUM = re.compile(r'[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?')
 CMD = re.compile(r'[MmLlHhVvCcSsQqTtAaZz]')
-COUNTS = {'M': 2, 'L': 2, 'T': 4, 'Q': 4, 'S': 4, 'C': 6, 'H': 1, 'V': 1, 'A': 7, 'Z': 0}
+COUNTS = {'M': 2, 'L': 2, 'T': 2, 'Q': 4, 'S': 4, 'C': 6, 'H': 1, 'V': 1, 'A': 7, 'Z': 0}
 
 
 def tokenize(d):
     out = []
-    for m in re.finditer(r'([MmLlHhVvCcSsQqTtAaZz])|([-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?)', d):
-        if m.group(1):
-            out.append([m.group(1), []])
-        else:
-            if not out:
-                out.append(['M', []])
-            out[-1][1].append(float(m.group(2)))
+    i, n = 0, len(d)
+    cmd = None
+    nums = []
+    while i < n:
+        ch = d[i]
+        if ch in 'MmLlHhVvCcSsQqTtAaZz':
+            if cmd is not None:
+                out.append([cmd, list(nums)])
+                nums = []
+            cmd = ch
+            i += 1
+            continue
+        if ch in ' \t\r\n,':
+            i += 1
+            continue
+        # A 命令的第 4、5 个参数是标志位，SVG 允许写成 "01" 这种紧贴形式
+        if cmd is not None and cmd.upper() == 'A' and len(nums) % 7 in (3, 4):
+            nums.append(1.0 if ch == '1' else 0.0)
+            i += 1
+            continue
+        m = NUM.match(d, i)
+        if not m:
+            i += 1
+            continue
+        nums.append(float(m.group(0)))
+        i = m.end()
+    if cmd is not None:
+        out.append([cmd, list(nums)])
+    if not out:
+        return out
     expanded = []
     for cmd, nums in out:
         n = COUNTS[cmd.upper()]

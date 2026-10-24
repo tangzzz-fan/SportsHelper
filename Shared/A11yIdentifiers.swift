@@ -47,11 +47,18 @@ enum A11y {
         static let voiceOnlineAccept = "import.voice.online.accept"
         static let voiceOnlineDecline = "import.voice.online.decline"
         static let voiceHint = "import.voice.hint"
+        static let sorePart = "import.sorePart"
+        static let safetyNotice = "import.safety.notice"
     }
 
     enum Plan {
         static let importPlan = "plan.import"
         static let title = "plan.title"
+        static let dayRow = "plan.day"
+        static let dayDetailDone = "plan.day.done"
+        static let itemRow = "plan.item"
+        static let aiEntry = "plan.ai.entry"
+        static let safetyNotice = "plan.safety.notice"
     }
 
     enum History {

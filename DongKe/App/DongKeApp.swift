@@ -43,6 +43,11 @@ struct DongKeApp: App {
         if ProcessInfo.processInfo.environment["DK_COMPLETE_ONBOARDING"] == "1", !profiles.hasOnboarded {
             profiles.save(OnboardingDraft().completedProfile(now: Date()))
         }
+        if let injuries = ProcessInfo.processInfo.environment["DK_PROFILE_INJURIES"], injuries.isEmpty == false {
+            var profile = profiles.profile ?? OnboardingDraft().completedProfile(now: Date())
+            profile.injuries = injuries
+            profiles.save(profile)
+        }
         #endif
 
         let userStore = UserExerciseStore(context: container.mainContext)

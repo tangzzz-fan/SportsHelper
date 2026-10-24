@@ -19,8 +19,14 @@ struct ExerciseDetailView: View {
                     Text(entry.tagText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    if FigureLibrary.bundled.figure(for: entry.id).frames.count > 1 {
-                        Text("轻点图示可播放动作循环")
+                    if FigureLibrary.bundled.hasArtwork(for: entry.id) {
+                        if FigureLibrary.bundled.figure(for: entry.id).frames.count > 1 {
+                            Text("轻点图示可播放动作循环")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    } else {
+                        Text("这个动作暂时没有示意图，按下面的要点做")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }

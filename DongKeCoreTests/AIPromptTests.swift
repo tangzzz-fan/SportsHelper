@@ -176,8 +176,15 @@ struct PlanSchemaJSONTests {
     }
 
     @Test func mentionsEveryLibraryId() {
+        // 清单由 systemPrompt 第 4 条动态生成；schema 只定义结构，不再维护一份易漂移的 id 列表
+        let prompt = AIPromptBuilder.systemPrompt()
         for entry in ExerciseLibrary.all {
-            #expect(PlanSchemaJSON.text.contains(entry.id))
+            #expect(prompt.contains(entry.id), "提示词里没有 \(entry.id)")
         }
+    }
+
+    @Test func schemaDoesNotHardcodeCatalogIds() {
+        #expect(PlanSchemaJSON.text.contains("例如 squat、push_up") == false,
+                "schema 里还留着一份会漂移的动作清单")
     }
 }

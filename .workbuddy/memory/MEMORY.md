@@ -25,8 +25,30 @@
 
 改文案后必跑 `scripts/voice-dump.sh` 复核三种（现四种）计划形态。见 §6.23。
 
+## 动作图示（2026-10-24 定稿）
+
+- 图是**矢量 path**（`DongKeCore/Figure/GeneratedFigureData.swift`，3MB，别手改），不是 GIF。31 个动作 × 3 帧 + `_generic` 占位。
+- 素材 = bryllim/workout-guide（302 个，906 帧，CC BY-SA 4.0），**上游是 Everkinetic**。根目录 `everkinetic-data/` 是同一脉的 raster 版（277 个），已在 `.gitignore`，**不是更大的库**。
+- 「同风格」有量化判据：线宽/图高 **0.67%–2.90%**（中位 1.23）、墨量 **3%–8%**（中位 5.4）、宽高比 0.87、留白 4.5%、图高 433–470 单位 / 512 画布。
+- **取景也要同档**：上游颈部那两张是胸像特写（图高 138），190pt 并排就是另一个档位，不能用。
+- 判定「能不能接」= 语义对 + 取景同档 + 有矢量源。缺一条就走占位，不用近似素材。
+- 生成器 `.scratch/figure-and-glass/tools/gen_figures.py`（手动跑，不进构建）；`svgcmd.py` 已支持 `A` 弧线 flag 连写。
+- 参数化自绘（`Tools/FigureDraw/`）三代都收敛到「木偶」，已判死，别再试。
+
 ## 环境
 
 - 模拟器 UDID：`D16A8318-973E-45CE-936B-94F5FFE3E0EC`（iPhone 18 Pro），`content_size` 保持 `large`，不要设 AX3
 - 推 origin 需代理：`git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`
 - `ios-run.sh` 会误判 UI 套件收尾，跑 UI 直接用 `xcodebuild ... -only-testing:DongKeUITests test`
+
+## 跑测试：必须 Python 包一层（2026-10-24）
+
+`xcodebuild test` 跑完**不退出**，无限刷 `IDESchemeActionSDKRecord ... invalidDigitCount(94232)`（Xcode 27 解 5 位 build 号失败），测试其实几秒就跑完。
+
+固定三步，见 `docs/HANDOFF.md` §6.25：
+
+1. `build-for-testing`（正常退出）
+2. Python `subprocess.Popen` + `wait(timeout=90)` 跑 `test-without-building`，超时 `kill()`
+3. 只认日志里 `Test run with` / `✘ Test "..." failed`，**不认退出码**
+
+⚠️ macOS 没有 GNU `timeout`，写 `timeout 200 xcodebuild` 会 `command not found`，随后 grep 空输出会被误读成「通过」。同一套写法推广到 `xcrun simctl`、`devicectl`、`swift test` 等会挂住的长命令。

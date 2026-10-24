@@ -460,6 +460,23 @@ FlowStep
 
 这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。
 
+### 5.1 动作库字段口径
+
+代码里不写注释，字段语义全部收在这里。改这些字段前先读本节。
+
+| 字段 | 口径 |
+|---|---|
+| `affectedParts` | **只标主要负荷**——发力肌群和承受大部分体重的关节。稳定肌、姿势代偿不算。理由：标宽了，用户一说「腰不好」整张表都会被禁掉，计划直接没法生成 |
+| `purposes` | 默认 `[.strength]`。区块取词：`warmup` 只取含 `.warmup` 的，`cooldown` 只取含 `.stretch` 的。一个动作可以多用途——开合跳既能热身也能当低强度有氧 |
+| `regressionId` | 低阶替代。指向库内动作时必须是另一条，不能指向自己；为空则只显示 `regressionName` 文案 |
+| `isStatic` | 静力保持动作。数据上仍有 3 帧，渲染期只取第 1 帧 |
+
+**部位词表只有一个来源**：`BodyPart.keywords`。`PlanBriefParser` 的避让识别、`PlanSafetyChecker` 的校验、`PlanCatalog` 的排除都从它派生（`BodyPart.avoidVocabulary` 是它按长度降序的投影，长词优先，「肩颈」不会被「肩」先吃掉）。曾经这三处各维护一张词表，结果生成器避开的动作和校验器标出的不是同一批。
+
+**动作名归一化放在 `PlanImportService.parse` 外层，不在各 decoder 里。** `strictJSON` 走 `PlanDecoder` 直接解出整份计划，根本不经过 `PlanDraftCompiler`；只有在外层才一次覆盖 strictJSON / lenientJSON / freeText 三条路径。库外动作（`custom_` 前缀）没有标准名可归，保留原名。
+
+**图示的 `stroked` 只为一件事存在**：素材走 `fill`（path 本身是闭合轮廓，靠 `evenodd` 出线条），自绘骨架走 `stroke`（path 是关节与轮廓线，描边才看得见）。当前生成数据里没有 `stroked: true` 的条目，这个分支是为 §12 的生成方案留的入口。
+
 ---
 
 ## 6. 持久化设计

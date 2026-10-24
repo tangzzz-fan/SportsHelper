@@ -295,3 +295,44 @@ struct PlanBriefResolutionTests {
         PlanBrief(sentence: "测试", weekdays: weekdays, daysPerWeek: daysPerWeek)
     }
 }
+
+@Suite("身体不适与训练偏好不打架")
+struct PlanBriefDiscomfortTests {
+    private func parse(_ text: String) -> PlanBrief {
+        PlanBriefParser.parse(text)
+    }
+
+    @Test("肩颈不适不会被读成想练肩")
+    func neckShoulderPainIsNotFocus() {
+        let brief = parse("我最近肩颈不适，为我制定一个计划")
+        #expect(brief.focus.contains("肩部") == false)
+        #expect(brief.avoid.contains { $0.contains("肩") })
+    }
+
+    @Test("说疼的部位不该是训练重点")
+    func sorePartIsNotFocus() {
+        let brief = parse("肩膀有点疼，想练背")
+        #expect(brief.focus == ["背部"])
+        #expect(brief.avoid.contains { $0.contains("肩") })
+    }
+
+    @Test("受伤部位与另一个部位的目标可以共存")
+    func injuryAndGoalCoexist() {
+        let brief = parse("腰不好，想练背")
+        #expect(brief.focus == ["背部"])
+        #expect(brief.avoid.contains { $0.contains("腰") })
+    }
+
+    @Test("没有不适时偏好照常识别")
+    func plainFocusStillWorks() {
+        #expect(parse("我想练肩").focus == ["肩部"])
+        #expect(parse("我想练肩").avoid.isEmpty)
+    }
+
+    @Test("连写的部位也能整体识别")
+    func compoundPartRecognized() {
+        let brief = parse("最近肩颈一直不舒服")
+        #expect(brief.focus.isEmpty)
+        #expect(brief.avoid.first?.contains("肩") == true)
+    }
+}

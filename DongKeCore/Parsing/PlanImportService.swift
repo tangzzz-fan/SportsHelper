@@ -8,6 +8,40 @@ public enum PlanImportService {
         memory: AliasMemory = .empty,
         exercises: UserExerciseCatalog = .empty
     ) -> ParsedPlanDraft {
+        normalized(parseRaw(text, memory: memory, exercises: exercises))
+    }
+
+    private static func normalized(_ draft: ParsedPlanDraft) -> ParsedPlanDraft {
+        guard let plan = draft.plan else { return draft }
+        var fixed = draft
+        fixed.plan = renamed(plan)
+        return fixed
+    }
+
+    private static func renamed(_ plan: WorkoutPlan) -> WorkoutPlan {
+        var copy = plan
+        copy.days = plan.days.map { day in
+            var fixedDay = day
+            fixedDay.blocks = day.blocks.map { block in
+                var fixedBlock = block
+                fixedBlock.items = block.items.map { item in
+                    guard let entry = ExerciseLibrary.entry(for: item.catalogId) else { return item }
+                    var fixedItem = item
+                    fixedItem.name = entry.name
+                    return fixedItem
+                }
+                return fixedBlock
+            }
+            return fixedDay
+        }
+        return copy
+    }
+
+    private static func parseRaw(
+        _ text: String,
+        memory: AliasMemory = .empty,
+        exercises: UserExerciseCatalog = .empty
+    ) -> ParsedPlanDraft {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return ParsedPlanDraft(

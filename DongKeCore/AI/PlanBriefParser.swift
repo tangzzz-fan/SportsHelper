@@ -24,8 +24,8 @@ public enum PlanBriefParser {
         let sessionMinutes = parseSessionMinutes(text, unparsed: &unparsed)
         let equipment = parseEquipment(text, unparsed: &unparsed)
         let goal = parseGoal(text)
-        let focus = parseFocus(text)
         let avoid = parseAvoid(text)
+        let focus = parseFocus(text, avoiding: avoid)
 
         let hasSignal = weekdays != nil
             || daysPerWeek != nil
@@ -219,7 +219,8 @@ public enum PlanBriefParser {
         return nil
     }
 
-    private static func parseFocus(_ text: String) -> [String] {
+    private static func parseFocus(_ text: String, avoiding phrases: [String] = []) -> [String] {
+        let text = masking(phrases, in: text)
         let groups: [(String, [String])] = [
             ("手臂", ["手臂", "胳膊", "肱二头", "肱三头", "拜拜肉"]),
             ("胸部", ["胸部", "胸肌", "胸"]),
@@ -246,7 +247,9 @@ public enum PlanBriefParser {
     private static func parseAvoid(_ text: String) -> [String] {
         var result: [String] = []
 
-        for groups in matches("((?:膝盖|腰|腰椎|肩|肩膀|手腕|脚踝|肘|颈)(?:也|有点|有些|最近|一直)?\\s*(?:不好|疼|痛|不适|有伤|受伤))", in: text) {
+        let parts = BodyPart.avoidVocabulary.joined(separator: "|")
+        let symptoms = "不舒服|不好|有伤|受伤|拉伤|发麻|弹响|咯噔|疼|痛|不适|酸|僵|麻"
+        for groups in matches("((?:\(parts))(?:也|有点|有些|最近|一直|老是|总是|还)?\\s*(?:\(symptoms)))", in: text) {
             if let phrase = groups.first, phrase.isEmpty == false {
                 result.append(phrase)
             }
@@ -274,11 +277,32 @@ public enum PlanBriefParser {
         words.contains { text.contains($0) }
     }
 
+    private static func masking(_ phrases: [String], in text: String) -> String {
+        guard phrases.isEmpty == false else { return text }
+        let source = text as NSString
+        var ranges: [NSRange] = []
+        for phrase in phrases where phrase.isEmpty == false {
+            var search = NSRange(location: 0, length: source.length)
+            while search.length > 0 {
+                let found = source.range(of: phrase, options: [], range: search)
+                if found.location == NSNotFound { break }
+                ranges.append(found)
+                let next = found.location + max(1, found.length)
+                search = NSRange(location: next, length: source.length - next)
+            }
+        }
+        guard ranges.isEmpty == false else { return text }
+        let buffer = NSMutableString(string: text)
+        for range in ranges where NSMaxRange(range) <= buffer.length {
+            buffer.replaceCharacters(in: range, with: String(repeating: " ", count: range.length))
+        }
+        return buffer as String
+    }
+
     private static func firstLocation(of token: String, in text: String) -> Int? {
         let range = (text as NSString).range(of: token)
         return range.location == NSNotFound ? nil : range.location
     }
-
     private static func firstCapture(_ pattern: String, in text: String) -> String? {
         matches(pattern, in: text).first?.first
     }

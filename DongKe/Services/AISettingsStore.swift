@@ -42,13 +42,24 @@ final class AISettingsStore {
             try? secrets.store(key, for: keyAccount)
         }
         #endif
-        self.baseURL = defaults.string(forKey: baseURLKey) ?? ""
-        self.model = defaults.string(forKey: modelKey) ?? AIConfiguration.defaultModel
-        self.hasKey = secrets.secret(for: keyAccount)?.isEmpty == false
+        self.baseURL = defaults.string(forKey: baseURLKey) ?? AIDefaults.baseURL
+        self.model = defaults.string(forKey: modelKey) ?? Self.defaultModel
+        let stored = secrets.secret(for: keyAccount)
+        self.hasKey = stored?.isEmpty == false || AIDefaults.hasBuiltInKey
+    }
+
+    private static var defaultModel: String {
+        AIDefaults.model.isEmpty ? AIConfiguration.defaultModel : AIDefaults.model
+    }
+
+    var usesBuiltInKey: Bool {
+        (secrets.secret(for: keyAccount)?.isEmpty ?? true) && AIDefaults.hasBuiltInKey
     }
 
     var configuration: AIConfiguration {
-        AIConfiguration(baseURL: baseURL, model: model, apiKey: secrets.secret(for: keyAccount))
+        let stored = secrets.secret(for: keyAccount)
+        let key = (stored?.isEmpty == false) ? stored : (AIDefaults.hasBuiltInKey ? AIDefaults.apiKey : nil)
+        return AIConfiguration(baseURL: baseURL, model: model, apiKey: key)
     }
 
     var isConfigured: Bool {
@@ -58,17 +69,17 @@ final class AISettingsStore {
     func saveKey(_ raw: String) throws {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         try secrets.store(trimmed.isEmpty ? nil : trimmed, for: keyAccount)
-        hasKey = secrets.secret(for: keyAccount)?.isEmpty == false
+        hasKey = secrets.secret(for: keyAccount)?.isEmpty == false || AIDefaults.hasBuiltInKey
     }
 
     func clearKey() {
         try? secrets.store(nil, for: keyAccount)
-        hasKey = false
+        hasKey = AIDefaults.hasBuiltInKey
     }
 
     func reloadFromDisk() {
-        baseURL = defaults.string(forKey: baseURLKey) ?? ""
-        model = defaults.string(forKey: modelKey) ?? AIConfiguration.defaultModel
-        hasKey = secrets.secret(for: keyAccount)?.isEmpty == false
+        baseURL = defaults.string(forKey: baseURLKey) ?? AIDefaults.baseURL
+        model = defaults.string(forKey: modelKey) ?? Self.defaultModel
+        hasKey = secrets.secret(for: keyAccount)?.isEmpty == false || AIDefaults.hasBuiltInKey
     }
 }

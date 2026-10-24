@@ -1,6 +1,6 @@
 # 换机接手说明
 
-本文是给人看的交接单，不是规范。规范只有两份：`docs/FROZEN-BASELINE.md` 与 `docs/SPEC.md`。
+本文是给人看的交接单，不是规范。规范只有两份：`docs/FROZEN-BASELINE.md` 与 `docs/SPEC.md`。**主流程看 `docs/FLOW.md`**（唯一维护点，改入口或保存时机同步改它）。
 
 ## 1. 当前状态
 
@@ -180,6 +180,16 @@ xcrun simctl io booted screenshot /tmp/shot.png
 改 schema 时同步 `PlanSchemaJSON`：测试守了两件事——`$defs` 恰好 6 个、18 个 catalogId 全部出现在 prompt 与 schema 文本里；drift 会红。
 
 **未做**：401 / 429 / 超时的真实端点 E2E（本机沙箱出网白名单不放行任意外部域名）；Key 的「先验证再保存」也没做——保存不联网是刻意选择，401 时给「去改 Key」入口。
+
+### 内置 Key（临时，上架前必须清）
+
+`DongKeCore/AI/AIDefaults.swift` 从 `Bundle.main` 读 `ai-defaults.json`（由 `.env` 转换而来，**已被 gitignore**），用户没填 Key 时用它。三件事要记住：
+
+1. **这是为「说一句就能用」做的临时通道**，不是长期方案。它让 F10「用户自填 Key」和 AC-18/AC-19 的「缺 Key」分支同时失效——`hasKey` 恒为真。
+2. **JSON 文件随包分发，可以被 dump。** 上架前必须把 `ai-defaults.json` 从 bundle 里摘掉（或让 Key 字段为空），否则等于把 Key 送出去。
+3. 判定链路：`AISettingsStore.usesBuiltInKey` = 用户没填 且 包内有 Key。清掉包内 Key 后这条自动变假，不用改代码。
+
+**上架检查项：`sh ipa 解包后确认 Payload/DongKe.app/ai-defaults.json 不存在或 apiKey 为空`。**
 
 ## 6.3 训练执行的三条不变量
 
@@ -577,6 +587,128 @@ swiftc -O -o /tmp/icon-render Tools/IconRender/main.swift
 `NSPrivacyTracking` 为 false，`NSPrivacyTrackingDomains` 为空——没有任何追踪。
 
 **两条要人工过目**：一是 UserContent 这条申报的是「会发到用户自配端点」，如果将来加了自家服务端或统计 SDK，这条要跟着改；二是 App Store Connect 的「App 隐私」营养标签要和这份清单口径一致，别一边说收一边说不收。
+
+## 6.25 跑测试必须用 Python 包一层（2026-10-24）
+
+**症状**：`xcodebuild ... test` 把测试全跑完了，进程却不退出，无限打印
+
+```
+IDESchemeActionSDKRecord: operatingSystemBuild ... invalidDigitCount(94232)
+```
+
+测试其实 3 秒就跑完了，日志里 `Test run with 519 tests` 也在，但 `xcodebuild` 永远挂着。**Xcode 27 解析 5 位 build 号失败后进入死循环**，与本项目代码无关。
+
+**不要做的事**：
+
+- 别用 `timeout 200 xcodebuild ...` —— macOS 没有 GNU `timeout`，报 `command not found`，然后 grep 拿到空输出，**很容易被误读成「测试通过」**
+- 别因为「卡住」就怀疑模拟器、重启模拟器、重装 App——那是把工具链问题当环境问题
+- 别只看 `grep -c "error:"` 等于 0 就收工
+
+**做法**：分两步 + Python 控进程 + 从日志判读。
+
+```bash
+# ① 单独编译测试包（这条会正常退出）
+xcodebuild -project DongKe.xcodeproj -scheme DongKe \
+  -destination 'id=D16A8318-973E-45CE-936B-94F5FFE3E0EC' \
+  -derivedDataPath DerivedData build-for-testing \
+  OTHER_SWIFT_FLAGS=-disable-sandbox 2>&1 | grep -E "error:|BUILD"
+```
+
+```python
+# ② Python 跑、超时 kill、结果从日志读
+import subprocess
+cmd = ["xcodebuild", "-project", "DongKe.xcodeproj", "-scheme", "DongKe",
+       "-destination", "id=D16A8318-973E-45CE-936B-94F5FFE3E0EC",
+       "-derivedDataPath", "DerivedData",
+       "-only-testing:DongKeCoreTests", "test-without-building"]
+with open('/tmp/dktest.log', 'w') as f:
+    p = subprocess.Popen(cmd, stdout=f, stderr=subprocess.STDOUT)
+    try:
+        p.wait(timeout=90); print("正常退出", p.returncode)
+    except subprocess.TimeoutExpired:
+        p.kill(); p.wait(); print("超时结束（日志已保留）")
+```
+
+```bash
+# ③ 判读只认这三行，不认退出码
+grep -E "Test run with|✘ Test \".*\" failed|error:" /tmp/dktest.log | tail -15
+```
+
+**为什么这招管用**：`test-without-building` 省掉了编译期，从启动到跑完不到 10 秒；90 秒够它跑完，也够在卡死时及时止损。`kill()` 之后再读日志，日志已经落盘，结果完整。
+
+**`OTHER_SWIFT_FLAGS=-disable-sandbox` 不是可选项**（2026-10-24 复测）。省掉它，`DongKeCore` 会报一串：
+
+```
+external macro implementation type 'ObservationMacros.ObservableMacro' could not be found for macro 'Observable()';
+'/Applications/Xcode.app/.../swift-plugin-server' produced malformed response
+```
+
+出处是 `VoiceInputMachine.swift` 的 `@Observable`。**绕过外层沙盒重跑同样失败**——挡的是 Swift 宏插件自己的 `sandbox-exec`，不是 WorkBuddy 的沙盒。所以别再往「权限」方向查，直接加参数。
+
+**为什么值得固化成规定**：这次排查花了三轮才定位——先怀疑模拟器（重启了一次）、再怀疑 `timeout`、最后才想到是 xcodebuild 自己在刷日志。**同一个「卡住」对应四种原因，它就不是判据**。规矩定在这里，下次直接照抄，不再重新怀疑一遍。
+
+同一套写法推广到所有会挂住的长命令：`xcrun simctl`、真机 `devicectl`、`swift test`。
+
+## 6.26 动作图示的真实来源（2026-10-24）
+
+**`ARCHITECTURE.md` §12 写的「自绘参数化骨架」不是现在的实现**，别照那节去做。实际用的是开源 SVG 素材转 path，那节留作早期方案存档。
+
+| 项 | 事实 |
+|---|---|
+| 素材源 | [bryllim/workout-guide](https://github.com/bryllim/workout-guide)，源自 Everkinetic，**CC BY-SA 4.0** |
+| 本地副本 | `.scratch/figure-and-glass/assets/workout-guide-main/packages/workout-guide/assets`（302 个动作，每个 3 帧） |
+| 生成器 | `.scratch/figure-and-glass/tools/gen_figures.py`，**手工跑，不进构建** |
+| 产物 | `DongKeCore/Figure/GeneratedFigureData.swift`（3MB，已入库，别手改） |
+| 覆盖 | 动作库 39 个 → **31 个有专属图**，8 个回落到 `_generic` |
+
+补一个动作的图示，只需在 `gen_figures.py` 的 `MAPPING` 加一行 `catalogId: 上游 slug`，然后：
+
+```bash
+python3 .scratch/figure-and-glass/tools/gen_figures.py
+```
+
+**slug 必须按名字在 302 个目录里搜出来核对，不能凭中文名猜。** 这次就有两条踩坑：
+
+| 踩的坑 | 实际 | 后果 |
+|---|---|---|
+| `march_in_place`（原地踏步）→ `walking` | 素材画的是**跑步机** | 客厅原地踏步的用户看到跑步机会以为走错页面，已撤回 |
+| `hamstring_stretch`（腘绳肌拉伸） | 素材是**站姿脚放高处**，不是坐姿 | 文字已改成站姿，图示是权威、文字服从它 |
+
+### 八个没有素材的动作
+
+`hip_circle` / `scapular_circle` / `ankle_circle` / `neck_stretch` / `thread_needle` / `back_stretch` / `dumbbell_floor_press` / `march_in_place`。302 个素材里用宽泛关键词（neck / trap / circle / floor / thread / march）全搜过，确实没有。
+
+**不要用近似素材顶替**：这 8 个里每一个的"最近候选"都会传达错误姿势（跑步机、卧推图给地板卧推、婴儿式给仰卧抱膝）。
+
+**也不要手绘。** 做过样张对比，手绘线稿与 Everkinetic 的精细解剖图差一个量级，同屏会出现两套视觉语言，用户会认为 app 没做完。真要补只有两条路：找同源素材，或者按 `FIGURE-STYLE.md` §2.1 的实测常数描线复刻。**「Everkinetic 完整库比 bryllim 大」这个期待已经证伪**——根目录的 `everkinetic-data/` 就是那个「完整库」，277 个动作，是 bryllim 的上游 raster 母本；8 个缺图一个也补不上（见 `FIGURE-STYLE.md` §6）。
+
+UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页写「这个动作暂时没有示意图，按下面的要点做」，不再写「轻点图示可播放」。
+
+根目录的 `everkinetic-data/`（27 MB）**不入库**，已写进 `.gitignore`：它是离线参考，不是 App 资源。仓库自带的 LICENSE 是 GPL-3.0，而上游 `everkinetic/data` 才是 CC BY-SA 4.0——**别把原始文件复制进 bundle**。要矢量就去上游的 `dist/svg/`。
+
+## 6.27 动作 id 合并表（2026-10-24）
+
+**为什么现在就要有**：动作库 39 → 几百，id 一定会动。改一个 id，`planJSON` 里的 `catalogId`、`AliasMemory` 里的记忆、`regressionId` 三处会静默指向不存在的条目——不崩、不报错，只是详情页打不开、图示退占位、低阶替代点了没反应。这类问题上线后才被发现，代价最高。
+
+**做法**：`DongKeCore/Models/ExerciseMergeMap.swift`。语义是「旧 id 折到现存 id」，当前表为空，等真改 id 时再补。
+
+三处与参考实现（GymMane 的 `kMergedExercises`）不同，都是踩过它的问题：
+
+| | GymMane | 我们 |
+|---|---|---|
+| 链式 A→B→C | 只查一层，A 停在 B | init 时算好闭包，A 直接到 C |
+| 成环 A→B→A | 不检测（靠人工保证扁平） | 原样返回 + `cycles` 报出 |
+| 批量去重 | 遍历时顺手跳过重复 | `merging()` 保首次出现顺序 |
+
+接入点只有两个：`ExerciseLibrary.entry(for:merging:)` 和 `ExerciseAliasResolver.match(...)`。**不要在调用点各写一遍映射**，否则漏一处就等于没做。
+
+**护栏测试**（`ExerciseMergeMapTests`，9 条）：表里每条的目标必须在 `ExerciseLibrary.identifiers` 内、`cycles` 必须为空。这两条现在是空真，等表被填上就立刻生效。
+
+**参考材料**：`docs/specs/exercise-pool-crosswalk.md` 记了 GymMane 448 条动作与我们 39 条的对照，以及「能挪什么、不能挪什么」。三条要点：
+
+- 动作名称/肌群/器械/难度是事实性数据，可用；`steps` 英文指导语是 CC BY-SA 表达性内容，**不要照抄**
+- 388 张图里 300 张来自我们已有的 bryllim 302，剩 88 张全是器械向——**图示没有增量**
+- 448 条**一条中文都没有**，扩库的成本大头是写中文要点，不是拿数据
 
 ## 7. 换机后容易踩的坑
 

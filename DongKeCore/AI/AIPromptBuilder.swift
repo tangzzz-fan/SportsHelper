@@ -33,10 +33,11 @@ public enum AIPromptBuilder {
         1 所有字段必须出现；没有内容时字符串填空串，数组填 []，数值填 0；禁止出现 null。
         2 days 固定 7 项，dayIndex 1 到 7 对应周一到周日；休息日也要有完整对象，isRestDay 为 true、blocks 为 []。
         3 meta.daysPerWeek 必须等于 isRestDay 为 false 的天数。
-        4 catalogId 只能取以下值之一：\(catalogIds)；库外动作用 custom_ 前缀。
-        5 单组目标三选一：type 为 reps 时 value 是次数，duration_sec 时是秒数，distance_m 时是米数。
-        6 notes 写动作要点，不超过 60 字，不要写营销文案。
-        7 居家场景，默认无器械；需要器械时必须使用用户已声明的器械。
+        4 catalogId 只能取以下值之一（括号里是名字与用途）：\(catalogList)。库里确实没有的动作才用 custom_ 前缀。
+        5 区块取词：warmup 只选用途含「热身」的动作，2–3 个，每个 30–60 秒；main 选用途含「力量」的动作；cooldown 只选用途含「拉伸」的动作，2–3 个，每个 30 秒。不要把力量动作放进 warmup 或 cooldown。
+        6 单组目标三选一：type 为 reps 时 value 是次数，duration_sec 时是秒数，distance_m 时是米数。热身与拉伸用 duration_sec。
+        7 notes 写动作要点，不超过 60 字，不要写营销文案。
+        8 居家场景，默认无器械；需要器械时必须使用用户已声明的器械。
         """
     }
 
@@ -81,8 +82,16 @@ public enum AIPromptBuilder {
         return lines.joined(separator: "\n")
     }
 
-    private static var catalogIds: String {
-        ExerciseLibrary.all.map(\.id).joined(separator: ", ")
+    private static var catalogList: String {
+        ExerciseLibrary.all
+            .map { entry in
+                let purposes = ExercisePurpose.allCases
+                    .filter { entry.purposes.contains($0) }
+                    .map(\.chineseName)
+                    .joined(separator: "、")
+                return "\(entry.id)(\(entry.name)/\(purposes))"
+            }
+            .joined(separator: "，")
     }
 
     private static func weightText(_ weight: Double) -> String {

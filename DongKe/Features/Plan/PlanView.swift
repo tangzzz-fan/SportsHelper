@@ -9,6 +9,8 @@ struct PlanView: View {
     @Environment(NotificationService.self) private var notifications
     @State private var showLibrary = false
     @State private var showImport = false
+    @State private var showAI = false
+    @State private var selectedDay: PlanDay?
 
     init(plan: WorkoutPlan) {
         self.plan = plan
@@ -74,6 +76,10 @@ struct PlanView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 10)
 
+                    aiEntry
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+
                     HStack(spacing: 10) {
                         entryButton(title: "动作库", symbol: Icons.library) {
                             showLibrary = true
@@ -94,6 +100,23 @@ struct PlanView: View {
         .sheet(isPresented: $showLibrary) {
             ExerciseLibraryView { showLibrary = false }
         }
+        .sheet(item: $selectedDay) { day in
+            PlanDayDetailView(day: day)
+        }
+        .sheet(isPresented: $showAI) {
+            QuickAIPlanSheet { saved in
+                planStore.save(saved)
+                showAI = false
+                Task {
+                    if notifications.status == .authorized || notifications.status == .provisional {
+                        await notifications.reschedule(
+                            plan: saved,
+                            settings: ReminderSettingsStore.shared.settings
+                        )
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showImport) {
             ImportView { imported in
                 planStore.save(imported)
@@ -108,6 +131,34 @@ struct PlanView: View {
                 }
             }
         }
+    }
+
+    private var aiEntry: some View {
+        Button {
+            showAI = true
+        } label: {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("说一句，让 AI 排计划")
+                        .font(Typography.rowTitle)
+                        .foregroundStyle(.primary)
+                    Text("例如：最近肩颈不适，每周三次，每次 30 分钟，有哑铃")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: Icons.disclosure)
+                    .font(Typography.capsLabel)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableGlassStyle())
+        .glassSurface(radius: Theme.Radius.card)
+        .accessibilityIdentifier(A11y.Plan.aiEntry)
     }
 
     private func entryButton(title: String, symbol: String, action: @escaping () -> Void) -> some View {
@@ -129,43 +180,57 @@ struct PlanView: View {
     private func row(_ weekday: Weekday, _ day: PlanDay?) -> some View {
         let isToday = weekday == todayWeekday
         let isTraining = !(day?.isRestDay ?? true)
-        return HStack(spacing: 12) {
-            Text(weekday.chineseName)
-                .font(Typography.secondary.weight(isToday ? .semibold : .regular))
-                .foregroundStyle(isToday ? Theme.accent(for: colorScheme) : .secondary)
-                .frame(minWidth: 44, alignment: .leading)
-                .fixedSize(horizontal: true, vertical: false)
+        return Button {
+            selectedDay = day
+        } label: {
+            HStack(spacing: 12) {
+                Text(weekday.chineseName)
+                    .font(Typography.secondary.weight(isToday ? .semibold : .regular))
+                    .foregroundStyle(isToday ? Theme.accent(for: colorScheme) : .secondary)
+                    .frame(minWidth: 44, alignment: .leading)
+                    .fixedSize(horizontal: true, vertical: false)
 
-            Circle()
-                .fill(isTraining ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.15))
-                .frame(width: 6, height: 6)
+                Circle()
+                    .fill(isTraining ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.15))
+                    .frame(width: 6, height: 6)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(day?.title ?? "休息")
-                    .font(Typography.rowTitle.weight(isTraining ? .medium : .regular))
-                    .foregroundStyle(isTraining ? .primary : .secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let time = day?.scheduledTime, isTraining {
-                    Text(String(format: "%02d:%02d · 约 %d 分钟", time.hour, time.minute, day?.estimatedMinutes ?? 0))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(day?.title ?? "休息")
+                        .font(Typography.rowTitle.weight(isTraining ? .medium : .regular))
+                        .foregroundStyle(isTraining ? .primary : .secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    if let time = day?.scheduledTime, isTraining {
+                        Text(String(format: "%02d:%02d · 约 %d 分钟", time.hour, time.minute, day?.estimatedMinutes ?? 0))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .layoutPriority(1)
+
+                Spacer(minLength: 8)
+
+                if isToday {
+                    Text("今天")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.halo(for: colorScheme), in: Capsule())
+                }
+
+                if day != nil {
+                    Image(systemName: Icons.disclosure)
+                        .font(Typography.capsLabel)
+                        .foregroundStyle(.tertiary)
                 }
             }
-            .layoutPriority(1)
-
-            Spacer(minLength: 8)
-
-            if isToday {
-                Text("今天")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.accent(for: colorScheme))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Theme.halo(for: colorScheme), in: Capsule())
-            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 11)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
+        .buttonStyle(PressableGlassStyle())
+        .disabled(day == nil)
+        .accessibilityIdentifier("\(A11y.Plan.dayRow).\(weekday.rawValue)")
+        .accessibilityHint(day?.isRestDay == true ? "休息日" : "查看当天动作")
     }
 }

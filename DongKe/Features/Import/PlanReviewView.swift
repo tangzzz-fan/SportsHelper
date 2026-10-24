@@ -24,7 +24,9 @@ struct PlanReviewView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(UserExerciseStore.self) private var userExercises
+    @Environment(ProfileStore.self) private var profileStore
     @State private var editing: PlanEditRow?
+    @State private var soreParts: Set<BodyPart> = []
     private let memo = AliasMemoStore()
 
     init(draft: ParsedPlanDraft, plan: WorkoutPlan, onSave: @escaping (WorkoutPlan) -> Void) {
@@ -47,11 +49,17 @@ struct PlanReviewView: View {
                 header
 
                 if !blocking.isEmpty {
-                    issueBanner
+                    PlanIssueBanner(issues: blocking)
                 }
 
                 if draft.assumptions.isEmpty == false {
                     assumptionsCard
+                }
+
+                PlanSorePicker(soreParts: $soreParts)
+
+                if soreParts.isEmpty == false {
+                    PlanSafetyCard(issues: safetyIssues, plan: plan, soreParts: soreParts)
                 }
 
                 ForEach(trainingDays) { day in
@@ -63,6 +71,13 @@ struct PlanReviewView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+
+                if soreParts.isEmpty == false {
+                    Text(PlanSafetyChecker.disclaimer)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
@@ -70,6 +85,9 @@ struct PlanReviewView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("校对")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            soreParts = BodyPartDetector.parts(in: profileStore.profile?.injuries ?? "")
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("保存") {
@@ -159,20 +177,8 @@ struct PlanReviewView: View {
         .background(Theme.halo(for: colorScheme).opacity(0.7), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private var issueBanner: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("有 \(blocking.count) 处需要先改掉")
-                .font(.footnote.weight(.semibold))
-            ForEach(blocking) { issue in
-                Text("· \(issue.message)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    private var safetyIssues: [SafetyIssue] {
+        PlanSafetyChecker.check(plan, soreParts: soreParts)
     }
 
     private func dayCard(_ day: PlanDay) -> some View {

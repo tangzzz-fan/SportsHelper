@@ -114,12 +114,20 @@ public struct ExerciseFigure: Equatable, Sendable {
     public var motion: FigureMotion
     public var bounds: FigureBounds
     public var frames: [FigureFrame]
+    public var stroked: Bool
 
-    public init(catalogId: String, motion: FigureMotion, bounds: FigureBounds, frames: [FigureFrame]) {
+    public init(
+        catalogId: String,
+        motion: FigureMotion,
+        bounds: FigureBounds,
+        frames: [FigureFrame],
+        stroked: Bool = false
+    ) {
         self.catalogId = catalogId
         self.motion = motion
         self.bounds = bounds
         self.frames = frames
+        self.stroked = stroked
     }
 }
 
@@ -136,11 +144,17 @@ public struct FigureLibrary: Sendable {
         self.fallback = fallback
     }
 
-    public func figure(for catalogId: String) -> ExerciseFigure {
-        source.figure(for: catalogId) ?? fallback
+    public func figure(for catalogId: String, merging map: ExerciseMergeMap = .current) -> ExerciseFigure {
+        source.figure(for: map.resolve(catalogId)) ?? fallback
     }
 
     public static let bundled = FigureLibrary(source: BundledVectorFigures(), fallback: BundledVectorFigures.generic)
+}
+
+public extension FigureLibrary {
+    func hasArtwork(for catalogId: String, merging map: ExerciseMergeMap = .current) -> Bool {
+        figure(for: catalogId, merging: map).catalogId != BundledVectorFigures.generic.catalogId
+    }
 }
 
 public struct FigureSize: Equatable, Sendable {
@@ -185,6 +199,7 @@ struct FigureRecord: Sendable {
     var motion: FigureMotion
     var bounds: FigureBounds
     var frames: [String]
+    var stroked: Bool = false
 }
 
 struct BundledVectorFigures: FigureSource {
@@ -217,7 +232,8 @@ extension FigureRecord {
             catalogId: catalogId,
             motion: motion,
             bounds: bounds,
-            frames: frames.map { FigureFrame.vector(VectorPath(dsl: $0)) }
+            frames: frames.map { FigureFrame.vector(VectorPath(dsl: $0)) },
+            stroked: stroked
         )
     }
 }

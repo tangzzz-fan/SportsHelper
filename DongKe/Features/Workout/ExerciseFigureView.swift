@@ -65,9 +65,23 @@ struct ExerciseFigureView: View {
 
             ZStack {
                 ForEach(Array(figure.frames.enumerated()), id: \.offset) { index, frame in
-                    FigureShape(frame: frame, fit: fit)
-                        .fill(Color.primary, style: FillStyle(eoFill: true))
-                        .opacity(index == playback.displayedIndex ? (isPlaceholder ? 0.16 : 1) : 0)
+                    Group {
+                        if figure.stroked {
+                            FigureShape(frame: frame, fit: fit)
+                                .stroke(
+                                    Color.primary,
+                                    style: StrokeStyle(
+                                        lineWidth: max(0.9, figureSize.width * 0.0084),
+                                        lineCap: .round,
+                                        lineJoin: .round
+                                    )
+                                )
+                        } else {
+                            FigureShape(frame: frame, fit: fit)
+                                .fill(Color.primary, style: FillStyle(eoFill: true))
+                        }
+                    }
+                    .opacity(index == playback.displayedIndex ? (isPlaceholder ? 0.16 : 1) : 0)
                 }
             }
             .frame(width: figureSize.width, height: figureSize.height)

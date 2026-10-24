@@ -4,6 +4,8 @@
 .env
 .env.*
 !.env.example
+# 由 .env 转换来的内置默认配置，含 Key，不进 git
+DongKe/Resources/ai-defaults.json
 
 DerivedData/
 .build/
@@ -11,3 +13,10 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 .scratch/*/assets/
+
+# 图标探索的预览图，9MB，结论已落进 AppIcon 与 HANDOFF §6.24
+.scratch/icon-explore/
+
+# Everkinetic 原始 raster 库：27MB 的离线参考，不是 App 资源
+# 用法与许可风险见 docs/FIGURE-STYLE.md §6
+everkinetic-data/

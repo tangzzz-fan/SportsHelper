@@ -47,13 +47,17 @@ struct FigureLibraryTests {
         #expect(figure.frames.count == 1)
     }
 
-    @Test("all eighteen whitelist actions are backed by real artwork")
+    @Test("all thirty-one whitelist actions are backed by real artwork")
     func whitelistCoverage() {
         let whitelist = [
             "squat", "push_up", "plank", "lunge", "glute_bridge", "dumbbell_row",
             "shoulder_press", "jumping_jack", "dead_bug", "wall_sit", "side_plank",
             "calf_raise", "superman", "crunch", "mountain_climber", "high_knees",
-            "bird_dog", "russian_twist"
+            "bird_dog", "russian_twist",
+            "arm_circle", "cat_cow", "quad_stretch",
+            "hamstring_stretch", "hip_flexor_stretch", "chest_stretch", "calf_stretch",
+            "child_pose", "butterfly", "dumbbell_bench_press", "dumbbell_rdl",
+            "lateral_raise", "biceps_curl"
         ]
         for id in whitelist {
             let figure = FigureLibrary.bundled.figure(for: id)
@@ -63,11 +67,30 @@ struct FigureLibraryTests {
         }
     }
 
+    @Test("上游素材确实没有的八个动作走占位图，不假装有")
+    func unmappedIdsFallBack() {
+        let unmapped = [
+            "hip_circle", "scapular_circle", "ankle_circle",
+            "neck_stretch", "thread_needle", "back_stretch", "dumbbell_floor_press",
+            "march_in_place"
+        ]
+        for id in unmapped {
+            #expect(FigureLibrary.bundled.figure(for: id).catalogId == "_generic", "\(id) 不该声称有专属图")
+        }
+    }
+
     @Test("isometric holds are declared explicitly, not inferred from duration type")
     func staticHoldsAreExplicit() {
         let holds = ["plank", "wall_sit", "side_plank"]
         for id in holds {
             #expect(FigureLibrary.bundled.figure(for: id).motion == .hold, "\(id) should hold")
+        }
+        let stretches = [
+            "quad_stretch", "hamstring_stretch", "hip_flexor_stretch", "chest_stretch",
+            "calf_stretch", "child_pose", "butterfly"
+        ]
+        for id in stretches {
+            #expect(FigureLibrary.bundled.figure(for: id).motion == .hold, "\(id) 是静态拉伸，应保持单帧")
         }
         let dynamicButDurationTyped = ["mountain_climber", "high_knees", "jumping_jack"]
         for id in dynamicButDurationTyped {
@@ -75,10 +98,10 @@ struct FigureLibraryTests {
         }
     }
 
-    @Test("generated dataset holds nineteen records, all with three frames")
+    @Test("generated dataset holds thirty-two records, all with three frames")
     func generatedDatasetGate() {
         let records = GeneratedFigureData.records
-        #expect(records.count == 19)
+        #expect(records.count == 32)
         #expect(records.filter { $0.catalogId == "_generic" }.count == 1)
         let generic = records.first { $0.catalogId == "_generic" }
         #expect(generic?.frames.count == 1)

@@ -58,7 +58,29 @@ public enum ExerciseAliasResolver {
         ("卷腹", "crunch"), ("半程仰卧起坐", "crunch"), ("crunch", "crunch"), ("abdominal crunch", "crunch"),
         ("深蹲", "squat"), ("徒手深蹲", "squat"), ("自重深蹲", "squat"), ("空气深蹲", "squat"),
         ("徒手蹲", "squat"), ("下蹲", "squat"), ("蹲起", "squat"),
-        ("squat", "squat"), ("air squat", "squat")
+        ("squat", "squat"), ("air squat", "squat"),
+
+        ("手臂绕环", "arm_circle"), ("臂绕环", "arm_circle"), ("绕臂", "arm_circle"), ("arm circle", "arm_circle"),
+        ("原地踏步", "march_in_place"), ("踏步", "march_in_place"), ("原地走", "march_in_place"), ("march in place", "march_in_place"),
+        ("髋绕环", "hip_circle"), ("转髋", "hip_circle"), ("骨盆绕环", "hip_circle"), ("hip circle", "hip_circle"),
+        ("肩胛绕环", "scapular_circle"), ("绕肩", "scapular_circle"), ("肩胛画圈", "scapular_circle"), ("scapular circle", "scapular_circle"),
+        ("踝绕环", "ankle_circle"), ("转脚踝", "ankle_circle"), ("脚踝绕环", "ankle_circle"), ("ankle circle", "ankle_circle"),
+        ("猫牛式", "cat_cow"), ("猫牛", "cat_cow"), ("猫式牛式", "cat_cow"), ("cat cow", "cat_cow"), ("cat-cow", "cat_cow"),
+        ("股四头肌拉伸", "quad_stretch"), ("股四头拉伸", "quad_stretch"), ("大腿前侧拉伸", "quad_stretch"), ("quad stretch", "quad_stretch"),
+        ("腘绳肌拉伸", "hamstring_stretch"), ("腿后侧拉伸", "hamstring_stretch"), ("大腿后侧拉伸", "hamstring_stretch"), ("hamstring stretch", "hamstring_stretch"),
+        ("髋前侧拉伸", "hip_flexor_stretch"), ("髂腰肌拉伸", "hip_flexor_stretch"), ("跪姿髋屈肌拉伸", "hip_flexor_stretch"), ("hip flexor stretch", "hip_flexor_stretch"),
+        ("胸大肌拉伸", "chest_stretch"), ("胸肩拉伸", "chest_stretch"), ("靠墙胸部拉伸", "chest_stretch"), ("chest stretch", "chest_stretch"),
+        ("背部拉伸", "back_stretch"), ("抱膝拉伸", "back_stretch"), ("下背拉伸", "back_stretch"), ("back stretch", "back_stretch"),
+        ("颈肩拉伸", "neck_stretch"), ("颈部拉伸", "neck_stretch"), ("斜方肌拉伸", "neck_stretch"), ("neck stretch", "neck_stretch"),
+        ("小腿拉伸", "calf_stretch"), ("跟腱拉伸", "calf_stretch"), ("腓肠肌拉伸", "calf_stretch"), ("calf stretch", "calf_stretch"),
+        ("婴儿式", "child_pose"), ("婴儿式放松", "child_pose"), ("孩童式", "child_pose"), ("child pose", "child_pose"),
+        ("穿针式", "thread_needle"), ("穿针", "thread_needle"), ("开书式胸椎旋转", "thread_needle"), ("thread the needle", "thread_needle"),
+        ("蝴蝶式", "butterfly"), ("蝴蝶坐", "butterfly"), ("束角式", "butterfly"), ("butterfly stretch", "butterfly"),
+        ("哑铃卧推", "dumbbell_bench_press"), ("哑铃推胸", "dumbbell_bench_press"), ("dumbbell bench press", "dumbbell_bench_press"),
+        ("哑铃地板卧推", "dumbbell_floor_press"), ("dumbbell floor press", "dumbbell_floor_press"), ("floor press", "dumbbell_floor_press"),
+        ("哑铃罗马尼亚硬拉", "dumbbell_rdl"), ("dumbbell romanian deadlift", "dumbbell_rdl"), ("rdl", "dumbbell_rdl"),
+        ("哑铃侧平举", "lateral_raise"), ("dumbbell lateral raise", "lateral_raise"), ("lateral raise", "lateral_raise"),
+        ("哑铃弯举", "biceps_curl"), ("dumbbell curl", "biceps_curl"), ("biceps curl", "biceps_curl")
     ]
 
     public static let modifiers: [String] = [
@@ -76,7 +98,7 @@ public enum ExerciseAliasResolver {
 
         if let remembered = memory.catalogId(for: rawName) {
             return ExerciseMatch(
-                catalogId: remembered,
+                catalogId: ExerciseMergeMap.current.resolve(remembered),
                 alias: rawName.trimmingCharacters(in: .whitespacesAndNewlines),
                 modifier: nil,
                 source: .memory
@@ -85,7 +107,7 @@ public enum ExerciseAliasResolver {
 
         guard let hit = aliasHit(name) else { return nil }
         return ExerciseMatch(
-            catalogId: hit.id,
+            catalogId: ExerciseMergeMap.current.resolve(hit.id),
             alias: hit.alias,
             modifier: uncoveredModifier(in: name, alias: normalize(hit.alias)),
             source: .alias

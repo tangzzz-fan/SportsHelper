@@ -5,8 +5,6 @@ public enum PlanGenerator {
 
     static let catalog: [CatalogItem] = PlanCatalog.items
 
-    static let blockedByInjury: [(keywords: [String], ids: Set<String>)] = PlanCatalog.blockedByInjury
-
     public static func blockedCatalogIds(for injuries: String) -> Set<String> {
         PlanCatalog.blockedIds(for: injuries)
     }

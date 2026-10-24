@@ -31,7 +31,9 @@ struct AISettingsCard: View {
 
             input(
                 title: "API Key",
-                prompt: store.hasKey ? "已保存，输入新的可覆盖" : "sk-…",
+                prompt: store.usesBuiltInKey
+                    ? "正在用 app 内置的 Key，填新的可覆盖"
+                    : (store.hasKey ? "已保存，输入新的可覆盖" : "sk-…"),
                 text: $keyDraft,
                 isSecure: true
             )
@@ -45,7 +47,9 @@ struct AISettingsCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("Key 存在本机钥匙串，不上传。只有你主动点「用 AI 生成」时才会把档案与要求发给你填的这个服务；其余功能离线可用。")
+            Text(store.usesBuiltInKey
+                 ? "现在用的是 app 内置的 Key，只有你主动点「用 AI 生成」时才会把档案与要求发过去。填自己的 Key 就只走你自己的账户。"
+                 : "Key 存在本机钥匙串，不上传。只有你主动点「用 AI 生成」时才会把档案与要求发给你填的这个服务；其余功能离线可用。")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -60,7 +64,7 @@ struct AISettingsCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("AI 直连")
                     .font(Typography.rowTitle)
-                Text("OpenAI 兼容接口，自己填地址与 Key")
+                Text(store.usesBuiltInKey ? "已内置 DeepSeek，直接可用；也可以换成自己的接口" : "OpenAI 兼容接口，自己填地址与 Key")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -116,11 +120,11 @@ struct AISettingsCard: View {
                 in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
             )
 
-            if store.hasKey {
+            if store.hasKey, store.usesBuiltInKey == false {
                 Button {
                     store.clearKey()
                     keyDraft = ""
-                    feedback = "已清除 API Key"
+                    feedback = "已清除，回到 app 内置的 Key"
                 } label: {
                     Text("清除 Key")
                         .font(.subheadline.weight(.medium))
