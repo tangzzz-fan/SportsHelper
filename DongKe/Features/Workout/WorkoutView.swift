@@ -10,6 +10,8 @@ struct WorkoutView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showSkipOptions = false
     @State private var showDowngradeOptions = false
+    @State private var bonusReps = 0
+    @State private var effort: Int?
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -128,6 +130,10 @@ struct WorkoutView: View {
             guard token > 0 else { return }
             Haptics.setTimeUp()
         }
+        .onChange(of: session.stepIndex) { _, _ in
+            bonusReps = 0
+            effort = nil
+        }
         .onAppear(perform: startVoiceIfNeeded)
         .onDisappear(perform: stopVoice)
         .onChange(of: scenePhase) { _, _ in
@@ -216,6 +222,73 @@ struct WorkoutView: View {
         }
     }
 
+    private var completeButtonTitle: String {
+        guard bonusReps > 0, let target = session.currentTarget else { return "完成本组" }
+        return "完成 \(target.value + bonusReps) 次"
+    }
+
+    private var bonusRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("比目标多做几个")
+                .font(Typography.capsLabel)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                ForEach(0...3, id: \.self) { value in
+                    chip(value == 0 ? "刚好" : "+\(value)", on: bonusReps == value) {
+                        bonusReps = value
+                    }
+                    .accessibilityIdentifier(A11y.Workout.bonusReps(value))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var effortRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("这组还剩几次力气？不选也行")
+                .font(Typography.capsLabel)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                ForEach(1...5, id: \.self) { level in
+                    chip(effortLabel(level), on: effort == level) {
+                        effort = effort == level ? nil : level
+                    }
+                    .accessibilityIdentifier(A11y.Workout.effort(level))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func effortLabel(_ level: Int) -> String {
+        switch level {
+        case 1: "很轻松"
+        case 2: "还能 3 次"
+        case 3: "还能 2 次"
+        case 4: "还能 1 次"
+        default: "已经力竭"
+        }
+    }
+
+    private func chip(_ text: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(text)
+                .font(Typography.capsLabel.weight(.medium))
+                .foregroundStyle(on ? Theme.callToActionInk(for: colorScheme) : Color.primary.opacity(0.72))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 9)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(
+                    on ? Theme.accent(for: colorScheme) : Color.primary.opacity(0.07),
+                    in: Capsule()
+                )
+                .contentShape(Capsule())
+        }
+        .buttonStyle(PressableGlassStyle())
+    }
+
     private var controlDock: some View {
         VStack(spacing: 8) {
             setCounterText
@@ -229,10 +302,24 @@ struct WorkoutView: View {
                     .padding(.top, 6)
             }
 
+            if session.acceptsBonusReps {
+                bonusRow
+                    .padding(.top, 12)
+            }
+
+            if session.isLastSetOfDay {
+                effortRow
+                    .padding(.top, 10)
+            }
+
             Button {
-                session.completeSet()
+                let extra = bonusReps
+                let rated = effort
+                bonusReps = 0
+                effort = nil
+                session.completeSet(bonus: extra, rpe: rated)
             } label: {
-                Text("完成本组")
+                Text(completeButtonTitle)
                     .font(Typography.buttonLabel)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)

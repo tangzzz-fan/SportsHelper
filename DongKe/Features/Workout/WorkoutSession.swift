@@ -74,6 +74,23 @@ final class WorkoutSession: Identifiable {
         return flow.setCounts[id] ?? 1
     }
 
+    var currentTarget: SetTarget? {
+        guard case let .set(_, _, target, _)? = currentStep else { return nil }
+        return target
+    }
+
+    var acceptsBonusReps: Bool {
+        currentTarget?.type == .reps
+    }
+
+    var isLastSetOfDay: Bool {
+        guard case .set? = currentStep else { return false }
+        return !flow.steps.dropFirst(stepIndex + 1).contains { step in
+            if case .set = step { return true }
+            return false
+        }
+    }
+
     var completedSets: Int {
         logs.filter { $0.status != .skipped }.count
     }

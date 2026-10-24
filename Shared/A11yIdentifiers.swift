@@ -25,6 +25,8 @@ enum A11y {
         static let setCountdown = "workout.setCountdown"
         static let downgrade = "workout.downgrade"
         static let downgradeHalf = "workout.downgrade.half"
+        static func bonusReps(_ value: Int) -> String { "workout.bonus.\(value)" }
+        static func effort(_ level: Int) -> String { "workout.effort.\(level)" }
         static let skipReasonNoTime = "workout.skipReason.noTime"
         static let skipRest = "workout.rest.skip"
         static let summaryTitle = "workout.summary.title"

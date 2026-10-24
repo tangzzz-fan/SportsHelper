@@ -58,19 +58,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.core.tests
         GENERATE_INFOPLIST_FILE: YES
-  DongKeUITests:
-    type: bundle.ui-testing
-    platform: iOS
-    sources:
-      - path: DongKeUITests
-      - path: Shared
-    dependencies:
-      - target: DongKe
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.uitests
-        GENERATE_INFOPLIST_FILE: YES
-        TEST_TARGET_NAME: DongKe
 schemes:
   DongKe:
     build:
@@ -83,4 +70,3 @@ schemes:
       config: Debug
       targets:
         - DongKeCoreTests
-        - DongKeUITests

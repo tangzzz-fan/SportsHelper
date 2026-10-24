@@ -2,10 +2,10 @@
 
 ## 文件长度上限 500 行（2026-10-25 董事长改，原 300）
 
-**不含空行**，按 `grep -cve '^[[:space:]]*$'` 统计。门禁扫 `DongKe/ DongKeCore/ DongKeCoreTests/ DongKeUITests/ Shared/` 五个目录：
+**不含空行**，按 `grep -cve '^[[:space:]]*$'` 统计。门禁扫 `DongKe/ DongKeCore/ DongKeCoreTests/ Shared/` 四个目录：
 
 ```bash
-for f in $(find DongKe DongKeCore DongKeCoreTests DongKeUITests Shared -name '*.swift'); do n=$(grep -cve '^[[:space:]]*$' "$f"); [ "$n" -gt 500 ] && echo "$n $f"; done
+for f in $(find DongKe DongKeCore DongKeCoreTests Shared -name '*.swift'); do n=$(grep -cve '^[[:space:]]*$' "$f"); [ "$n" -gt 500 ] && echo "$n $f"; done
 ```
 
 改了这条要同步三处：ARCHITECTURE §4.3-1、§4.3 门禁段、Feature 完成判据表；SPEC §4 与 §10。
@@ -24,15 +24,25 @@ for f in $(find DongKe DongKeCore DongKeCoreTests DongKeUITests Shared -name '*.
 
 决策与触发条件见 `.scratch/follow-along/issues/01-跟练分路的决策.md`、backlog §7。
 
-## 测试范围（2026-10-24 用户明确要求）
+## 测试范围：只有单测（2026-10-25 董事长改，取代 10-24 版）
 
-**UI 测试默认不跑**——一轮 6 分钟。日常只跑单测，UI 显式 `--with-ui` 才跑：
+**UI 测试全部取消**——目标、`DongKeUITests/` 目录（643 行 / 21 条）、`scripts/test-scope.sh` 一并删除。「取消」不是「默认不跑」：没有第二档了。
 
-- `ui`（动了 `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/`）→ `--run` 只跑单测 539 条，`--with-ui` 追加 UI 21 条
-- `core`（只动 `DongKeCore/`、`DongKeCoreTests/`、`Tools/`）→ 只跑单测
-- `none`（纯文档）→ 都不跑，仍要过 ARCHITECTURE §4.3 门禁
+```bash
+# 唯一命令：先 build-for-testing，再 Python 包一层跑 test-without-building
+xcodebuild -project DongKe.xcodeproj -scheme DongKe \
+  -destination 'platform=iOS Simulator,id=D16A8318-973E-45CE-936B-94F5FFE3E0EC' \
+  -derivedDataPath /tmp/dk-solo \
+  OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -disable-sandbox' build-for-testing
+```
 
-该补跑 UI 的四个节点：提交前动过视图 / 改了命中区 / 改了播报或语音输入 / 要上真机。细则见 `docs/HANDOFF.md` §6.21。
+**唯一的自动化验收 = 单测全绿。** 纯文档改动一档不跑，但仍要过 ARCHITECTURE §4.3 的 grep 门禁。
+
+已知缺口写在明处：`DongKe/Services`（AI 客户端、语音、TTS）没有自动化兜底，改了就自己上模拟器点一遍那一个功能；命中区改完手动点一次边缘。
+
+`Shared/A11yIdentifiers.swift` 保留——那是 VoiceOver 的词汇，不是 UI 测试的私产。
+
+**恢复条件**（防止哪天又冒出来）：先答「给谁看、多久跑一次」；答不上来就别恢复。原文件在 `git log --diff-filter=D -- DongKeUITests` 那次提交里。细则见 `docs/HANDOFF.md` §6.6。
 
 ## 按钮命中区（2026-10-24）
 
@@ -79,7 +89,6 @@ for f in $(find DongKe DongKeCore DongKeCoreTests DongKeUITests Shared -name '*.
 
 - 模拟器 UDID：`D16A8318-973E-45CE-936B-94F5FFE3E0EC`（iPhone 18 Pro），`content_size` 保持 `large`，不要设 AX3
 - 推 origin 需代理：`git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`
-- `ios-run.sh` 会误判 UI 套件收尾，跑 UI 直接用 `xcodebuild ... -only-testing:DongKeUITests test`
 
 ## 跑测试：必须 Python 包一层（2026-10-24）
 

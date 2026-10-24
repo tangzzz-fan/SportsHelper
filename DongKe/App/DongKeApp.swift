@@ -13,11 +13,7 @@ struct DongKeApp: App {
     @State private var aiSettings = AISettingsStore.shared
 
     init() {
-        let isUITest = Self.isUITestRun
-        if isUITest {
-            Self.resetDefaultsForUITest()
-        }
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: isUITest)
+        let configuration = ModelConfiguration()
         let container: ModelContainer
         do {
             container = try ModelContainer(
@@ -79,20 +75,5 @@ struct DongKeApp: App {
                 .environment(NotificationService.shared)
         }
         .modelContainer(container)
-    }
-
-    private static var isUITestRun: Bool {
-        #if DEBUG
-        return ProcessInfo.processInfo.environment["DK_UI_TEST"] == "1"
-        #else
-        return false
-        #endif
-    }
-
-    private static func resetDefaultsForUITest() {
-        let defaults = UserDefaults.standard
-        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(DataResetService.defaultsPrefix) {
-            defaults.removeObject(forKey: key)
-        }
     }
 }

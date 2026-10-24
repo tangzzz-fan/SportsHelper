@@ -8,10 +8,10 @@
 |---|---|
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
-| 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
+| 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests。UI 测试目标已删除（§6.21），`Shared/A11yIdentifiers.swift` 仍编进 App，供 VoiceOver 与将来任何自动化使用 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 13 页清单**全部落地**：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成 + 一句话语音 / 文字）、理解确认、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空）+ 训练播报（ticket 07–09）与语音输入（ticket 06）。工程侧补上了 `Assets.xcassets`（AppIcon，`Tools/IconRender` 可重渲）与 `PrivacyInfo.xcprivacy`（见 §6.24） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **487 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **16 条 UI 测试**（`-only-testing:DongKeUITests`，默认不跑，见 §6.21）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条、语音输入 42 条 |
+| 测试 | **单测全绿**（`-only-testing:DongKeCoreTests`，条数看日志，不在此处维护——写死的数字必然过期）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条、语音输入 42 条、主肌群覆盖 8 条、组余力 6 条。**无 UI 测试**（§6.21） |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -32,21 +32,17 @@
 git clone https://github.com/tangzzz-fan/SportsHelper.git && cd SportsHelper
 xcodegen generate
 xcodebuild -project DongKe.xcodeproj -scheme DongKe \
-  -destination 'platform=iOS Simulator,name=iPhone 16' test
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -disable-sandbox' test
 ```
 
-预期：生成工程成功；单测 375 条 + UI 测试 12 条，全部通过。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
+预期：生成工程成功；单测全绿。若出现大量失败，先看 `~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh probe` 的模拟器探测结果，别先怀疑代码。
 
-**必须分两次跑**，不要指望一条命令全绿：
+**只有一个测试目标**（`DongKeCoreTests`）。UI 测试已取消（§6.21）。
 
-```bash
-~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh test --project DongKe.xcodeproj --scheme DongKe -only-testing:DongKeCoreTests
-~/.workbuddy/skills/ios-build-test/scripts/ios-run.sh test --project DongKe.xcodeproj --scheme DongKe -only-testing:DongKeUITests
-```
+`OTHER_SWIFT_FLAGS` 里的 `-disable-sandbox` 不是可选项：Xcode 27.1 的编译期沙盒会让 `swift-plugin-server` 输出畸形响应，`@Observable` 全部报「macro implementation not found」。见 §6.25。
 
-原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
-
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 442 tests`。UI 测试是 XCTest，看 `Executed 13 tests`。
+`ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，真实结果看日志里的 `Test run with N tests passed`。
 
 ## 4. 专家团怎么续上
 
@@ -322,17 +318,23 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 **坑二**：繁体只收了动作名与单位会用到的三十来个字，不是完整 OpenCC；没收录的字会落回 custom，不会乱配。
 **坑三**：`修饰词否决` 的顺序是先精确匹配、再按长度取包含匹配，所以新增短别名（`下蹲`、`旋体`）不会抢走长别名（`靠墙深蹲`、`俄罗斯旋体`）。
 
-## 6.6 UI 测试（2026-10-23）
+## 6.6 UI 测试已取消（2026-10-25，取代原 6.6）
 
-`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十三条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存（含「截断 JSON 提示没粘完整」）/ 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关（提醒 + 语音）与清空，另有一条在无障碍字号下断言训练页四个控件可点。
+2026-10-23 建过一个 `DongKeUITests` 目标（643 行、约 21 条用例，覆盖引导 / 导入 / 训练 / 设置四条链路）。2026-10-25 **整体删除**：目标、目录、连同 `scripts/test-scope.sh` 一起删掉——那个脚本存在的唯一目的就是判断「要不要跑 UI」，UI 没了它也就没了。
 
-| 机制 | 说明 |
+删它的理由不是「不重要」，是**反馈速度不匹配**：一轮六分钟，拿到的是布局与命中区回归这类「改完就想立刻知道」的信号。用六分钟的循环去验一个本该三秒知道的事，最后一定会被绕过——事实也是被绕过（连续两轮在跑之前被叫停）。
+
+替代不是「不验」，是换三处：
+
+| 原来靠 UI 测试 | 现在靠什么 |
 |---|---|
-| 标识符 | `Shared/A11yIdentifiers.swift` 的 `A11y` 同时编进 App 与 UI 测试，改一边另一边编译期就报错，避免字符串漂移 |
-| 隔离 | `DK_UI_TEST=1` 让 `ModelContainer` 走内存存储，并在 `DongKeApp.init` 清掉全部 `dk.` UserDefaults ⇒ 每次启动都是干净的零数据 |
-| 预置 | `DK_COMPLETE_ONBOARDING=1` 在 init 里直接写档案（不再是 `.task` 里补写），所以首帧就落在今日页，不会闪一下引导 |
-| 点击 | 用例一律用 `tap(_:)` 助手，它按元素**中心坐标**点击。`element.tap()` 在带 `overlay` 的按钮上会做「避开遮挡」的坐标调整，实测会落到空白处（`today.start` 因此永远点不动），不要换回去 |
-| 等待 | 转场后先等元素消失（`waitUntilGone`）再点下一个，否则休息面板的淡出层会吃掉下一次点击 |
+| 命中区够不够大 | `PressableGlassStyle` 统一加 `.contentShape`（§6.22）；新按钮不直接用 `.buttonStyle(.plain)` 配 `Text` + `frame` |
+| 文案与控件的对应 | 文案常量在 Core，取值进单测；视图只排版 |
+| 主链路能不能走通 | 每次发布前人工走查三条（ARCHITECTURE §15.3） |
+
+`Shared/A11yIdentifiers.swift` **保留**。视图仍在用它设 `accessibilityIdentifier`，那是 VoiceOver 的词汇；去掉它等于为了让自动化闭嘴而牺牲可访问性。
+
+**将来若要恢复**：`git log --diff-filter=D -- DongKeUITests` 能找到删除那次提交，643 行原样可取回。恢复前先回答一个问题——**这次是给谁看、多久跑一次**；答不上来就别恢复。
 
 ## 6.7 引导不再是全屏弹层（2026-10-23）
 
@@ -429,7 +431,7 @@ let result = try await transport.generate(request)   // result.text / result.mod
 - **闸门放 Core 的理由**：「什么时候不该说话」是产品规则，不该埋在 App 里靠手测。`SpeechCuePolicy` 三个布尔，配假 speaker 就能把让路、打断、恢复全测了。
 - `.ambient` + `.mixWithOthers`：尊重静音键（图书馆里不会突然出声），代价是不 duck 音乐。
 - 念完 / 取消时 `setActive(false, options: .notifyOthersOnDeactivation)`，不长期占着音频会话。
-- 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；UI 测试 `testSettingsVoiceTogglePersists` 验持久化。
+- 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；持久化本身由 `VoiceSettingsStore` 的单测覆盖（原 UI 测试 `testSettingsVoiceTogglePersists` 已随 UI 目标删除，见 §6.6）。
 - 文案上限 40 字：超长先丢「下一个」，再丢「共 N 组」，动作名与剂量最后才动——别在 08 里改成按字数硬截。
 
 **还没接的**：无——09 已把触发接进 `WorkoutSession`。剩下 `10 真机验收`。
@@ -488,38 +490,27 @@ SpeechTranscribing（Core 协议）
 
 **还没接的**：真机上的中文离线识别、蓝牙耳机拾音、来电打断——归 10 验收清单。
 
-## 6.21 测试范围：什么时候不用跑 UI 测试（2026-10-24）
+## 6.21 测试范围：只有一个目标（2026-10-25，取代 2026-10-24 版）
 
-UI 测试要起模拟器、装 App、点按钮，一轮 16 条约 6 分钟；只改 `DongKeCore` 的解析规则却陪跑一遍，纯属浪费。**默认不跑，要跑显式加 `--with-ui`**。判据仍然落在一条上：**这次改动会不会让「用户点得到的东西」变样**。
+**改完就跑单测，没有第二档。**
 
 ```bash
-scripts/test-scope.sh              # 只看判定
-scripts/test-scope.sh --run        # 跑单测（UI 不跑）
-scripts/test-scope.sh --with-ui    # 单测 + UI，约 6 分钟
-scripts/test-scope.sh --base HEAD~3
+xcodebuild -project DongKe.xcodeproj -scheme DongKe \
+  -destination 'platform=iOS Simulator,id=D16A8318-973E-45CE-936B-94F5FFE3E0EC' \
+  -derivedDataPath /tmp/dk-solo \
+  OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -disable-sandbox' \
+  build-for-testing
 ```
 
-| 判定的 scope | 触发路径 | `--run` 跑什么 | `--with-ui` 追加 |
-|---|---|---|---|
-| `ui` | `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/` | 单测 | + UI 16 条 |
-| `core` | `DongKeCore/`、`DongKeCoreTests/`、`Tools/`，以及 `scripts/` 这类散件 | 单测 | 不追加 |
-| `none` | `docs/`、`.scratch/`、`*.md` | 都不跑，仍要过 §4.3 门禁 | 不追加 |
+再单独跑 `test-without-building -only-testing:DongKeCoreTests`，外面包一层 Python 超时（§6.25）。
 
-判定为 `ui` 时脚本会打印 `ui-triggers:` 列出触发文件——**看到它就知道该不该补一次 UI**。建议在这些节点跑：
+原来的 `scripts/test-scope.sh`（判定 none / core / ui 三档）**随 UI 测试一起删除**。它存在的目的是回答「这次要不要陪跑 UI」，UI 没了，它剩下的只是一个会过期的分类器——每加一个新目录就得记得改 `UI_PATTERNS`，忘了它就把改动判成 `core` 然后静默跳过。
 
-- 提 PR / 提交前，改过视图、入口、设计系统或 `project.yml`
-- 改了 `contentShape`、`buttonStyle`、命中区这类「点得到点不到」的东西（见 §6.22）
-- 改了播报、语音输入的可见行为（UI 里有 `DK_VOICE_*` 注入钩子）
-- 一次没跑过、要上真机前
+**一条留下的判断**：改了 `DongKe/Services`（`AIPlanClient`、`VoiceService`、`SystemSpeechTranscriber`）而单测覆盖不到的行为，**自己上模拟器点一遍**。不是跑套件，是点那一个功能。这些地方没有自动化兜底，这是已知缺口，写在明处好过假装被覆盖。
 
-几个刻意的取舍：
+纯文档改动一档都不跑，但仍要过 ARCHITECTURE §4.3 的 grep 门禁。
 
-- **`DongKe/Services` 算 ui**。`AIPlanClient`、`VoiceService`、`SystemSpeechTranscriber` 这些是 App 层，改动会改用户看到的行为（401 文案、播报有没有声、麦克风有没有反应），而它们没有独立单测。宁可多跑一次。
-- **`DongKeCore` 算 core**。SPEC §10 只要求「UI 只测三条主链路」，Core 的行为变化由 487 条单测兜。真怕漏，就手动加 `--with-ui`——脚本给的是默认档，不是禁令。
-- **`DongKeCore` 改**也可能动文案（例如 `VoiceInputCopy`），但文案不靠 UI 测试验，靠 `#expect(failure.message.contains("麦克风"))` 这类断言。
-- **`none` 不等于免检**。门禁 grep、`xcodegen generate` 后工程是否干净，一样要跑。
-
-跑之前记得：`ios-run.sh` 会因「结论已出但进程不退场」把 UI 套件掐掉——Swift Testing 的 `Test run with N tests passed` 先出现，20 秒后它就杀进程，而这时 UI 才启动。`test-scope.sh --run` 已绕开这个坑（直接 `xcodebuild` + 日志判定 + `perl alarm` 上界）；手工跑时**不要用 `ios-run.sh` 跑 UI 套件**，直接在命令行 `xcodebuild ... -only-testing:DongKeUITests test`。
+`#if DEBUG` 里那几个 `DK_*` 环境变量（`DK_COMPLETE_ONBOARDING` 跳过引导、`DK_PROFILE_INJURIES` 预置不适部位、`DK_SEED_USER_EXERCISE` 预置自定义动作、`DK_VOICE_*` 语音桩）**保留，但改性质**：以前是自动化钩子，现在是**人工走查钩子**——上模拟器点一遍时用它跳过准备工作。`DK_UI_TEST`（内存库 + 清空 UserDefaults）已删，它只为自动化存在。
 
 ## 6.22 按钮命中区：字上能点，字外点不动（2026-10-24）
 
@@ -536,7 +527,7 @@ scripts/test-scope.sh --base HEAD~3
 
 1. **不要按视图结构扫遮挡**。`allElementsBoundByIndex` 会把按钮里的 `Text`、祖先容器都算成「压在上面」，误报一堆。
 2. **直接量命中区**。`element.frame` 打印出来对比按钮视觉尺寸，差一大截就是没加 `contentShape`。
-3. **UI 测试断言行为，不断言结构**。`DongKeRestDayUITests` 只留两条：点文字能进、点下缘也能进。别写「没有任何元素与按钮框相交」。
+3. **UI 测试已取消（§6.6）**，这条自查现在只能靠人：改完按钮在模拟器上点一次字的边缘。代价是漏检，换来的是不必为一次点击等六分钟。
 
 新加的按钮一律走 `PressableGlassStyle`，别直接用 `.buttonStyle(.plain)` 配 `Text` + `frame`。
 
@@ -612,9 +603,11 @@ IDESchemeActionSDKRecord: operatingSystemBuild ... invalidDigitCount(94232)
 # ① 单独编译测试包（这条会正常退出）
 xcodebuild -project DongKe.xcodeproj -scheme DongKe \
   -destination 'id=D16A8318-973E-45CE-936B-94F5FFE3E0EC' \
-  -derivedDataPath DerivedData build-for-testing \
-  OTHER_SWIFT_FLAGS=-disable-sandbox 2>&1 | grep -E "error:|BUILD"
+  -derivedDataPath /tmp/dk-solo build-for-testing \
+  OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -disable-sandbox' 2>&1 | grep -E "error:|BUILD"
 ```
+
+`-disable-sandbox` 在 Xcode 27.1 上是**必需**的，不是保险：缺了它，所有 `@Observable` 都报 `swift-plugin-server produced malformed response`。见项目记忆 2026-10-25。
 
 ```python
 # ② Python 跑、超时 kill、结果从日志读
