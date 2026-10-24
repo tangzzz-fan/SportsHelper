@@ -33,6 +33,7 @@
 		2D2A55BBB4731F947EADD453 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C82C6C6F67C385236512C65 /* Typography.swift */; };
 		2DCB33210364CBCB32A15E1F /* ReminderHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A2CC2703A871BE8D0DCD05 /* ReminderHealth.swift */; };
 		31234E55FA971E4396F49A1A /* ReminderHealthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102F550CF1AA854CF2A097D6 /* ReminderHealthTests.swift */; };
+		3132BE1243791634D19391CC /* DongKeRestDayUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A30EF4194F1125C884539D /* DongKeRestDayUITests.swift */; };
 		329D515DEBE92A77668191AC /* SystemSpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A47005292FC71C12907C981 /* SystemSpeechTranscriber.swift */; };
 		32A3FBCBAFE3E32027B8DA05 /* WorkoutVoiceSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0045C11A42F69B5F03C23C1E /* WorkoutVoiceSession.swift */; };
 		340AA3438006F72FE6628009 /* PlanBriefParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED52CF4CC8350CA8DE9A1F60 /* PlanBriefParserTests.swift */; };
@@ -368,6 +369,7 @@
 		A29EB0C06E192682252AB2B3 /* VoiceInputMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputMachine.swift; sourceTree = "<group>"; };
 		A4CC0B22EA0BD15B95368DF5 /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
 		A772907EBF74BE120974DF4E /* NotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouter.swift; sourceTree = "<group>"; };
+		A9A30EF4194F1125C884539D /* DongKeRestDayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DongKeRestDayUITests.swift; sourceTree = "<group>"; };
 		AB6AB296368355A6973FB533 /* PlanGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanGeneratorTests.swift; sourceTree = "<group>"; };
 		ABBFAFF50EAA19C6549674AA /* TodayView+Cards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TodayView+Cards.swift"; sourceTree = "<group>"; };
 		ACA2DFBE1DD4F51BB07F99EA /* UserExercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExercise.swift; sourceTree = "<group>"; };
@@ -759,6 +761,7 @@
 			isa = PBXGroup;
 			children = (
 				84B06CC50B6D81C962D85D7B /* DongKeChainsUITests.swift */,
+				A9A30EF4194F1125C884539D /* DongKeRestDayUITests.swift */,
 				AF977E8D6E65F06845A3831D /* DongKeUITestCase.swift */,
 				7247305B23B0BEBDF93C64B0 /* DongKeVoiceUITests.swift */,
 			);
@@ -984,7 +987,21 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					0DDB01FA4600953CEADDB6F2 = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
 						TestTargetID = E3C2F1BFA76FA190F0AFFA80;
+					};
+					8ECD9815B56A9D26B825FD36 = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
+					};
+					E3C2F1BFA76FA190F0AFFA80 = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
+					};
+					F151BEEF59A26017A462EFCF = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -1143,6 +1160,7 @@
 			files = (
 				CF3BDDBBAFB3D62709217804 /* A11yIdentifiers.swift in Sources */,
 				AE9EC45592FE302CAF08E869 /* DongKeChainsUITests.swift in Sources */,
+				3132BE1243791634D19391CC /* DongKeRestDayUITests.swift in Sources */,
 				97C3E981486C5FB5AE6556FE /* DongKeUITestCase.swift in Sources */,
 				8C404DD0E04B7CE527E7844D /* DongKeVoiceUITests.swift in Sources */,
 			);
@@ -1313,8 +1331,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]" = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = UKXWZ3FS84;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1371,8 +1394,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]" = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = UKXWZ3FS84;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
