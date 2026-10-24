@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **391 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **12 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条 |
+| 测试 | **426 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **13 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 24 条、播报闸门 11 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -46,7 +46,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 原因：脚本看到第一条 `Executed N tests` / `Test run with N tests` 就认为「结论已出」，再等 20 秒仍不退出就 SIGTERM。跑完单测后 UI 测试还没开始，就会被这条宽限掐掉。跑单类/单目标时它是对的，跨目标必须分开调用。
 
-另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 375 tests`。UI 测试是 XCTest，看 `Executed 12 tests`。
+另外 `ios-run.sh` 的尾巴会打 `Executed 0 test` + `TEST SUCCEEDED`——XCTest 计数器不认 Swift Testing，单测真实结果看日志里的 `Test run with 426 tests`。UI 测试是 XCTest，看 `Executed 13 tests`。
 
 ## 4. 专家团怎么续上
 
@@ -312,7 +312,7 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 
 ## 6.6 UI 测试（2026-10-23）
 
-`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十一条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存（含「截断 JSON 提示没粘完整」）/ 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关与清空，另有一条在 AX3 字号下断言训练页四个控件可点。
+`DongKeUITests` 是 XCTest 目标（Swift Testing 不支持 XCUIApplication），十三条用例覆盖四条主链路：引导五步 / 导入粘贴→识别→校对→保存（含「截断 JSON 提示没粘完整」）/ 训练→休息→跳过→总结（含要点与「做不动」三选）/ 设置开关（提醒 + 语音）与清空，另有一条在无障碍字号下断言训练页四个控件可点。
 
 | 机制 | 说明 |
 |---|---|
@@ -403,6 +403,24 @@ let result = try await transport.generate(request)   // result.text / result.mod
 - `Tools/AISmoke` 改吃同一个 `AITransport`，它自己那份降级环删掉了；顺带修掉那里「`interpret` 不传 memory / exercises」的隐患。
 
 **已知边界**：`json_schema` 被拒后的降级不是无损的——DeepSeek 上 `json_object` 档不保证结构，仍由 `PlanValidator` 与校对页兜底。真实端点复测：400 降级 → 200，20.4 秒，2 天 14 个动作 33 组，落在新的 7 个动作 / 22 组上限内。
+
+## 6.18 训练播报（2026-10-24）
+
+三段式，判断全在 Core，App 只剩 AVFoundation 粘合：
+
+| 层 | 文件 | 职责 |
+|---|---|---|
+| 文案 | `DongKeCore/Workout/WorkoutAnnouncement.swift`、`+Builder` | `WorkoutPlan` + `FlowStep` → 一句 ≤40 字的中文 |
+| 闸门 | `DongKeCore/Ports/SpeechAnnouncing.swift`、`Workout/SpeechCueCoordinator.swift` | 开关 / 前台 / VoiceOver 三条件；不可播时立刻停 |
+| 出声 | `DongKe/Services/SystemSpeechAnnouncer.swift` | `AVSpeechSynthesizer`（zh-CN，rate 0.5）+ `AVAudioSession .ambient` |
+
+- **闸门放 Core 的理由**：「什么时候不该说话」是产品规则，不该埋在 App 里靠手测。`SpeechCuePolicy` 三个布尔，配假 speaker 就能把让路、打断、恢复全测了。
+- `.ambient` + `.mixWithOthers`：尊重静音键（图书馆里不会突然出声），代价是不 duck 音乐。
+- 念完 / 取消时 `setActive(false, options: .notifyOthersOnDeactivation)`，不长期占着音频会话。
+- 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；UI 测试 `testSettingsVoiceTogglePersists` 验持久化。
+- 文案上限 40 字：超长先丢「下一个」，再丢「共 N 组」，动作名与剂量最后才动——别在 08 里改成按字数硬截。
+
+**还没接的**：训练页的实际触发（进组 / 休息归零 / 退出训练停止）是 09，`SpeechCueCoordinator` 现在没有任何生产调用方。
 
 ## 7. 换机后容易踩的坑
 

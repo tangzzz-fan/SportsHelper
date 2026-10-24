@@ -206,6 +206,25 @@ final class DongKeChainsUITests: DongKeUITestCase {
         XCTAssertEqual(toggle(A11y.Settings.reminderToggle).value as? String, reminderSwitch.value as? String, "关掉再打开，开关状态没记住")
     }
 
+    func testSettingsVoiceTogglePersists() {
+        launchApp(["DK_COMPLETE_ONBOARDING": "1"])
+
+        text(A11y.Today.title)
+        tap(button(A11y.Today.settings))
+
+        let voiceSwitch = toggle(A11y.Settings.voiceToggle)
+        let before = voiceSwitch.value as? String
+        tap(voiceSwitch)
+        XCTAssertNotEqual(voiceSwitch.value as? String, before, "语音开关点了没反应")
+        let after = voiceSwitch.value as? String
+
+        tap(button(A11y.Settings.done))
+        text(A11y.Today.title)
+        tap(button(A11y.Today.settings))
+
+        XCTAssertEqual(toggle(A11y.Settings.voiceToggle).value as? String, after, "关掉再打开，语音开关没记住")
+    }
+
     func testSettingsEraseAllLandsOnOnboarding() {
         launchApp(["DK_COMPLETE_ONBOARDING": "1"])
 

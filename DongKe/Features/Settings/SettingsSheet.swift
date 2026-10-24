@@ -13,6 +13,8 @@ struct SettingsSheet: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
 
+    @Bindable private var voice = VoiceSettingsStore.shared
+
     @State private var showEraseConfirm = false
     @State private var isErasing = false
 
@@ -23,6 +25,7 @@ struct SettingsSheet: View {
                     VStack(spacing: 16) {
                         reminderCard
                         statusCard
+                        voiceCard
                         AISettingsCard()
                         aboutCard
                         dangerCard
@@ -166,6 +169,29 @@ struct SettingsSheet: View {
             .padding(16)
             .opacity(settingsStore.settings.enabled ? 1 : 0.45)
             .disabled(!settingsStore.settings.enabled)
+        }
+        .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var voiceCard: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("语音提示")
+                        .font(Typography.rowTitle)
+                    Text("训练时念动作、组数与休息；静音键打开时不发声")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Toggle("", isOn: $voice.isEnabled)
+                    .labelsHidden()
+                    .tint(Theme.accent(for: colorScheme))
+                    .accessibilityIdentifier(A11y.Settings.voiceToggle)
+                    .accessibilityLabel("语音提示")
+            }
+            .padding(16)
         }
         .glassSurface(radius: Theme.Radius.card)
     }
