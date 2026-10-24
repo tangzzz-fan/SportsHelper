@@ -1,8 +1,5 @@
 import Foundation
 
-// 用真实 API 跑一遍「提示词 → 响应 → 解析 → 校验」，只依赖 DongKeCore。
-// 用法：scripts/ai-smoke.sh "重点练手臂和核心，不要跳跃动作"
-
 struct SmokeError: Error, CustomStringConvertible {
     let description: String
 }
@@ -24,58 +21,18 @@ func makeProfile() -> UserProfile {
     return profile
 }
 
-func send(_ request: URLRequest) async throws -> (Int, Data) {
-    let (data, response) = try await URLSession.shared.data(for: request)
-    let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-    return (status, data)
-}
-
-func generate(
-    configuration: AIConfiguration,
-    profile: UserProfile,
-    brief: PlanBrief
-) async throws -> (draft: ParsedPlanDraft, mode: AIResponseMode) {
-    let url = try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get()
-    let key = try configuration.resolvedKey ?? { throw SmokeError(description: "缺少 API Key") }()
-    let messages = AIPromptBuilder.makeMessages(profile: profile, brief: brief)
-
-    var mode: AIResponseMode? = .jsonSchema
-    var lastRejection = ""
-    while let current = mode {
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 60
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        request.httpBody = ChatRequestBodyBuilder.data(
-            model: configuration.resolvedModel,
-            messages: messages,
-            mode: current
-        )
-
+func loggingTransport() -> AITransport {
+    AITransport(sender: { request in
         let started = Date()
-        let (status, body) = try await send(request)
-        let elapsed = Date().timeIntervalSince(started)
-        print("· \(current.rawValue): HTTP \(status), \(String(format: "%.1f", elapsed))s, \(body.count) bytes")
-
-        switch AIResponseMapper.outcome(status: status, body: body) {
-        case .content(let text):
-            print("  响应前 120 字：\(text.prefix(120))")
-            switch AIPlanInterpreter.interpret(text) {
-            case .success(let draft):
-                return (draft, current)
-            case .failure(let error):
-                throw SmokeError(description: "解析失败：\(error.message)")
-            }
-        case .degrade(let snippet):
-            lastRejection = snippet
-            print("  降级原因：\(snippet.prefix(120))")
-            mode = current.next
-        case .failure(let error):
-            throw SmokeError(description: "请求失败：\(error.message)")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let elapsed = String(format: "%.1f", Date().timeIntervalSince(started))
+        print("· HTTP \(status)，\(elapsed)s，\(data.count) bytes")
+        if (200..<300).contains(status) == false {
+            print("  返回前 160 字：\(String(decoding: data.prefix(160), as: UTF8.self))")
         }
-    }
-    throw SmokeError(description: "三档都失败，最后一次：\(lastRejection)")
+        return AITransport.Response(status: status, body: data)
+    })
 }
 
 func report(_ draft: ParsedPlanDraft, mode: AIResponseMode, elapsed: TimeInterval) {
@@ -118,8 +75,9 @@ print("端点：\(configuration.trimmedBaseURL)/chat/completions")
 print("模型：\(configuration.resolvedModel)")
 let brief = PlanBriefParser.parse(note)
 let resolved = brief.resolved(against: makeProfile())
-print("补充要求：\(note.isEmpty ? "（无）" : note)")
+print("原话：\(note.isEmpty ? "（无）" : note)")
 print("解析为：\(resolved.weekdayText)，共 \(resolved.daysPerWeek) 天；每次 \(resolved.sessionMinutes) 分钟；\(resolved.equipmentText)；\(resolved.goal.chineseName)")
+print("上限：每天 \(resolved.maxExercises) 个动作 / \(resolved.maxSets) 组")
 if resolved.focus.isEmpty == false { print("重点：\(resolved.focus.joined(separator: "、"))") }
 if resolved.avoid.isEmpty == false { print("避开：\(resolved.avoid.joined(separator: "、"))") }
 
@@ -127,8 +85,21 @@ let semaphore = DispatchSemaphore(value: 0)
 let started = Date()
 Task {
     do {
-        let result = try await generate(configuration: configuration, profile: makeProfile(), brief: brief)
-        report(result.draft, mode: result.mode, elapsed: Date().timeIntervalSince(started))
+        guard let key = configuration.resolvedKey else { throw SmokeError(description: "缺少 API Key") }
+        let request = AITransport.Request(
+            url: try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get(),
+            key: key,
+            model: configuration.resolvedModel,
+            messages: AIPromptBuilder.makeMessages(profile: makeProfile(), brief: brief)
+        )
+        let result = try await loggingTransport().generate(request)
+        print("  响应前 120 字：\(result.text.prefix(120))")
+        switch AIPlanInterpreter.interpret(result.text, memory: .empty, exercises: .empty) {
+        case let .success(draft):
+            report(draft, mode: result.mode, elapsed: Date().timeIntervalSince(started))
+        case let .failure(error):
+            print("✘ 解析失败：\(error.message)")
+        }
         semaphore.signal()
     } catch {
         print("✘ \(error)")

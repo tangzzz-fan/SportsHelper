@@ -269,7 +269,7 @@ struct PlanBriefResolutionTests {
     @Test("动作与组数上限跟着本次时长走")
     func capsFollowSessionMinutes() {
         let short = PlanBriefParser.parse("每次 20 分钟").resolved(against: profile)
-        #expect(short.maxExercises == 4)
+        #expect(short.maxExercises == 3)
         #expect(short.maxSets == 10)
 
         let long = PlanBriefParser.parse("每次 60 分钟").resolved(against: profile)

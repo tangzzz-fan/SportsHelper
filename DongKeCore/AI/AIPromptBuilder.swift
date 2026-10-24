@@ -2,10 +2,7 @@ import Foundation
 
 public enum AIPromptBuilder {
     public static func makeMessages(profile: UserProfile, extraNote: String = "") -> [ChatMessage] {
-        [
-            ChatMessage(role: .system, content: systemPrompt()),
-            ChatMessage(role: .user, content: userBrief(profile: profile, extraNote: extraNote))
-        ]
+        makeMessages(profile: profile, brief: PlanBrief(sentence: extraNote))
     }
 
     public static func makeMessages(profile: UserProfile, brief: PlanBrief) -> [ChatMessage] {
@@ -16,9 +13,7 @@ public enum AIPromptBuilder {
     }
 
     public static func copyablePrompt(profile: UserProfile, extraNote: String = "") -> String {
-        makeMessages(profile: profile, extraNote: extraNote)
-            .map(\.content)
-            .joined(separator: "\n\n")
+        copyablePrompt(profile: profile, brief: PlanBrief(sentence: extraNote))
     }
 
     public static func copyablePrompt(profile: UserProfile, brief: PlanBrief) -> String {
@@ -46,25 +41,7 @@ public enum AIPromptBuilder {
     }
 
     public static func userBrief(profile: UserProfile, extraNote: String) -> String {
-        var lines: [String] = []
-        let weight = weightText(profile.weightKg)
-        lines.append("身高 \(profile.heightCm) cm，体重 \(weight) kg，年龄 \(profile.age) 岁，性别 \(profile.sex.chineseName)。")
-        lines.append("目标：\(profile.goal.chineseName)；水平：\(profile.level.chineseName)。")
-        lines.append("每周可训练：\(weekdayText(profile.availableWeekdays))；每次约 \(profile.sessionMinutes) 分钟。")
-        lines.append("可用器械：\(equipmentText(profile.equipment))。")
-        let maxExercises = max(3, min(8, profile.sessionMinutes / 5))
-        let maxSets = max(6, min(30, profile.sessionMinutes / 2))
-        lines.append("每次动作数不超过 \(maxExercises) 个，总组数不超过 \(maxSets) 组，估算时长落在 \(profile.sessionMinutes) 分钟的 ±15% 内。")
-        let injuries = profile.injuries.trimmingCharacters(in: .whitespacesAndNewlines)
-        if injuries.isEmpty == false {
-            lines.append("伤病限制：\(injuries)。")
-        }
-        let note = extraNote.trimmingCharacters(in: .whitespacesAndNewlines)
-        if note.isEmpty == false {
-            lines.append("补充要求：\(note)。")
-        }
-        lines.append("请按以上条件生成一周计划。")
-        return lines.joined(separator: "\n")
+        userBrief(profile: profile, brief: PlanBrief(sentence: extraNote))
     }
 
     public static func userBrief(profile: UserProfile, brief: PlanBrief) -> String {
@@ -106,14 +83,6 @@ public enum AIPromptBuilder {
 
     private static var catalogIds: String {
         ExerciseLibrary.all.map(\.id).joined(separator: ", ")
-    }
-
-    private static func weekdayText(_ weekdays: [Weekday]) -> String {
-        weekdays.isEmpty ? "未指定" : weekdays.map(\.chineseName).joined(separator: "、")
-    }
-
-    private static func equipmentText(_ equipment: [Equipment]) -> String {
-        equipment.isEmpty ? "徒手" : equipment.map(\.chineseName).joined(separator: "、")
     }
 
     private static func weightText(_ weight: Double) -> String {

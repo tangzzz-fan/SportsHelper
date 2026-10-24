@@ -359,12 +359,12 @@ DongKe/
 ```bash
 grep -rn "import SwiftData" DongKe --include=*.swift | grep -v "/Data/" | grep -v "/App/"
 grep -rn "import SwiftUI" DongKe/Domain DongKe/Services DongKe/Data --include=*.swift
-grep -rn "systemName:" DongKe --include=*.swift | grep -v "DesignSystem/Icons.swift"
+grep -rn 'Image(systemName: "' DongKe --include=*.swift
 grep -rn "Color(hex:" DongKe --include=*.swift | grep -v "DesignSystem/Theme.swift"
 grep -rln "//" DongKe --include=*.swift | xargs -r grep -Hn "^\s*//"
 find DongKe -name '*.swift' | xargs wc -l | awk '$1>300 && $2!="total"'
 grep -rn "URLSession" DongKe --include=*.swift | grep -v "Services/AIPlanClient.swift"
-grep -rn "UIPasteboard" DongKe --include=*.swift
+grep -rn "UIPasteboard" DongKe --include=*.swift | grep -vE "UIPasteboard\.general\.string[[:space:]]*="
 grep -rn "removeAllPendingNotificationRequests" DongKe --include=*.swift
 grep -rn "#[0-9A-Fa-f]\{6\}" DongKe --include=*.swift
 ```
@@ -372,9 +372,11 @@ grep -rn "#[0-9A-Fa-f]\{6\}" DongKe --include=*.swift
 最后四条 grep 的期望结果为空，各自对应一条架构承诺：
 
 - `URLSession` 只允许出现在 `AIPlanClient` 里。这是"离线优先"唯一可自动验证的形式
-- `UIPasteboard` 一律不出现，粘贴只能走 `UIPasteControl`
+- `UIPasteboard` 只允许**写入**（`= ` 赋值，用于复制提示词）；读取粘贴板一律走 `UIPasteControl`，普通读取会被上面这条 grep 拦下
 - `removeAllPendingNotificationRequests` 一律不出现，通知只能按前缀清理，见 §9.5
 - 任何 6 位十六进制色值都不出现，颜色只能来自 `design-tokens.json`
+
+> 门禁两处修订（2026-10-24）：`systemName:` 那条原写法会连 `Image(systemName: Icons.x)` 一起拦（永远非空，等于失效），改为只查**字面量**；`UIPasteboard` 那条原写法连写剪贴板也拦，但复制提示词没有替代 API，改为只拦读取。
 
 任一 grep 非空，或存在超 300 行的文件、入口文件含业务逻辑，即退回重做，不算完成。
 

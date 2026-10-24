@@ -70,9 +70,19 @@ struct AIPromptBuilderTests {
         var profile = UserProfile()
         profile.sessionMinutes = 30
         let brief = AIPromptBuilder.userBrief(profile: profile, extraNote: "")
-        #expect(brief.contains("不超过 6 个"))
+        #expect(brief.contains("不超过 5 个"))
         #expect(brief.contains("不超过 15 组"))
         #expect(brief.contains("±15%"))
+    }
+
+    @Test func actionCapNeverExceedsSetCapAtThreeSetsEach() {
+        for minutes in stride(from: 5, through: 120, by: 5) {
+            var profile = UserProfile()
+            profile.sessionMinutes = minutes
+            let effective = PlanBrief(sentence: "").resolved(against: profile)
+            #expect(effective.maxExercises * 3 <= effective.maxSets)
+            #expect(effective.maxExercises >= 2)
+        }
     }
 
     @Test func volumeCapScalesWithLongerSessions() {

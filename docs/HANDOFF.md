@@ -11,7 +11,7 @@
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework + DongKe app + DongKeCoreTests + DongKeUITests；`Shared/A11yIdentifiers.swift` 同时编进 App 与 UI 测试 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 12 页清单里已落地 11 页：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成）、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（30 分钟内有效）；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
-| 测试 | **375 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **12 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条 |
+| 测试 | **391 条 Swift Testing 全绿**（`-only-testing:DongKeCoreTests`）+ **12 条 UI 测试全绿**（`-only-testing:DongKeUITests`）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条 |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
 
@@ -369,6 +369,40 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 - 测试 375 / UI 12；截图 `t37-brief-confirm.png`。
 
 **关于 AX3**：确认页没有强制 AX3，`BriefConfirmView` 只是在系统字号本身是无障碍档时切换底栏布局。之前看到 AX3 是因为截图命令手动设了 `xcrun simctl ui <UDID> content_size accessibility-extra-extra-extra-large`；现已复位 `large`，并删掉本次的 AX3 截图。以后不再用 AX3 做常规验收。
+
+## 6.16 复核 02–04：门禁与口径的修正（2026-10-24）
+
+对 `524286a..f22843f`（三个提交）做了一次双轴复核（Standards / Spec），查出并修掉六处：
+
+1. **`BriefConfirmView` 325 行**撞 §4.3 规则 1，门禁第 6 条非空。拆成 `BriefConfirmView.swift`（状态、`editedBrief`、`sourceText`）与 `BriefConfirmView+Sections.swift`（版式）。约定：跨文件扩展取用不到的成员不要写 `private`，跟 `TodayView+Cards` 一致。
+2. **每日训练量上限有两套公式**，且 30 分钟时互斥：`maxExercises = minutes/5 = 6`、`maxSets = minutes/2 = 15`，而 6 个动作各 3 组就是 18 组。现在只有 `EffectivePlanBrief` 一处：先算 `maxSets`，再取 `maxExercises = maxSets/3`（夹 2…8）。30 分钟 = 5 个动作 / 15 组；20 分钟 = 3 / 10；60 分钟 = 8 / 30。`AIPromptBuilder` 不再自己算。
+3. **`userBrief` 曾有两份实现**（`extraNote` 版与 `brief` 版）。只留 `brief` 版，`extraNote` 是 `PlanBrief(sentence:)` 的薄包装——注意这改了文案：`补充要求：X` 现在写作 `本次按用户原话生成` + `用户原话：X`。
+4. **`AIPlanGenerating` 的两个便捷重载**默认 `memory: .empty, exercises: .empty`，等于把 04 刚修的「AI 路径无视别名记忆」重新打开，且零调用方。整段删除，协议只留全参版本。
+5. **确认页的来源标签**原本读 `brief.overriddenFields`（解析结果），用户在页面上改完不重算，会把改过的值标成「沿用档案」。现在直接与档案比：星期 / 时长 / 器械 / 目标与档案一致才标「沿用档案」。
+6. **`isVague` 只有测试在读**。确认页标题下加一句「没听出具体安排，下面按你的档案兜底，可以直接改」，让它真的被消费。
+
+顺带收口：确认页按钮改走 `Typography.buttonLabel` / `Typography.secondary`（原来硬写 `.subheadline.weight(.semibold)` / `.footnote.weight(.medium)`，同屏三档字重且绕开 token），去掉 `lineLimit(1)`，「共 N 天」「N 分钟」补 `monospacedDigit`。
+
+**门禁本身也修了两条**（已回写 `ARCHITECTURE.md` §4.3）：`systemName:` 那条会连 `Image(systemName: Icons.x)` 一起拦，永远非空等于失效，改为只查字面量；`UIPasteboard` 那条连写剪贴板也拦，但「复制提示词」没有替代 API，改为只拦读取（非 `= ` 赋值）。
+
+**测试**：单测 375 → 376（新增一条 5…120 分钟全档位 `maxExercises × 3 ≤ maxSets` 不变量；两条旧断言随新公式调整），UI 12 条。
+
+## 6.17 AI 传输层抽出 Core（2026-10-24）
+
+HTTP 从 App 服务里挪进了 `DongKeCore/AI/AITransport.swift`：
+
+```swift
+let transport = AITransport.live()          // 或 AITransport(sender: { … })
+let request = AITransport.Request(url:key:model:messages:)
+let result = try await transport.generate(request)   // result.text / result.mode
+```
+
+- `sender: @Sendable (URLRequest) async throws -> Response` 是唯一注入点，`Response` 只带 `status` 与 `body`——测试不用拼 `HTTPURLResponse`，也不需要 `URLProtocol` 的全局注册表。
+- `sleep` 同样可注入：重试退避是 2 秒，测试传 `.milliseconds(1)` 并记录调用次数，用来区分「重试了」和「没重试」。
+- `AIPlanClient` 现在只剩三件事：读设置、组请求、把 `result.text` 交给 `AIPlanInterpreter`（带 `memory` / `exercises`）。`makeSession()` 挪到 `AITransport.makeSession()`，15s / 60s 超时与 ephemeral 配置不变。
+- `Tools/AISmoke` 改吃同一个 `AITransport`，它自己那份降级环删掉了；顺带修掉那里「`interpret` 不传 memory / exercises」的隐患。
+
+**已知边界**：`json_schema` 被拒后的降级不是无损的——DeepSeek 上 `json_object` 档不保证结构，仍由 `PlanValidator` 与校对页兜底。真实端点复测：400 降级 → 200，20.4 秒，2 天 14 个动作 33 组，落在新的 7 个动作 / 22 组上限内。
 
 ## 7. 换机后容易踩的坑
 

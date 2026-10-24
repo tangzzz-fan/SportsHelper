@@ -59,6 +59,7 @@ public struct PlanBrief: Equatable, Sendable {
     public func resolved(against profile: UserProfile) -> EffectivePlanBrief {
         let minutes = min(120, max(5, sessionMinutes ?? profile.sessionMinutes))
         let gear = (equipment?.isEmpty == false ? equipment : profile.equipment) ?? []
+        let maxSets = max(6, min(30, minutes / 2))
         return EffectivePlanBrief(
             weekdays: resolvedWeekdays(against: profile),
             sessionMinutes: minutes,
@@ -67,8 +68,8 @@ public struct PlanBrief: Equatable, Sendable {
             focus: focus,
             avoid: avoid,
             injuries: profile.injuries,
-            maxExercises: max(3, min(8, minutes / 5)),
-            maxSets: max(6, min(30, minutes / 2))
+            maxExercises: max(2, min(8, maxSets / 3)),
+            maxSets: maxSets
         )
     }
 
