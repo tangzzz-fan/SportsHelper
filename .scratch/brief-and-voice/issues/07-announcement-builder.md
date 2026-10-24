@@ -4,10 +4,17 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done（2026-10-24）
 
-- [ ] `WorkoutAnnouncement`：sessionStart / setStart / restStart / restCountdown / restFinished / blockBreak / finished
-- [ ] `WorkoutAnnouncementBuilder`：动作名、第 N 组 / 共 M 组、剂量（12 次 / 45 秒 / 每侧 10 次 / 40 米）、休息时长、下一动作
-- [ ] 读法规则：>60 秒休息读「1 分 30 秒」；倒数只读「3 / 2 / 1」；完成读「完成 9 组，完成率 100%」
-- [ ] 长度护栏：单句 ≤40 字；超长砍动作要点，不砍动作名与剂量
-- [ ] 测试 ≥20 条：四种目标类型、每侧、循环 / 超级组、最后一组不说「下一组」、休息 0 秒不播、完成率 0 / 100
+- [x] `WorkoutAnnouncement`：sessionStart / setStart / restStart / restCountdown / restFinished / blockBreak / finished，每种都有 `text`
+- [x] `WorkoutAnnouncementBuilder`：从 `WorkoutPlan` + `dayIndex` 建表（动作名、每组总数、剂量），按 `FlowStep` 索引取文案
+- [x] 读法规则：≥60 秒读「1 分钟 / 1 分 30 秒」；倒数只读 3 / 2 / 1；完成读「完成 9 组，完成率 100%」
+- [x] 长度护栏：单句 ≤40 字；超长按「下一个 → 共 N 组」的顺序丢可选片段，动作名与剂量最后才动
+- [x] 测试 24 条：四种剂量、每侧、公里、循环 / 超集、最后一组无「下一个」、休息 0 秒不播、完成率 0 / 56 / 100、长名字降级、全流程每句 ≤40 字
+
+**两处实现取舍**：
+
+1. **剂量不复用 `SetTarget.doseText`，另写 `WorkoutAnnouncementBuilder.doseText`**。界面那份是「10 次/侧」，念出来是「10 次斜杠侧」；播报要「每侧 10 次」。两份各自服务读者，不合并。
+2. **60 秒读「1 分钟」而不是「60 秒」**。原票只写了「>60 秒读 1 分 30 秒」，没说 60 本身；念「1 分钟」更自然，测试按这个锁。
+
+**边界**：文案不念动作要点与常见错误——念出来一句就超 40 字，那些留在屏幕上由 VoiceOver 读。打断 / 中止策略归 08。
