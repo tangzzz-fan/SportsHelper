@@ -366,3 +366,97 @@ GymMane 那张 169 条的表实测：**0 条链式、0 自映射、0 环**。说
 ### 中间态
 
 图文跟练卡（1–2 人日）：十式顺序 + 每式一句要点 + 总时长，不打卡、不入库、不进统计。点开率能回答「是真需求还是一个人随口问」，内容以后可直接复用成 `Routine` 数据。
+
+---
+
+## 8. 库外动作的按需生图（§5 T3 的单帧特例）
+
+状态：待开 spec（2026-10-25 记录，董事长要求）
+关联：§5、`docs/FIGURE-STYLE.md` §2.1、`DongKeCore/Figure/ExerciseFigure.swift`、`DongKeCore/Import/ExerciseAliasResolver.swift`
+
+### 场景
+
+用户粘贴一段计划、或者用一句话让 AI 排计划时，动作名**大概率不在 43 条库里**（`ConfusableNounTests` 里「杠铃卧推 / 腿举 / 引体向上 / 波比跳」全都落在库外）。现在的处置是三级兜底：猜（标橙待确认）/ 记（别名记忆）/ 存（我的动作，`custom_<slug>`）——**但图示永远退回同一张 `_generic`**，47 个库里动作有 35 张专属图，库外动作一张都没有。
+
+§5 的 T3 是给**固定 8 个缺口**预先出图；这条解决的是另一件事：**动作集合是开放的，事先不知道会出现什么**。这是「预先供给」和「按需生成」的区别，不能混在一个条目里做。
+
+### 为什么这条比 §5 的 T3 容易
+
+§5 判死 T3 的核心障碍是**「同一个人换 3 个姿势」的一致性**——三帧要看起来是同一个模特，扩散模型做不到。而库外动作：
+
+- 只要 **1 帧**，没有 `motion`、没有 3 帧连播
+- 不进 `GeneratedFigureData.swift`（那是构建期生成物，库外动作本来就不在里面）
+- 播放页只做静态展示，不参与「图示可点播放」
+
+**单帧绕开了那个障碍。** 但换来三个新问题，见下。
+
+### 三条硬约束（已核实）
+
+1. **位图接不进来。** `FigureFrame` 只有一个 case（`.vector(vectorPath)`），`ExerciseFigureView` 走 `FigureShape: Shape` + `.fill` / `.stroke` 两条分支。图像模型产出的是 PNG，要接必须扩 `.bitmap` case + 一条 `Image` 渲染分支 + 尺寸适配规则（现有按 `bounds` 等比适配，位图没有 `bounds`）。
+2. **必须联网。** 与「无账号、本地优先」的既有取向冲突。BYOK 已经开了一个口（`AISettingsStore`），但那是「生成计划」时的显式行为，图示是**被动展示**，用户没预期它会发网络请求。
+3. **有延迟，且不能阻塞解析。** 粘贴 → 解析 → 校对页是毫秒级；生图是秒级到几十秒。所以只能「先占位，生完再换」，不能把用户卡在校对页等图。
+
+### 提示词草案（基于 31 张 / 93 帧实测参数）
+
+风格参数来自 `FIGURE-STYLE.md` §2.1：线宽/图高 0.67–2.90%（中位 1.23）、墨量 3–8%、留白中位 4.5%、图高 433–470 单位 / 512 画布。这些数字要翻译成模型能懂的词。
+
+**正向**
+
+```
+Single full-body human figure demonstrating {EXERCISE_EN}, side view,
+clean black line art on pure white background,
+minimal anatomical outline, no interior shading,
+stroke weight about 1.2% of figure height,
+sparse ink coverage (3–8% of canvas), lots of white space,
+figure height about 88% of a square canvas, 4–5% margin on all sides,
+orthographic projection, flat, no perspective distortion,
+no facial features, no hair detail, joint articulation visible,
+{站姿: standing upright, aspect ratio ≈ 0.87}
+{躺姿: lying horizontal, aspect ratio ≈ 2.0}
+{无器械动作: no equipment}
+{有器械动作: only a {哑铃/弹力带/椅子/墙}, drawn in the same line weight}
+```
+
+**负向**
+
+```
+photograph, 3D render, shading, gradient, color, background scenery,
+multiple figures, cropped head, close-up, bust portrait,
+text, watermark, arrows, numbers,
+extra limbs, distorted anatomy, motion blur, sketchy strokes
+```
+
+**三条使用规则**
+
+1. **中文名要先翻成英文**。动作名进提示词前必须翻译，否则模型对「蚌式开合」的理解远不如 `clamshell`。现成的映射就在 `ExerciseAliasResolver.aliases` 的英文别名里，缺的补一条。
+2. **器械只在动作必需时画**。现有 43 条里 `regressionName` 走自重的很多，图上多画一个哑铃会让用户以为必须去健身房。
+3. **生成结果按归一化动作名缓存**。同一个动作第二次粘贴不重复请求，缓存键用 `ExerciseAliasResolver` 归一化后的名字（不是用户原话，否则「臀桥」「桥式」「hip bridge」会各生成一张）。
+
+### 做之前必须先定的
+
+1. **位图进，还是矢量化进。** 位图要扩 `FigureFrame` 并接受「和现有 35 张不是同一种渲染」；矢量化（`potrace` 一类）能保持单 path，但线宽和墨量会跑偏，大概率过不了 §2.1 判据。**建议先按位图做**，理由是库外动作本来就是「有个示意比没有强」，不必假装它和精选图同档。
+2. **什么时候生成。** 校对页出现库外动作时立刻请求（用户正在等，最有耐心），还是保存后再后台生成（不打断流程）。**建议后者**，加一个「生成中」的灰显状态。
+3. **一致性要求放到多低。** 同一动作两次生成体型不同算不算问题？**建议接受**，但同一份计划内要复用同一张（缓存保证）。
+4. **成本与配额。** 按每张 ¥0.05–0.3 估，一个 20 个新动作的计划就是 ¥1–6。要不要给用户一个开关，或者每天 N 张的上限。
+5. **生成物的权利。** 现有素材是 CC BY-SA 4.0（署名 bryllim / Everkinetic）。AI 生成图不继承这个许可，但要单独确认模型服务商的商用条款；如果生成时把现有图作为参考图（image-to-image），产物可能被视为衍生作品，署名要求会回来。
+
+### 验收
+
+拿「波比跳」（`burpee`，库里确实没有、用户粘贴高频）做第一张：
+
+- 190pt 下与 `jumping_jack` 并排，非作者不觉得「这不是同一个 App 的图」
+- 实测线宽/图高落在 0.7%–2.9%、墨量 3%–8%（用现有 `FIGURE-STYLE` §2.1 的脚本量，不靠肉眼）
+- 全身、头顶不裁、无背景、无文字
+- 同一动作第二次请求命中缓存，不发网络请求
+- 断网时不报错，静默退回 `_generic` 占位
+
+### 为什么现在不做
+
+三个理由，按重要性排：
+
+1. **前置未定。** 它依赖 §5 的 T2 模板当验收基准（否则「同风格」只能靠肉眼），而 T2 要不要建还没拍。
+2. **依赖一个还没做的决策。** 库外动作现在连「该不该进库」都没定（§6 的准入规则里 id 规约、中文名来源都还空着）。先给它们生图，等于给一批身份不明的动作配插图。
+3. **当前 47 条里只有 12 条走占位。** 缺口还没大到值得引入联网、位图、成本三件事。等 §1 那 4 条康复动作也确认真需要图，再一起做更划算。
+
+**一个便宜的中间态**（0.5 人日，可先做）：把 `_generic` 从「一张通用人形」改成**按动作分组的三张**（下肢 / 上肢 / 核心），`custom_` 动作按 `group` 选图。这不能给出正确姿势，但至少不会出现「用户存了个深蹲，图示却是站着的抽象人」。
+
