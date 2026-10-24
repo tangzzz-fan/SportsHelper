@@ -22,21 +22,21 @@ struct WorkoutVoiceSessionTests {
         return (voice, speaker)
     }
 
-    @Test("开始训练只播一次")
+    @Test("开始训练只播一次，读当天主题与动作数")
     func startSpeaksOnce() {
         let (voice, speaker) = makeVoice()
         voice.start()
         voice.start()
         #expect(speaker.spoken.count == 1)
-        #expect(speaker.spoken.first == "开始训练，测试计划，共 2 组")
+        #expect(speaker.spoken.first == "开始训练，训练，2 个动作，共 2 组")
     }
 
-    @Test("进入第一组播动作与剂量")
+    @Test("进入第一组先说动作名")
     func firstSetAnnouncement() {
         let (voice, speaker) = makeVoice()
         voice.start()
         voice.stepChanged(to: 0)
-        #expect(speaker.spoken.last == "第 1 组，共 1 组，深蹲，12 次，下一个：臀桥")
+        #expect(speaker.spoken.last == "深蹲，第 1 组，共 1 组，12 次，下一个：臀桥")
     }
 
     @Test("同一个步骤重复渲染不重播")
@@ -74,12 +74,29 @@ struct WorkoutVoiceSessionTests {
         #expect(speaker.spoken.last == "休息，30 秒")
     }
 
-    @Test("区块切换报下一区块名")
-    func blockBreakSpeaksNextTitle() {
-        let (voice, speaker) = makeVoice()
+    @Test("区块切换报下一个动作，不是区块标题")
+    func blockBreakSpeaksNextAction() throws {
+        let plan = makePlan(days: makeSevenDays(
+            training: [1],
+            blocks: [
+                makeBlock(id: "b1", items: [makeItem(id: "i1", name: "开合跳", sets: 1)], restBetweenItems: 120),
+                makeBlock(id: "b2", items: [makeItem(id: "i2", name: "深蹲", sets: 1)])
+            ]
+        ))
+        let speaker = FakeSpeaker()
+        let coordinator = SpeechCueCoordinator(
+            policy: SpeechCuePolicy(isEnabled: true, isForeground: true, isVoiceOverRunning: false),
+            announcer: speaker
+        )
+        let voice = WorkoutVoiceSession(plan: plan, dayIndex: 1, coordinator: coordinator)
+        let breakIndex = try #require(WorkoutFlowModel(plan: plan, dayIndex: 1).steps.firstIndex {
+            if case .blockBreak = $0 { true } else { false }
+        })
+
         voice.start()
-        voice.restStarted(seconds: 120, nextBlockTitle: "核心")
-        #expect(speaker.spoken.last == "休息，2 分钟，接下来：核心")
+        voice.restStarted(seconds: 120, at: breakIndex)
+
+        #expect(speaker.spoken.last == "休息，2 分钟，接下来：深蹲，12 次")
     }
 
     @Test("最后 3 秒各报一次，重复 tick 不重播")
@@ -176,8 +193,8 @@ struct WorkoutVoiceSessionTests {
         voice.finished(completedSets: 1)
 
         #expect(speaker.spoken == [
-            "开始训练，测试计划，共 2 组",
-            "第 1 组，共 1 组，深蹲，12 次，下一个：臀桥",
+            "开始训练，训练，2 个动作，共 2 组",
+            "深蹲，第 1 组，共 1 组，12 次，下一个：臀桥",
             "休息，30 秒",
             "1",
             "休息结束，下一个：臀桥，12 次",

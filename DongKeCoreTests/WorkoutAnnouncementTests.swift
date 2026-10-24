@@ -15,28 +15,36 @@ struct WorkoutAnnouncementTests {
         WorkoutAnnouncementBuilder(plan: plan(items: items), dayIndex: 1)
     }
 
-    @Test("开始训练读到计划名与总组数")
+    @Test("开始训练读当天主题、动作数与总组数")
     func sessionStartReadsTitleAndSets() {
-        let text = WorkoutAnnouncement.sessionStart(title: "居家弹力带背部", totalSets: 14).text
-        #expect(text == "开始训练，居家弹力带背部，共 14 组")
+        let text = WorkoutAnnouncement.sessionStart(
+            title: "居家弹力带背部", exerciseCount: 4, totalSets: 14
+        ).text
+        #expect(text == "开始训练，居家弹力带背部，4 个动作，共 14 组")
     }
 
-    @Test("没有计划名时只报总数")
+    @Test("没有计划名时只剩动作数与总数")
     func sessionStartWithoutTitle() {
-        #expect(WorkoutAnnouncement.sessionStart(title: "  ", totalSets: 9).text == "开始训练，共 9 组")
+        #expect(
+            WorkoutAnnouncement.sessionStart(title: "  ", exerciseCount: 3, totalSets: 9).text
+                == "开始训练，3 个动作，共 9 组"
+        )
     }
 
-    @Test("休息日没有组数时不出现「共 0 组」")
+    @Test("休息日没有动作也没有组数时只报开始")
     func sessionStartWithoutSets() {
-        #expect(WorkoutAnnouncement.sessionStart(title: "测试计划", totalSets: 0).text == "开始训练，测试计划")
+        #expect(
+            WorkoutAnnouncement.sessionStart(title: "", exerciseCount: 0, totalSets: 0).text
+                == "开始训练"
+        )
     }
 
-    @Test("每组开口报第几组、共几组、动作与次数")
+    @Test("每组先把动作名说出来，再报第几组")
     func setStartBasic() {
         let text = WorkoutAnnouncement.setStart(
             name: "深蹲", setIndex: 1, totalSets: 3, dose: "12 次", nextName: nil
         ).text
-        #expect(text == "第 1 组，共 3 组，深蹲，12 次")
+        #expect(text == "深蹲，第 1 组，共 3 组，12 次")
     }
 
     @Test("不是最后一组时带上下一个动作")
@@ -111,10 +119,31 @@ struct WorkoutAnnouncementTests {
         #expect(builder.restFinished(nextStepIndex: nil).text == "休息结束")
     }
 
-    @Test("区块切换报休息时长与下一区块名")
+    @Test("区块切换报休息时长与下一个动作")
     func blockBreakReadsNextBlock() {
-        let text = WorkoutAnnouncement.blockBreak(seconds: 120, nextBlockTitle: "核心").text
-        #expect(text == "休息，2 分钟，接下来：核心")
+        let text = WorkoutAnnouncement.blockBreak(seconds: 120, nextLabel: "平板支撑，40 秒").text
+        #expect(text == "休息，2 分钟，接下来：平板支撑，40 秒")
+    }
+
+    @Test("区块休息的「接下来」取下一个动作而不是区块标题")
+    func blockBreakPrefersNextExercise() {
+        let plan = makePlan(days: makeSevenDays(
+            training: [1],
+            blocks: [
+                makeBlock(id: "b1", items: [makeItem(id: "i1", name: "开合跳", sets: 1)], restBetweenItems: 90),
+                makeBlock(id: "b2", items: [makeItem(id: "i2", name: "深蹲", sets: 1)])
+            ]
+        ))
+        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
+        let breakIndex = WorkoutFlowModel(plan: plan, dayIndex: 1).steps.firstIndex {
+            if case .blockBreak = $0 { true } else { false }
+        }
+
+        guard let breakIndex else {
+            Issue.record("没有找到区块休息")
+            return
+        }
+        #expect(builder.nextActionLabel(afterBlockBreakAt: breakIndex) == "深蹲，12 次")
     }
 
     @Test("区块切换不走 set 播报入口，由休息入口负责")
@@ -231,6 +260,43 @@ struct WorkoutAnnouncementTests {
 
         #expect(builder.plannedSets == 0)
         #expect(builder.announcement(forStepAt: 0) == nil)
-        #expect(builder.sessionStart().text == "开始训练，测试计划")
+        #expect(builder.sessionStart().text == "开始训练")
+    }
+
+    @Test("循环区块的组序按动作累计，不再每轮从第 1 组重来")
+    func circuitSetIndexAccumulates() {
+        let items = [makeItem(id: "i1", name: "深蹲", sets: 2)]
+        let plan = makePlan(days: makeSevenDays(
+            training: [1],
+            blocks: [makeBlock(kind: .circuit, rounds: 3, items: items, restBetweenRounds: 60)]
+        ))
+        let flow = WorkoutFlowModel(plan: plan, dayIndex: 1)
+        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
+
+        let indices = flow.steps.compactMap { step -> Int? in
+            if case let .set(_, setIndex, _, _) = step { return setIndex }
+            return nil
+        }
+        #expect(indices == [1, 2, 3, 4, 5, 6])
+        #expect(flow.setCounts["i1"] == 6)
+
+        guard case let .setStart(name, setIndex, totalSets, _, _)? = builder.announcement(forStepAt: 6) else {
+            Issue.record("第 7 个 step 应是 set")
+            return
+        }
+        #expect(name == "深蹲")
+        #expect(setIndex == 5)
+        #expect(totalSets == 6)
+    }
+
+    @Test("开始训练读当天主题，不是整份计划名")
+    func sessionStartUsesDayTitle() {
+        let plan = makePlan(days: makeSevenDays(
+            training: [1],
+            blocks: [makeBlock(items: [makeItem(id: "i1", sets: 2)])]
+        ))
+        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
+
+        #expect(builder.sessionStart().text == "开始训练，训练，1 个动作，共 2 组")
     }
 }

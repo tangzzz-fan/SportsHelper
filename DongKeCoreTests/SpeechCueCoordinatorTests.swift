@@ -48,7 +48,7 @@ struct SpeechCueCoordinatorTests {
     func speaksWhenAllowed() {
         let (coordinator, announcer) = coordinator()
         coordinator.announce(.setStart(name: "深蹲", setIndex: 2, totalSets: 3, dose: "12 次", nextName: "臀桥"))
-        #expect(announcer.spoken == ["第 2 组，共 3 组，深蹲，12 次，下一个：臀桥"])
+        #expect(announcer.spoken == ["深蹲，第 2 组，共 3 组，12 次，下一个：臀桥"])
         #expect(coordinator.lastSpokenText == announcer.spoken.first)
     }
 
@@ -70,7 +70,7 @@ struct SpeechCueCoordinatorTests {
     @Test("连续节点按顺序送进引擎，后一句由引擎打断前一句")
     func sequentialNodesAreAllDelivered() {
         let (coordinator, announcer) = coordinator()
-        coordinator.announce(.sessionStart(title: "测试计划", totalSets: 9))
+        coordinator.announce(.sessionStart(title: "测试计划", exerciseCount: 3, totalSets: 9))
         coordinator.announce(.setStart(name: "深蹲", setIndex: 1, totalSets: 3, dose: "12 次", nextName: nil))
         #expect(announcer.spoken.count == 2)
         #expect(coordinator.lastSpokenText?.contains("深蹲") == true)

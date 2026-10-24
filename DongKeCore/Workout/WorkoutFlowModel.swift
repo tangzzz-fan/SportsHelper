@@ -9,6 +9,7 @@ public enum FlowStep: Equatable, Sendable {
 
 public struct WorkoutFlowModel: Equatable, Sendable {
     public let steps: [FlowStep]
+    public let setCounts: [String: Int]
 
     public var plannedSets: Int {
         steps.reduce(into: 0) { count, step in
@@ -19,10 +20,25 @@ public struct WorkoutFlowModel: Equatable, Sendable {
     public init(plan: WorkoutPlan, dayIndex: Int) {
         guard let day = plan.days.first(where: { $0.dayIndex == dayIndex }), !day.isRestDay else {
             steps = [.finished]
+            setCounts = [:]
             return
         }
 
         var built: [FlowStep] = []
+        var counts: [String: Int] = [:]
+
+        func appendSets(of item: ExercisePrescription) {
+            for _ in 1...max(1, item.sets) {
+                let next = (counts[item.itemId] ?? 0) + 1
+                counts[item.itemId] = next
+                built.append(.set(
+                    prescriptionId: item.itemId,
+                    setIndex: next,
+                    target: item.target,
+                    restAfterSec: item.restSec
+                ))
+            }
+        }
 
         for (blockOffset, block) in day.blocks.enumerated() {
             let isLoop = block.kind == .circuit || block.kind == .superset
@@ -31,14 +47,7 @@ public struct WorkoutFlowModel: Equatable, Sendable {
             if isLoop {
                 for round in 1...rounds {
                     for item in block.items {
-                        for setIndex in 1...max(1, item.sets) {
-                            built.append(.set(
-                                prescriptionId: item.itemId,
-                                setIndex: setIndex,
-                                target: item.target,
-                                restAfterSec: item.restSec
-                            ))
-                        }
+                        appendSets(of: item)
                     }
                     if round < rounds, block.restBetweenRoundsSec > 0 {
                         built.append(.roundBreak(seconds: block.restBetweenRoundsSec))
@@ -46,14 +55,7 @@ public struct WorkoutFlowModel: Equatable, Sendable {
                 }
             } else {
                 for item in block.items {
-                    for setIndex in 1...max(1, item.sets) {
-                        built.append(.set(
-                            prescriptionId: item.itemId,
-                            setIndex: setIndex,
-                            target: item.target,
-                            restAfterSec: item.restSec
-                        ))
-                    }
+                    appendSets(of: item)
                 }
             }
 
@@ -67,5 +69,6 @@ public struct WorkoutFlowModel: Equatable, Sendable {
 
         built.append(.finished)
         steps = built
+        setCounts = counts
     }
 }

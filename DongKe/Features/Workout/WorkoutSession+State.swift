@@ -75,12 +75,7 @@ extension WorkoutSession {
         var effects: [RestEffect] = []
         rest = RestTimerStateMachine.reduce(rest, .start(seconds: seconds, now: now), &effects)
         saveCheckpoint(now: now)
-        voice?.restStarted(seconds: seconds, nextBlockTitle: blockTitleForRest)
-    }
-
-    var blockTitleForRest: String? {
-        if case let .blockBreak(_, nextTitle)? = currentStep { return nextTitle }
-        return nil
+        voice?.restStarted(seconds: seconds, at: stepIndex)
     }
 
     func syncRestNotification() {

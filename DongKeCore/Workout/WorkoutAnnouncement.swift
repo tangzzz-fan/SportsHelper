@@ -1,30 +1,31 @@
 import Foundation
 
 public enum WorkoutAnnouncement: Equatable, Sendable {
-    case sessionStart(title: String, totalSets: Int)
+    case sessionStart(title: String, exerciseCount: Int, totalSets: Int)
     case setStart(name: String, setIndex: Int, totalSets: Int, dose: String, nextName: String?)
     case restStart(seconds: Int)
     case restCountdown(secondsLeft: Int)
     case restFinished(nextName: String?, nextDose: String?)
-    case blockBreak(seconds: Int, nextBlockTitle: String)
+    case blockBreak(seconds: Int, nextLabel: String)
     case finished(completedSets: Int, plannedSets: Int)
 
     public static let textLimit = 40
 
     public var text: String {
         switch self {
-        case let .sessionStart(title, totalSets):
+        case let .sessionStart(title, exerciseCount, totalSets):
             let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
             return Self.compose([
                 ("开始训练", true),
                 (name, true),
+                (exerciseCount > 0 ? "\(exerciseCount) 个动作" : "", true),
                 (totalSets > 0 ? "共 \(totalSets) 组" : "", false)
             ])
         case let .setStart(name, setIndex, totalSets, dose, nextName):
             return Self.compose([
+                (name, true),
                 ("第 \(setIndex) 组", true),
                 ("共 \(totalSets) 组", false),
-                (name, true),
                 (dose, true),
                 (nextName.map { "下一个：\($0)" } ?? "", false)
             ])
@@ -41,12 +42,12 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
                 ("下一个：\(nextName)", true),
                 (nextDose ?? "", false)
             ])
-        case let .blockBreak(seconds, nextBlockTitle):
-            let title = nextBlockTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        case let .blockBreak(seconds, nextLabel):
+            let label = nextLabel.trimmingCharacters(in: .whitespacesAndNewlines)
             return Self.compose([
                 ("休息", true),
                 (Self.durationText(seconds), true),
-                (title.isEmpty ? "" : "接下来：\(title)", false)
+                (label.isEmpty ? "" : "接下来：\(label)", false)
             ])
         case let .finished(completedSets, plannedSets):
             let percent = plannedSets > 0

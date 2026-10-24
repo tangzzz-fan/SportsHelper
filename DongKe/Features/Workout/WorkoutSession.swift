@@ -69,7 +69,8 @@ final class WorkoutSession: Identifiable {
     }
 
     var currentSetTotal: Int {
-        currentPrescription?.sets ?? 1
+        guard let id = currentPrescription?.itemId else { return 1 }
+        return flow.setCounts[id] ?? 1
     }
 
     var completedSets: Int {

@@ -9,11 +9,15 @@ public struct WorkoutAnnouncementBuilder: Sendable {
 
     private let steps: [FlowStep]
     private let exercises: [String: Exercise]
-    private let title: String
+    private let setCounts: [String: Int]
+    private let dayTitle: String
 
     public init(plan: WorkoutPlan, dayIndex: Int) {
-        self.steps = WorkoutFlowModel(plan: plan, dayIndex: dayIndex).steps
-        self.title = plan.meta.title
+        let flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
+        self.steps = flow.steps
+        self.setCounts = flow.setCounts
+        self.dayTitle = plan.days.first(where: { $0.dayIndex == dayIndex })?.title
+            ?? plan.meta.title
 
         var collected: [String: Exercise] = [:]
         for day in plan.days where day.dayIndex == dayIndex {
@@ -36,8 +40,17 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         }
     }
 
+    public var exerciseCount: Int {
+        setCounts.count
+    }
+
     public func sessionStart() -> WorkoutAnnouncement {
-        .sessionStart(title: title, totalSets: plannedSets)
+        let sets = plannedSets
+        return .sessionStart(
+            title: sets > 0 ? dayTitle : "",
+            exerciseCount: exerciseCount,
+            totalSets: sets
+        )
     }
 
     public func step(at index: Int) -> FlowStep? {
@@ -53,7 +66,7 @@ public struct WorkoutAnnouncementBuilder: Sendable {
             return .setStart(
                 name: exercise.name,
                 setIndex: setIndex,
-                totalSets: exercise.totalSets,
+                totalSets: setCounts[prescriptionId] ?? exercise.totalSets,
                 dose: Self.doseText(target),
                 nextName: upcoming == exercise.name ? nil : upcoming
             )
@@ -81,6 +94,17 @@ public struct WorkoutAnnouncementBuilder: Sendable {
             return .restFinished(nextName: nil, nextDose: nil)
         }
         return .restFinished(nextName: exercise.name, nextDose: Self.doseText(target))
+    }
+
+    public func nextActionLabel(afterBlockBreakAt index: Int) -> String? {
+        guard steps.indices.contains(index), case .blockBreak = steps[index] else { return nil }
+        for step in steps.dropFirst(index + 1) {
+            if case let .set(prescriptionId, _, target, _) = step,
+               let exercise = exercises[prescriptionId] {
+                return "\(exercise.name)，\(Self.doseText(target))"
+            }
+        }
+        return nil
     }
 
     public func finished(completedSets: Int) -> WorkoutAnnouncement {

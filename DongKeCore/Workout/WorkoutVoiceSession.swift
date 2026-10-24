@@ -37,12 +37,12 @@ public final class WorkoutVoiceSession {
         cues.announce(announcement)
     }
 
-    public func restStarted(seconds: Int, nextBlockTitle: String? = nil) {
+    public func restStarted(seconds: Int, at stepIndex: Int? = nil) {
         guard isActive else { return }
         lastCountdown = nil
         guard seconds > 0 else { return }
-        if let nextBlockTitle, nextBlockTitle.isEmpty == false {
-            cues.announce(.blockBreak(seconds: seconds, nextBlockTitle: nextBlockTitle))
+        if let stepIndex, let label = builder.nextActionLabel(afterBlockBreakAt: stepIndex) {
+            cues.announce(.blockBreak(seconds: seconds, nextLabel: label))
         } else {
             cues.announce(.restStart(seconds: seconds))
         }
