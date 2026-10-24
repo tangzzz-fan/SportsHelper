@@ -192,6 +192,18 @@ extension ExerciseLibrary {
             regressionName: "轻力度颈部等长",
             relievedParts: [.shoulderNeck],
             purposes: [.mobility]
+        ),
+        ExerciseEntry(
+            id: "bench_dip",
+            name: "凳上反屈伸",
+            group: .upper,
+            equipment: .bench,
+            isStatic: false,
+            cues: ["背对凳子，双手撑在边缘", "肘部向后弯，身体贴着凳子下沉", "下到肘弯约 90 度再推起"],
+            mistakes: ["肩膀耸起", "下沉太深压到肩前侧"],
+            regressionName: "直臂支撑",
+            alternativeId: "biceps_curl",
+            affectedParts: [.elbow, .shoulderNeck]
         )
     ]
 }

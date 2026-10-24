@@ -101,10 +101,11 @@ func downgradedAndSkippedDoNotCount() {
     #expect(DoseAdjustment.propose(plan: plan(), logs: logs, now: day) == nil)
 }
 
-@Test("到次数上限就不再往上加")
+@Test("次数到顶后换下一级杠杆")
 func stopsAtCeiling() {
     let nearCeiling = plan(value: 14)
-    #expect(DoseAdjustment.propose(plan: nearCeiling, logs: twoSessions(planned: 14), now: day) == nil)
+    let next = DoseAdjustment.propose(plan: nearCeiling, logs: twoSessions(planned: 14), now: day)
+    #expect(next?.changes[0].field == .sets)
 
     let atLimit = plan(value: 13)
     #expect(DoseAdjustment.propose(plan: atLimit, logs: twoSessions(planned: 13), now: day)?.changes[0].toValue == 15)

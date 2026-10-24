@@ -230,5 +230,29 @@ extension ExerciseLibrary {
             alternativeId: "hip_thrust",
             affectedParts: [.lowerBack, .hip]
         ),
+        ExerciseEntry(
+            id: "single_leg_rdl",
+            name: "单腿罗马尼亚硬拉",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["单脚站稳，另一脚脚尖点地", "髋部后移，上身随之前倾", "下去时腿后侧拉长，起来时收臀"],
+            mistakes: ["弓背点头够地面", "支撑腿膝盖锁死"],
+            regressionName: "徒手髋铰链",
+            alternativeId: "glute_bridge",
+            affectedParts: [.lowerBack, .hip]
+        ),
+        ExerciseEntry(
+            id: "single_leg_calf_raise",
+            name: "单腿站姿提踵",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["单脚前脚掌踩实，另一脚勾在小腿后", "先站稳，再慢慢踮到最高", "顶点停一秒，落下时脚跟不着地"],
+            mistakes: ["靠墙借力", "落得太快没有控制"],
+            regressionName: "提踵",
+            regressionId: "calf_raise",
+            affectedParts: [.ankle]
+        ),
     ]
 }

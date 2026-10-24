@@ -465,7 +465,7 @@ extra limbs, distorted anatomy, motion blur, sketchy strokes
 
 ## 9. 剂量回路（记录接回处方）
 
-状态：**已开 spec 与票**（2026-10-25）
+状态：**12 张票全部落地**（2026-10-25），单测 634 条绿
 spec：`docs/specs/2026-10-25-dose-loop.md` · 票：`.scratch/dose-loop/issues/01..11`
 原则：ADR-0004「计划只因用户选择而变」、ADR-0003「外来计划不主动提建议」
 

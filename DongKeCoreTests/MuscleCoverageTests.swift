@@ -62,8 +62,8 @@ struct MuscleCoverageTests {
         #expect(rdl?.primaryMuscleText == "腘绳、臀")
     }
 
-    @Test("力量动作不足两个的肌群被闸门挡下")
+    @Test("九个肌群各有至少两个力量动作，闸门全放行")
     func coverageGate() {
-        #expect(Set(MuscleCoverage.uncovered) == [.hamstrings, .calves, .arms])
+        #expect(MuscleCoverage.uncovered.isEmpty)
     }
 }

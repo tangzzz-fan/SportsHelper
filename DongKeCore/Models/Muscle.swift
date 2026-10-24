@@ -50,6 +50,9 @@ public enum PrimaryMuscleMap {
         "calf_stretch": [.calves],
         "butterfly": [.glutes],
         "dumbbell_rdl": [.hamstrings, .glutes],
+        "single_leg_rdl": [.hamstrings, .glutes],
+        "single_leg_calf_raise": [.calves],
+        "bench_dip": [.arms],
 
         "push_up": [.chest],
         "dumbbell_row": [.back],

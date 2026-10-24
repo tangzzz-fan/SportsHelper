@@ -59,7 +59,7 @@ struct PlanAdjustView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("练久了觉得腻、太难或太占时间，就在这儿改。改完会排一份新计划，历史记录继续保留。")
+                    Text("练久了觉得腻，就在这儿换一批动作。改完会排一份新计划，历史记录继续保留。加量减量不用你来发现——那件事交给记录和提案。")
                         .font(Typography.meta)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

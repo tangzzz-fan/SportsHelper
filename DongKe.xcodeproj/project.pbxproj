@@ -15,6 +15,7 @@
 		05A4DA61416682AED2B5896B /* OnboardingView+Steps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C271913BAF298C641B1AE8A7 /* OnboardingView+Steps.swift */; };
 		06988F438944C6FB9EB8BB0A /* SpeechTranscribing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B96976FA8249583E45F1CC /* SpeechTranscribing.swift */; };
 		0735F2CADC0BE5E3E1D060DC /* AIPlanInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 099FB584AA3D573A00D50258 /* AIPlanInterpreter.swift */; };
+		075965F5BDB12590FCA1BFFA /* ProposalMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */; };
 		08640E78C3F1C4AFDD65D845 /* PlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 168C6D3E33852EFB889A046D /* PlanGenerator.swift */; };
 		0A023CE8300460188E144118 /* NotificationPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07835A2181449460CC9EC8AB /* NotificationPlanTests.swift */; };
 		0B48053DB700C3CA2877A976 /* AIDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9704C745911EB637CE7655A4 /* AIDefaults.swift */; };
@@ -77,6 +78,7 @@
 		476C60FE0C26A8C5195196BE /* QuickAIPlanSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7639FAB5F2D2B1FD70D1BFF2 /* QuickAIPlanSheet.swift */; };
 		47F796030AAE671920DB2BDC /* SessionRecapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0687D412EFFC6AD281FEDB6 /* SessionRecapTests.swift */; };
 		480E30E1019CE4A6C328A724 /* HeterogeneousImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38159CD313B1775E12D7F9F2 /* HeterogeneousImportTests.swift */; };
+		4A98A9F971D5AA63706090CC /* DoseRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361A74D9C66BE56BD904E0E0 /* DoseRulesTests.swift */; };
 		4DA64951D52979FB83BCE65F /* FreeTextPlanParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4D30EE47BD565CC140A5FC /* FreeTextPlanParserTests.swift */; };
 		4DDEA2C96FC0CF8B80A992A3 /* PlanImportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44258EF3F495884B4A898CD /* PlanImportServiceTests.swift */; };
 		4E3E57B82C22CFF968B46005 /* WeeklyScheduleGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B19F978971C4BF449F7A3DC /* WeeklyScheduleGeneratorTests.swift */; };
@@ -84,6 +86,7 @@
 		4F8D679A3688ACEE276864B4 /* PlanStructureEdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FE090CC38440A20C32F275 /* PlanStructureEdgeCaseTests.swift */; };
 		501CC82A480AF66E8325C279 /* HealthNoticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A4EC3751D4536F29DA3BD6 /* HealthNoticeView.swift */; };
 		51A18F54CA3948AC017479EE /* ExerciseFigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2163C75A915C2783591E25F8 /* ExerciseFigureView.swift */; };
+		520D13F95364873F5593442B /* DoseContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EFACD7A20E5D2454374AB8 /* DoseContext.swift */; };
 		532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53891C1FFE0EE91BE9ADA57 /* SessionRecap.swift */; };
 		5443E3AE27CB0B81D3A4913A /* BriefConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */; };
 		551177AA2EC1C86E88B26BA2 /* VoiceInputStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7165AE427C0B18EEE0AEBE14 /* VoiceInputStubs.swift */; };
@@ -283,6 +286,7 @@
 		066C1D6F10CA0FACB51A0367 /* ExerciseCatalogLower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogLower.swift; sourceTree = "<group>"; };
 		072B203C1325BFB3873E3159 /* UserExerciseEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExerciseEntity.swift; sourceTree = "<group>"; };
 		07835A2181449460CC9EC8AB /* NotificationPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanTests.swift; sourceTree = "<group>"; };
+		07EFACD7A20E5D2454374AB8 /* DoseContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseContext.swift; sourceTree = "<group>"; };
 		08858064C4587155DEFFB92D /* HistoryStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStatsTests.swift; sourceTree = "<group>"; };
 		099FB584AA3D573A00D50258 /* AIPlanInterpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlanInterpreter.swift; sourceTree = "<group>"; };
 		0A1235595513A4C67691C071 /* ReminderTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderTrigger.swift; sourceTree = "<group>"; };
@@ -325,6 +329,7 @@
 		339585D7FCB670DF5AB70DD3 /* ExerciseMergeMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseMergeMapTests.swift; sourceTree = "<group>"; };
 		34D0865D917976B35B540784 /* VoiceInputLimit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputLimit.swift; sourceTree = "<group>"; };
 		34EE64634EB6C313DD4EDA9F /* SetLogEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetLogEntity.swift; sourceTree = "<group>"; };
+		361A74D9C66BE56BD904E0E0 /* DoseRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseRulesTests.swift; sourceTree = "<group>"; };
 		370A86363E7929C0A9F92503 /* SetTimerStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimerStateMachine.swift; sourceTree = "<group>"; };
 		38159CD313B1775E12D7F9F2 /* HeterogeneousImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeterogeneousImportTests.swift; sourceTree = "<group>"; };
 		392808FC1F4B0FBB1BBD1E4C /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
@@ -471,6 +476,7 @@
 		D0A2A6F2248D26FE225F29EE /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		D0B21C4BC2ADAFA626F299FF /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
 		D0EFD5ED0DCF0D7B6532C5E2 /* WorkoutPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutPrompt.swift; sourceTree = "<group>"; };
+		D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalMemory.swift; sourceTree = "<group>"; };
 		D2AE3C350D95A89908EA8043 /* SetLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetLogStore.swift; sourceTree = "<group>"; };
 		D3A2CC2703A871BE8D0DCD05 /* ReminderHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderHealth.swift; sourceTree = "<group>"; };
 		D3CEB601AFA0FB8E22A2B0C8 /* Weekday.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Weekday.swift; sourceTree = "<group>"; };
@@ -632,7 +638,9 @@
 			isa = PBXGroup;
 			children = (
 				A0319F624ACE677C4A53E75D /* DoseAdjustment.swift */,
+				07EFACD7A20E5D2454374AB8 /* DoseContext.swift */,
 				96756A522ECB326E955CA1AF /* PlanProposal.swift */,
+				D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */,
 				8F501E3694D2DEA6102D3A99 /* RestTimerStateMachine.swift */,
 				C53891C1FFE0EE91BE9ADA57 /* SessionRecap.swift */,
 				238F2A197411516434EDC1DE /* SetTimerDriver.swift */,
@@ -932,6 +940,7 @@
 				9D7D1AE5857538E37B133809 /* ConfusableNounTests.swift */,
 				CA020B3355FE5B3C92592EAF /* DistanceTargetTests.swift */,
 				A8F4AD124AFA07118CD8E94A /* DoseAdjustmentTests.swift */,
+				361A74D9C66BE56BD904E0E0 /* DoseRulesTests.swift */,
 				D9784B1F95EBFA597F7DAC94 /* ExerciseLibraryTests.swift */,
 				339585D7FCB670DF5AB70DD3 /* ExerciseMergeMapTests.swift */,
 				04E26A133B3A13BA93DBA66D /* ExerciseNounTests.swift */,
@@ -1135,6 +1144,7 @@
 				1C8EFDDD44CFD1AAA3E11362 /* ChatMessage.swift in Sources */,
 				EA46780A5FF8F18078F578BD /* ChatRequestBodyBuilder.swift in Sources */,
 				2542507649CC3BE537B9F908 /* DoseAdjustment.swift in Sources */,
+				520D13F95364873F5593442B /* DoseContext.swift in Sources */,
 				4ECB5457DB176219C598AFBE /* DraftJSONAdapter.swift in Sources */,
 				92F737DDF08305B2C0AF23A1 /* DraftLineScanner+Aliases.swift in Sources */,
 				00C4A5F1D63BE6FCBC339D29 /* DraftLineScanner+Dose.swift in Sources */,
@@ -1173,6 +1183,7 @@
 				FF662691F24AB80298C81510 /* PlanSchemaJSON.swift in Sources */,
 				0BF68397448AA01C7529030A /* PlanValidator.swift in Sources */,
 				A145922B969FA0DD34ED248A /* ProfileModels.swift in Sources */,
+				075965F5BDB12590FCA1BFFA /* ProposalMemory.swift in Sources */,
 				2DCB33210364CBCB32A15E1F /* ReminderHealth.swift in Sources */,
 				D8A69C1D25DA37A6DC575B1E /* ReminderTrigger.swift in Sources */,
 				977C82EB49CDE10F874BC667 /* RestTimerStateMachine.swift in Sources */,
@@ -1213,6 +1224,7 @@
 				7DEE284208C93220C824647B /* ConfusableNounTests.swift in Sources */,
 				4126EF9558987B945AFC596E /* DistanceTargetTests.swift in Sources */,
 				9F7F946F63222E80DD78B0F4 /* DoseAdjustmentTests.swift in Sources */,
+				4A98A9F971D5AA63706090CC /* DoseRulesTests.swift in Sources */,
 				BFE77BF1E9D0DB45C51360C9 /* ExerciseLibraryTests.swift in Sources */,
 				38FBD483312173981B322239 /* ExerciseMergeMapTests.swift in Sources */,
 				878DC0E62C5993FE39311D52 /* ExerciseNounTests.swift in Sources */,

@@ -9,12 +9,14 @@ struct PlanView: View {
     @Environment(ProfileStore.self) private var profiles
     @Environment(NotificationService.self) private var notifications
     @Environment(SetLogStore.self) private var setLogStore
+    @Environment(SessionStore.self) private var sessionStore
     @State private var showLibrary = false
     @State private var showImport = false
     @State private var showAI = false
     @State private var showAdjust = false
     @State private var selectedDay: PlanDay?
     @State private var proposal: PlanProposal?
+    @State private var askedForAdvice = false
 
     init(plan: WorkoutPlan) {
         self.plan = plan
@@ -93,6 +95,24 @@ struct PlanView: View {
                         DoseProposalCard(proposal: proposal, onAccept: accept, onReject: reject)
                             .padding(.horizontal, 16)
                             .padding(.top, 14)
+                    } else if plan.source.isMachineWritten {
+                        Button {
+                            askedForAdvice = true
+                            refreshProposal()
+                        } label: {
+                            Text("看看这份计划可以怎么调")
+                                .font(Typography.meta)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(
+                                    Color.primary.opacity(0.05),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                )
+                        }
+                        .buttonStyle(PressableGlassStyle())
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                     }
 
                     aiEntry
@@ -175,17 +195,42 @@ struct PlanView: View {
     }
 
     private func refreshProposal() {
-        guard let found = DoseAdjustment.propose(plan: plan, logs: setLogStore.recentLogs()) else {
+        let memo = ProposalMemo.shared
+        memo.settle(with: setLogStore.recentLogs())
+        if let baseline = memo.rebuildBaseline, lastSessionHeldUp() {
+            proposal = DoseAdjustment.restoreProposal(from: baseline, current: plan)
+            return
+        }
+        let context = DoseContext(
+            plan: plan,
+            logs: setLogStore.recentLogs(),
+            memory: ProposalMemo.shared.memory,
+            sessionStarts: sessionStore.sessions.map(\.date),
+            asked: askedForAdvice
+        )
+        guard let found = DoseAdjustment.propose(context) else {
             proposal = nil
             return
         }
-        proposal = ProposalMemo.shared.isRejected(found) ? nil : found
+        proposal = found
+    }
+
+    private func lastSessionHeldUp() -> Bool {
+        guard let last = sessionStore.sessions.first, last.plannedSets > 0 else { return false }
+        return Double(last.completedSets) / Double(last.plannedSets) >= 0.8
     }
 
     private func accept() {
         guard let proposal else { return }
+        if proposal.kind == .rebuild {
+            ProposalMemo.shared.rememberBaseline(plan)
+        }
+        if ProposalMemo.shared.rebuildBaseline != nil, proposal.kind == .dose {
+            ProposalMemo.shared.clearBaseline()
+        }
         let next = DoseAdjustment.apply(proposal, to: plan)
         planStore.save(next)
+        ProposalMemo.shared.accept(proposal)
         self.proposal = nil
         Task {
             if notifications.status == .authorized || notifications.status == .provisional {
@@ -199,7 +244,7 @@ struct PlanView: View {
 
     private func reject() {
         guard let proposal else { return }
-        ProposalMemo.shared.rememberRejection(proposal)
+        ProposalMemo.shared.reject(proposal)
         self.proposal = nil
     }
 

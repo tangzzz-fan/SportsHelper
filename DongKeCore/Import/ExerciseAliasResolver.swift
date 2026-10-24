@@ -79,6 +79,9 @@ public enum ExerciseAliasResolver {
         ("哑铃卧推", "dumbbell_bench_press"), ("哑铃推胸", "dumbbell_bench_press"), ("dumbbell bench press", "dumbbell_bench_press"),
         ("哑铃地板卧推", "dumbbell_floor_press"), ("dumbbell floor press", "dumbbell_floor_press"), ("floor press", "dumbbell_floor_press"),
         ("哑铃罗马尼亚硬拉", "dumbbell_rdl"), ("dumbbell romanian deadlift", "dumbbell_rdl"), ("rdl", "dumbbell_rdl"),
+        ("单腿罗马尼亚硬拉", "single_leg_rdl"), ("single leg rdl", "single_leg_rdl"), ("single-leg romanian deadlift", "single_leg_rdl"),
+        ("单腿站姿提踵", "single_leg_calf_raise"), ("single leg calf raise", "single_leg_calf_raise"), ("one leg calf raise", "single_leg_calf_raise"),
+        ("凳上反屈伸", "bench_dip"), ("凳上臂屈伸", "bench_dip"), ("bench dip", "bench_dip"),
         ("哑铃侧平举", "lateral_raise"), ("dumbbell lateral raise", "lateral_raise"), ("lateral raise", "lateral_raise"),
         ("哑铃弯举", "biceps_curl"), ("dumbbell curl", "biceps_curl"), ("biceps curl", "biceps_curl"),
 
