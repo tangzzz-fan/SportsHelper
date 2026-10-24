@@ -48,6 +48,8 @@ struct PlanReviewView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
 
+                PlanOriginNotice(source: plan.source)
+
                 if !blocking.isEmpty {
                     PlanIssueBanner(issues: blocking)
                 }
@@ -77,12 +79,11 @@ struct PlanReviewView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if soreParts.isEmpty == false {
-                    Text(PlanSafetyChecker.disclaimer)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(PlanSafetyChecker.disclaimer)
+                    .font(Typography.capsLabel)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(A11y.Import.medicalNotice)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)

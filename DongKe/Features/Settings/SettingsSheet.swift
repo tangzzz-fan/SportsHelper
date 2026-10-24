@@ -17,6 +17,7 @@ struct SettingsSheet: View {
     @Bindable private var largeText = LargeTextStore.shared
 
     @State private var showEraseConfirm = false
+    @State private var showHealthNotice = false
     @State private var isErasing = false
 
     var body: some View {
@@ -28,6 +29,7 @@ struct SettingsSheet: View {
                         statusCard
                         voiceCard
                         largeTextCard
+                        healthCard
                         AISettingsCard()
                         aboutCard
                         dangerCard
@@ -60,6 +62,9 @@ struct SettingsSheet: View {
                 Button("清空全部数据", role: .destructive, action: eraseAll)
                 Button("取消", role: .cancel) {}
             }
+            .sheet(isPresented: $showHealthNotice) {
+                HealthNoticeView()
+            }
         }
     }
 
@@ -82,6 +87,35 @@ struct SettingsSheet: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var healthCard: some View {
+        Button {
+            showHealthNotice = true
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("健康提示与免责")
+                        .font(Typography.rowTitle)
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: Icons.disclosure)
+                        .font(Typography.micro)
+                        .foregroundStyle(.tertiary)
+                }
+                Text("计划不替代医生。AI 写的内容可能有错，练前先看一眼。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableGlassStyle())
+        .glassSurface(radius: Theme.Radius.card)
+        .accessibilityIdentifier(A11y.Settings.healthNoticeEntry)
     }
 
     private var dangerCard: some View {

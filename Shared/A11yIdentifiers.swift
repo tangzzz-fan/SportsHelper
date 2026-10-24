@@ -12,6 +12,8 @@ enum A11y {
         static let settings = "today.settings"
         static let title = "today.title"
         static let reminderBanner = "today.reminderBanner"
+        static let skipToday = "today.skipToday"
+        static let undoSkipToday = "today.undoSkipToday"
     }
 
     enum Workout {
@@ -20,6 +22,7 @@ enum A11y {
         static let skipSet = "workout.skipSet"
         static let end = "workout.end"
         static let cues = "workout.cues"
+        static let setCountdown = "workout.setCountdown"
         static let downgrade = "workout.downgrade"
         static let downgradeHalf = "workout.downgrade.half"
         static let skipReasonNoTime = "workout.skipReason.noTime"
@@ -50,6 +53,7 @@ enum A11y {
         static let sorePart = "import.sorePart"
         static let safetyNotice = "import.safety.notice"
         static let safetyRelief = "import.safety.relief"
+        static let medicalNotice = "import.medical.notice"
     }
 
     enum Plan {
@@ -60,6 +64,12 @@ enum A11y {
         static let itemRow = "plan.item"
         static let aiEntry = "plan.ai.entry"
         static let safetyNotice = "plan.safety.notice"
+        static let originNotice = "plan.origin.notice"
+        static let originBadge = "plan.origin.badge"
+        static let adjustEntry = "plan.adjust.entry"
+        static let adjustApply = "plan.adjust.apply"
+        static let adjustConfirm = "plan.adjust.confirm"
+        static let adjustPreview = "plan.adjust.preview"
     }
 
     enum History {
@@ -71,6 +81,8 @@ enum A11y {
         static let scheduledCount = "settings.scheduledCount"
         static let voiceToggle = "settings.voiceToggle"
         static let largeTextToggle = "settings.largeTextToggle"
+        static let healthNotice = "settings.healthNotice"
+        static let healthNoticeEntry = "settings.healthNotice.entry"
         static let done = "settings.done"
         static let erase = "settings.erase"
     }

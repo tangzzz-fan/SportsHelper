@@ -55,6 +55,9 @@ extension WorkoutSession {
     }
 
     func refresh(now: Date = Date()) {
+        syncSetTimer(now: now)
+        tickSetTimer(now: now)
+
         var effects: [RestEffect] = []
         let next = RestTimerStateMachine.reduce(rest, .tick(now: now), &effects)
         if next != rest { rest = next }
@@ -70,6 +73,12 @@ extension WorkoutSession {
         if case .running = rest {
             voice?.restTick(secondsLeft: Int(remainingRest(now: now).rounded(.up)))
         }
+    }
+
+    func tickSetTimer(now: Date) {
+        guard setTimer.state != .idle else { return }
+        setTimer.tick(now: now)
+        voice?.setElapsed(setTimer.elapsedSeconds(now: now))
     }
 
     func extendRest(by seconds: Int = 15, now: Date = Date()) {

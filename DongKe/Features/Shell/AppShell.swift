@@ -72,7 +72,7 @@ struct AppShell: View {
                 case .plan:
                     PlanView(plan: activePlan)
                 case .history:
-                    HistoryView(weeklyTarget: activePlan.meta.daysPerWeek)
+                    HistoryView(weeklyTarget: weeklyTarget)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -128,6 +128,10 @@ struct AppShell: View {
 
     private var activePlan: WorkoutPlan {
         planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
+    }
+
+    private var weeklyTarget: Int {
+        max(1, activePlan.meta.daysPerWeek - DaySkipStore.shared.skippedThisWeek())
     }
 
     private func openWorkout(_ link: WorkoutDeepLink) {

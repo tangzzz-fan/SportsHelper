@@ -10,7 +10,9 @@ struct TodayView: View {
     var onEraseAll: () -> Void
 
     @State private var showSettings: Bool
+    @State var showSkipConfirm = false
     private let settingsStore = ReminderSettingsStore.shared
+    @Bindable var daySkip = DaySkipStore.shared
     @Environment(NotificationService.self) private var notifications
 
     init(
@@ -124,6 +126,15 @@ struct TodayView: View {
         }
         .task {
             await notifications.refreshStatus()
+        }
+        .confirmationDialog(
+            "今天先不练？本周目标会少一次，今天不会记成「漏练」。明天照常。",
+            isPresented: $showSkipConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("今天不练") { daySkip.skip() }
+                .accessibilityIdentifier(A11y.Today.skipToday)
+            Button("取消", role: .cancel) {}
         }
     }
 

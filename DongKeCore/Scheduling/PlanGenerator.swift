@@ -9,7 +9,7 @@ public enum PlanGenerator {
         PlanCatalog.blockedIds(for: injuries)
     }
 
-    public static func makePlan(profile: UserProfile, now: Date = Date()) -> WorkoutPlan {
+    public static func makePlan(profile: UserProfile, variation: Int = 0, now: Date = Date()) -> WorkoutPlan {
         let blocked = blockedCatalogIds(for: profile.injuries)
         let available = catalog.filter { item in
             !blocked.contains(item.id) && profile.equipment.contains(item.equipment)
@@ -37,7 +37,7 @@ public enum PlanGenerator {
                 continue
             }
 
-            let focus = focusFor(rotation: rotation)
+            let focus = focusFor(rotation: rotation + variation * 2)
             rotation += 1
             days.append(makeTrainingDay(
                 weekday: weekday,
@@ -46,7 +46,8 @@ public enum PlanGenerator {
                 sets: sets,
                 dose: dose,
                 rest: rest,
-                profile: profile
+                profile: profile,
+                variation: variation * (dayIndex + 1)
             ))
         }
 
@@ -59,7 +60,7 @@ public enum PlanGenerator {
                 sessionMinutes: profile.sessionMinutes
             ),
             days: days,
-            source: .manual,
+            source: .generated,
             createdAt: now
         )
     }
@@ -108,8 +109,13 @@ public enum PlanGenerator {
         return SetTarget(type: .reps, value: adjusted, perSide: false)
     }
 
-    private static func staticSeconds(for level: TrainingLevel) -> Int {
-        switch level {
+    private static func rotated(_ items: [CatalogItem], by offset: Int) -> [CatalogItem] {
+        guard items.count > 1, offset != 0 else { return items }
+        let shift = ((offset % items.count) + items.count) % items.count
+        return Array(items[shift...] + items[..<shift])
+    }
+
+    private static func staticSeconds(for level: TrainingLevel) -> Int {        switch level {
         case .beginner: 30
         case .intermediate: 40
         case .advanced: 50
@@ -123,7 +129,8 @@ public enum PlanGenerator {
         sets: Int,
         dose: SetTarget,
         rest: Int,
-        profile: UserProfile
+        profile: UserProfile,
+        variation: Int = 0
     ) -> PlanDay {
         let warmup = pool.filter(\.isDynamic).first
         let mainCandidates = pool.filter { $0.joint != .core && !$0.isDynamic }
@@ -139,6 +146,7 @@ public enum PlanGenerator {
             main = mainCandidates
         }
         main += mainCandidates.filter { item in !main.contains(where: { $0.id == item.id }) }
+        main = rotated(main, by: variation)
 
         let targetSeconds = profile.sessionMinutes * 60
         let workPerSet = dose.estimatedWorkSeconds

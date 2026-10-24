@@ -56,6 +56,8 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
                 return cue
             case let .remaining(secondsLeft):
                 return "\(secondsLeft)"
+            case .timeUp:
+                return "时间到"
             case let .encourage(secondsLeft):
                 return Self.compose([("加油", true), ("最后 \(secondsLeft) 秒", true)])
             }

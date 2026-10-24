@@ -10,4 +10,9 @@ enum Haptics {
     static func setLogged() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
+
+    static func setTimeUp() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        AudioServicesPlaySystemSound(1057)
+    }
 }

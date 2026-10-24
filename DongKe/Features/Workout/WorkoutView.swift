@@ -124,6 +124,10 @@ struct WorkoutView: View {
         .onChange(of: session.restFinishedToken) { _, _ in
             Haptics.restFinished()
         }
+        .onChange(of: session.setTimerReachedToken) { _, token in
+            guard token > 0 else { return }
+            Haptics.setTimeUp()
+        }
         .onAppear(perform: startVoiceIfNeeded)
         .onDisappear(perform: stopVoice)
         .onChange(of: scenePhase) { _, _ in
@@ -219,6 +223,11 @@ struct WorkoutView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             ProgressBar(progress: session.progress)
+
+            if session.showsSetCountdown {
+                SetCountdownBadge(remainingSeconds: session.setRemainingDisplay)
+                    .padding(.top, 6)
+            }
 
             Button {
                 session.completeSet()

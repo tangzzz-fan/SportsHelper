@@ -74,6 +74,7 @@ extension WorkoutSession {
         restKicker = kicker
         var effects: [RestEffect] = []
         rest = RestTimerStateMachine.reduce(rest, .start(seconds: seconds, now: now), &effects)
+        resetSetTimer()
         saveCheckpoint(now: now)
         voice?.restStarted(seconds: seconds, at: stepIndex)
     }
@@ -100,8 +101,17 @@ extension WorkoutSession {
         }
         stepIndex += 1
         autoStartRestIfBreak(now: Date())
+        syncSetTimer()
         saveCheckpoint()
         voice?.stepChanged(to: stepIndex, silent: silent)
+    }
+
+    func syncSetTimer(now: Date = Date()) {
+        setTimer.sync(step: currentStep, stepIndex: stepIndex, isResting: isResting, now: now)
+    }
+
+    func resetSetTimer() {
+        setTimer.reset()
     }
 
     func autoStartRestIfBreak(now: Date) {

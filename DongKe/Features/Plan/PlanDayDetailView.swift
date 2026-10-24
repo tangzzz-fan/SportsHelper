@@ -47,8 +47,11 @@ struct PlanDayDetailView: View {
                             reliefs: PlanSafetyChecker.reliefs(for: soreParts),
                             soreParts: soreParts
                         )
+                    }
+
+                    if day.isRestDay == false {
                         Text(PlanSafetyChecker.disclaimer)
-                            .font(.caption2)
+                            .font(Typography.capsLabel)
                             .foregroundStyle(.tertiary)
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.horizontal, 4)

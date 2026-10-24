@@ -59,9 +59,19 @@ extension TodayView {
     func sessionCard(_ day: PlanDay) -> some View {
         let items = day.blocks.flatMap(\.items)
         let resting = isRestToday
+        let skipped = daySkip.isSkipped()
+        let weeklyTarget = max(1, plan.meta.daysPerWeek - daySkip.skippedThisWeek())
         return VStack(alignment: .leading, spacing: 12) {
             Text(resting ? "今天休息" : day.title)
                 .font(Typography.detailTitle)
+
+            if skipped {
+                Text("今天标记为不练。明天照常，本周目标已减一。")
+                    .font(Typography.meta)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(A11y.Today.skipToday)
+            }
 
             Text(resting
                  ? "下次训练 \(day.weekday.chineseName) \(timeText(day)) · \(items.count) 个动作"
@@ -75,16 +85,16 @@ extension TodayView {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(store.completedDaysThisWeek) / \(plan.meta.daysPerWeek)")
+                    Text("\(store.completedDaysThisWeek) / \(weeklyTarget)")
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
                 }
-                ProgressBar(progress: min(1, Double(store.completedDaysThisWeek) / Double(max(1, plan.meta.daysPerWeek))))
+                ProgressBar(progress: min(1, Double(store.completedDaysThisWeek) / Double(weeklyTarget)))
             }
             .padding(.top, 12)
 
             Button(action: onStart) {
-                Text(isRestToday ? "提前练一次" : "开始训练")
+                Text(buttonTitle(resting: resting, skipped: skipped))
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -108,10 +118,39 @@ extension TodayView {
             }
             .accessibilityIdentifier(A11y.Today.start)
             .padding(.top, 12)
+
+            if skipped {
+                Button {
+                    daySkip.undo()
+                } label: {
+                    Text("撤销，今天还是练")
+                        .font(Typography.secondary)
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(PressableGlassStyle())
+                .accessibilityIdentifier(A11y.Today.undoSkipToday)
+            } else {
+                Button {
+                    showSkipConfirm = true
+                } label: {
+                    Text("今天不练")
+                        .font(Typography.secondary)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(PressableGlassStyle())
+                .accessibilityIdentifier(A11y.Today.skipToday)
+            }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassSurface(radius: Theme.Radius.glassCard)
+    }
+
+    private func buttonTitle(resting: Bool, skipped: Bool) -> String {
+        if skipped { return "还是练一次" }
+        return resting ? "提前练一次" : "开始训练"
     }
 
     var nextTrainingDay: PlanDay? {

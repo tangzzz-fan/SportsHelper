@@ -6,10 +6,12 @@ struct PlanView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(PlanStore.self) private var planStore
+    @Environment(ProfileStore.self) private var profiles
     @Environment(NotificationService.self) private var notifications
     @State private var showLibrary = false
     @State private var showImport = false
     @State private var showAI = false
+    @State private var showAdjust = false
     @State private var selectedDay: PlanDay?
 
     init(plan: WorkoutPlan) {
@@ -70,11 +72,14 @@ struct PlanView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 20)
 
-                    Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 10)
+                    HStack(spacing: 6) {
+                        Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
+                        PlanOriginBadge(source: plan.source)
+                    }
+                    .font(Typography.meta)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
 
                     aiEntry
                         .padding(.horizontal, 16)
@@ -88,6 +93,10 @@ struct PlanView: View {
                             showImport = true
                         }
                         .accessibilityIdentifier(A11y.Plan.importPlan)
+                        entryButton(title: "调整", symbol: Icons.edit) {
+                            showAdjust = true
+                        }
+                        .accessibilityIdentifier(A11y.Plan.adjustEntry)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
@@ -125,6 +134,21 @@ struct PlanView: View {
                     if notifications.status == .authorized || notifications.status == .provisional {
                         await notifications.reschedule(
                             plan: imported,
+                            settings: ReminderSettingsStore.shared.settings
+                        )
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showAdjust) {
+            PlanAdjustView(plan: plan, profile: profiles.profile ?? UserProfile()) { newProfile, newPlan in
+                profiles.save(newProfile)
+                planStore.save(newPlan)
+                showAdjust = false
+                Task {
+                    if notifications.status == .authorized || notifications.status == .provisional {
+                        await notifications.reschedule(
+                            plan: newPlan,
                             settings: ReminderSettingsStore.shared.settings
                         )
                     }

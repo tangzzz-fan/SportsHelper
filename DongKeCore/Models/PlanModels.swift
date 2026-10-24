@@ -174,6 +174,10 @@ public enum PlanGoal: String, Codable, Sendable, CaseIterable {
     case mobility
 }
 
+public extension PlanGoal {
+    static let selectable: [PlanGoal] = [.loseFat, .buildMuscle, .endurance, .generalFitness]
+}
+
 public enum TrainingLevel: String, Codable, Sendable, CaseIterable {
     case beginner
     case intermediate
@@ -205,11 +209,29 @@ public struct PlanMeta: Codable, Equatable, Sendable {
     }
 }
 
-public enum PlanSource: String, Codable, Sendable {
+public enum PlanSource: String, Codable, Sendable, CaseIterable {
+    case generated
     case ai
     case pasteJSON
     case pasteText
     case manual
+
+    public var isMachineWritten: Bool {
+        switch self {
+        case .ai, .pasteJSON, .pasteText: true
+        case .generated, .manual: false
+        }
+    }
+
+    public var chineseName: String {
+        switch self {
+        case .generated: "本地生成"
+        case .ai: "AI 生成"
+        case .pasteJSON: "导入"
+        case .pasteText: "导入"
+        case .manual: "手动创建"
+        }
+    }
 }
 
 public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
@@ -219,6 +241,7 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
     public var days: [PlanDay]
     public var cautions: [String]
     public var source: PlanSource
+    public var revision: Int
     public var createdAt: Date?
     public var updatedAt: Date?
 
@@ -229,6 +252,7 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
         days: [PlanDay],
         cautions: [String] = [],
         source: PlanSource = .manual,
+        revision: Int = 1,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
     ) {
@@ -238,6 +262,7 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
         self.days = days
         self.cautions = cautions
         self.source = source
+        self.revision = revision
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -247,6 +272,10 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
         case meta
         case days
         case cautions
+        case source
+        case revision
+        case createdAt
+        case updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -256,9 +285,10 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
         meta = try container.decode(PlanMeta.self, forKey: .meta)
         days = try container.decode([PlanDay].self, forKey: .days)
         cautions = try container.decode([String].self, forKey: .cautions)
-        source = .manual
-        createdAt = nil
-        updatedAt = nil
+        source = try container.decodeIfPresent(PlanSource.self, forKey: .source) ?? .manual
+        revision = try container.decodeIfPresent(Int.self, forKey: .revision) ?? 1
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -267,5 +297,27 @@ public struct WorkoutPlan: Codable, Equatable, Identifiable, Sendable {
         try container.encode(meta, forKey: .meta)
         try container.encode(days, forKey: .days)
         try container.encode(cautions, forKey: .cautions)
+        try container.encode(source, forKey: .source)
+        try container.encode(revision, forKey: .revision)
+        try container.encodeIfPresent(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+    }
+}
+
+public extension WorkoutPlan {
+    func markingSource(
+        _ source: PlanSource,
+        revision: Int? = nil,
+        now: Date = Date()
+    ) -> WorkoutPlan {
+        var copy = self
+        copy.source = source
+        if let revision { copy.revision = revision }
+        copy.updatedAt = now
+        return copy
+    }
+
+    var isMachineWritten: Bool {
+        source.isMachineWritten
     }
 }

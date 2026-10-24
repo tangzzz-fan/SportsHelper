@@ -31,7 +31,7 @@ struct QuickAIPlanSheet: View {
                             return
                         }
                         failure = nil
-                        review = Review(draft: draft, plan: plan)
+                        review = Review(draft: draft, plan: plan.markingSource(.ai))
                     }
 
                     if let failure {

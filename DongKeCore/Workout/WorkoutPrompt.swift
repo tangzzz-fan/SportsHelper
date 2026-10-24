@@ -4,6 +4,7 @@ public enum WorkoutPrompt: Equatable, Sendable {
     case focus(String)
     case remaining(secondsLeft: Int)
     case encourage(secondsLeft: Int)
+    case timeUp
 }
 
 public struct TimedPrompt: Equatable, Sendable {
@@ -25,10 +26,12 @@ public enum WorkoutPromptPlanner {
         isLastSet: Bool,
         allowsEncouragement: Bool
     ) -> [TimedPrompt] {
-        guard target.type == .durationSec, target.value >= shortestPromptedHold else { return [] }
+        guard target.type == .durationSec else { return [] }
 
         let total = target.value
-        var planned: [TimedPrompt] = []
+        var planned: [TimedPrompt] = [TimedPrompt(atSecond: total, prompt: .timeUp)]
+
+        guard total >= shortestPromptedHold else { return planned }
 
         if let cue, cue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
             planned.append(TimedPrompt(atSecond: max(3, total / 3), prompt: .focus(cue)))

@@ -742,8 +742,31 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 
 `PlanSafetyChecker.reliefs` 里还有一条运行时约束：推荐的动作必须 `affectedParts` 与不适部位不相交，写成了测试 `reliefsDoNotConflictWithItself`。
 
-## 7. 换机后容易踩的坑
+## 6.29 计划来源、版本号与「今天不练」（2026-10-25）
 
+**`WorkoutPlan.source` 曾经是个死字段。** 它一直在模型里，但自定义 `init(from:)` 硬写成 `.manual`，`CodingKeys` 也没有它——存进 SwiftData 再读出来，AI 生成的计划和手写的一模一样。现在补进编解码，并用 `decodeIfPresent` 兼容老存档（缺字段回落 `.manual`）。**加这类字段前先看 `init(from:)`**，默认的合成实现不一定在用。
+
+五个取值里，`generated` 是这次新加的：本地规则生成的不算「机器写的内容」，不该贴「AI 可能出错」的提示。判定收敛在 `PlanSource.isMachineWritten`，别在各处写 `== .ai`。
+
+**`revision` 是「第几版」，不是「改了几次」。** 首次生成是 1，每调整一次 +1。它同时是重排的随机种子（`PlanGenerator.makePlan(profile:variation:)`）——`variation = 0` 必须与不传时逐字节一致，否则老用户重启 App 会看到计划自己变了，有测试锁住这条。
+
+**「今天不练」不是「跳过一组」。** 它标记的是日程，不是组次：
+
+- 存 `DaySkipStore`（UserDefaults，`yyyy-MM-dd` 键，保留 120 天），不进 `SetLog`
+- 本周目标分母减一（`daysPerWeek - skippedThisWeek`），完成率分子不变
+- 理由：一整天没练不是「漏了 12 组」。记 12 个跳过会让分母凭空涨一截，把「临时有事」和「做不动」混成一类——而降阶率/跳过率是我们相对 GymMane 唯一的硬差异点，不能弄脏
+
+**三个提示放在三个位置，别合并：**
+
+| 位置 | 内容 | 触发 |
+|---|---|---|
+| 校对页顶部 | 「AI 可能写错动作名、组数、时长」 | `isMachineWritten` |
+| 校对页底部 + 计划日详情 | 医学免责 | 无条件（原来只在填了不适部位时显示，等于多数人看不到） |
+| 设置 → 健康提示与免责 | 五条完整说明 | 用户主动点 |
+
+设置里那张卡放在「大字模式」后面，不放「关于」里——放底部等于没人看得到。
+
+## 7. 换机后容易踩的坑
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。
 2. **把历史红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序（该报告是 2026-10-22 的历史快照，当前已全绿）。
 3. **骨架门禁红被当成回归**：打样期数据只有 2 帧，动态动作欠第 3 帧。判红前先核对 `figure-specs` 数据版本，见 SPEC §11 最后一条。

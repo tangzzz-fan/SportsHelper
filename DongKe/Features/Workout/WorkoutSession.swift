@@ -21,6 +21,7 @@ final class WorkoutSession: Identifiable {
     var finishedAt: Date?
     var restFinishedToken = 0
     var voice: WorkoutVoiceSession?
+    var setTimer = SetTimerDriver()
 
     init(
         plan: WorkoutPlan,
@@ -120,6 +121,18 @@ final class WorkoutSession: Identifiable {
         case .idle:
             return 0
         }
+    }
+
+    var showsSetCountdown: Bool {
+        setTimer.showsCountdown
+    }
+
+    var setRemainingDisplay: Int {
+        setTimer.remainingDisplay
+    }
+
+    var setTimerReachedToken: Int {
+        setTimer.reachedZeroCount
     }
 
 }

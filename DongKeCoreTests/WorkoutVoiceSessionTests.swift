@@ -226,6 +226,43 @@ struct WorkoutVoiceSessionTests {
         #expect(speaker.spoken.count == afterPrompts)
     }
 
+    @Test("撑到点念时间到，重复喂满秒数不重播")
+    func announcesTimeUpOnce() {
+        let (voice, speaker) = makeVoice(items: [
+            makeItem(id: "i1", sets: 1, value: 30, rest: 0, targetType: .durationSec)
+        ])
+        voice.start()
+        voice.stepChanged(to: 0)
+        voice.setElapsed(10)
+        voice.setElapsed(27)
+
+        voice.setElapsed(30)
+        #expect(speaker.spoken.last == "时间到")
+
+        let afterTimeUp = speaker.spoken.count
+        voice.setElapsed(30)
+        voice.setElapsed(45)
+        #expect(speaker.spoken.count == afterTimeUp)
+    }
+
+    @Test("短组只念时间到，不念要领")
+    func shortHoldOnlySpeaksTimeUp() {
+        let (voice, speaker) = makeVoice(items: [
+            makeItem(id: "i1", sets: 1, value: 10, rest: 0, targetType: .durationSec)
+        ])
+        voice.start()
+        voice.stepChanged(to: 0)
+        let afterSetStart = speaker.spoken.count
+
+        for second in 1...9 {
+            voice.setElapsed(second)
+        }
+        #expect(speaker.spoken.count == afterSetStart)
+
+        voice.setElapsed(10)
+        #expect(speaker.spoken.last == "时间到")
+    }
+
     @Test("次数型动作组内不念，免得数数打断节奏")
     func noPromptsForReps() {
         let (voice, speaker) = makeVoice(items: [makeItem(id: "i1", sets: 1, value: 12)])
