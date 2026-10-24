@@ -59,7 +59,12 @@ struct PlanReviewView: View {
                 PlanSorePicker(soreParts: $soreParts)
 
                 if soreParts.isEmpty == false {
-                    PlanSafetyCard(issues: safetyIssues, plan: plan, soreParts: soreParts)
+                    PlanSafetyCard(
+                        issues: safetyIssues,
+                        reliefs: safetyReliefs,
+                        plan: plan,
+                        soreParts: soreParts
+                    )
                 }
 
                 ForEach(trainingDays) { day in
@@ -179,6 +184,10 @@ struct PlanReviewView: View {
 
     private var safetyIssues: [SafetyIssue] {
         PlanSafetyChecker.check(plan, soreParts: soreParts)
+    }
+
+    private var safetyReliefs: [ExerciseEntry] {
+        PlanSafetyChecker.reliefs(for: soreParts)
     }
 
     private func dayCard(_ day: PlanDay) -> some View {

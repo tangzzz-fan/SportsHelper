@@ -27,7 +27,7 @@
 | P0 | F4 训练执行 | 逐组推进、组间休息倒计时、+15s / 跳过 / 降阶、锁屏后回前台按绝对时间重算 | 4.32 |
 | P0 | F5 粘贴导入 | JSON 严格解析 + 自由文本启发式；解析结果必须人工校正后才能保存 | 4.32 |
 | P0 | F6 打卡与完成率 | 每组完成即落库；完成率 = 完成组数 / 计划组数；历史按周展示 | 3.73 |
-| P0 | F7 动作图示 | 43 个核心动作：素材矢量线稿 3 关键帧 + 3 条要点 + 1 条低阶替代（35 个有专属图，8 个走占位） | 2.80 |
+| P0 | F7 动作图示 | 47 个核心动作：素材矢量线稿 3 关键帧 + 3 条要点 + 1 条低阶替代（35 个有专属图，12 个走占位） | 2.80 |
 | P0 | F10 直连 AI（BYOK） | 用户在设置里填 Base URL + Key，App 内生成计划；Key 存 Keychain | 1.37 |
 | P0 | F11 一句话生成 | 描述一句 → 本地解析成可确认的约束 → 用户确认后才发请求；句子覆盖天数 / 时长 / 器械 / 目标，伤病只增不减且不写回档案 | — |
 | P0 | F12 训练语音播报 | 关键节点（开始 / 每组 / 休息归零 / 换动作 / 完成）+ 休息最后 3 秒倒数朗读；默认关、仅前台、尊重静音键 | — |
@@ -37,7 +37,7 @@
 | 裁决 | 结论 | 理由 |
 |------|------|------|
 | 直连 AI | **进 MVP**，收敛为 OpenAI 兼容单端点 + 非流式 | 用户明确要求「可以直连」；不做生成引擎，只做「调用 + 解析」 |
-| 动作库规模 | **内置 43 个**（`ExerciseCatalog.swift` 里的 catalogId）+ 用户可增「我的动作」 | 初版锁定 18 个，2026-10-24 扩到 39（补热身 / 拉伸 / 康复向），同日再补 4 条臀部主项到 43。库外动作三级兜底：猜（标橙待确认）/ 记（别名记忆）/ 存（我的动作，`custom_<slug>`），见 HANDOFF §6.0 |
+| 动作库规模 | **内置 47 个**（`ExerciseCatalog.swift` 里的 catalogId）+ 用户可增「我的动作」 | 初版锁定 18 个，2026-10-24 扩到 39（补热身 / 拉伸 / 康复向），同日补 4 条臀部主项到 43，10-25 补 4 条肩颈康复到 47。库外动作三级兜底：猜（标橙待确认）/ 记（别名记忆）/ 存（我的动作，`custom_<slug>`），见 HANDOFF §6.0 |
 | 久坐提醒 | **移出 MVP，列 P1** | 用户原始诉求只提训练提醒；避免范围蔓延 |
 | 最低 iOS | **18.0** | SwiftData 成熟度与覆盖率的最优解（覆盖 93% 在用 iPhone） |
 | 动作素材 | **开源素材库 `bryllim/workout-guide` 的单色线条插画**（CC BY-SA 4.0，18/18 覆盖） | 用户裁决接受动画素材；本轮不上架，share-alike 处置延后，素材走 `FigureSource` 可换源（下一顺位：公有领域 `yuhonas/free-exercise-db`） |
@@ -108,7 +108,7 @@
 | `ProfileRecord` | singletonKey, heightCm, weightKg, age, sexRaw, goalRaw, levelRaw, availableWeekdays, sessionMinutes, equipment, injuries, onboardedAt | `#Unique singletonKey` | 单行 |
 | `ReminderSettingsRecord` | singletonKey, enabled, leadMinutes, soundEnabled, defaultTime | `#Unique singletonKey` | 单行 |
 
-**动作库**：`DongKeCore/Models/ExerciseCatalog.swift` 及其 `ExerciseCatalogLower/Upper/Core.swift` 里的 43 条 `ExerciseEntry`（名称 / 肌群 / 器械 / 静力标记 / 3 条要点 / 2 条常见错误 / 低阶替代 / 换动作 / `affectedParts` / `purposes`）。**图示**：`DongKeCore/Figure/GeneratedFigureData.swift`（构建期由 `gen_figures.py` 把素材 SVG 转成矢量路径：35 个动作各 3 帧 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。字段口径见 `ARCHITECTURE.md` §5.6。
+**动作库**：`DongKeCore/Models/ExerciseCatalog.swift` 及其 `ExerciseCatalogLower/Upper/Core.swift` 里的 47 条 `ExerciseEntry`（名称 / 肌群 / 器械 / 静力标记 / 3 条要点 / 2 条常见错误 / 低阶替代 / 换动作 / `affectedParts` / `relievedParts` / `purposes`）。**图示**：`DongKeCore/Figure/GeneratedFigureData.swift`（构建期由 `gen_figures.py` 把素材 SVG 转成矢量路径：35 个动作各 3 帧 + 1 条 `_generic` 占位图；静力动作**数据上也是 3 帧**，取第 1 帧是渲染期决定）。字段口径见 `ARCHITECTURE.md` §5.6。
 
 **计划契约**：`docs/plan-schema.json` 为唯一真相；AI 输出、粘贴 JSON、备份导出、SwiftData `planJSON` 四条链路共用；反 null，所有字段必填，空值用 `""` / `[]` / `0`。
 

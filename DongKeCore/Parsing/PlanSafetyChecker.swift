@@ -87,6 +87,14 @@ public enum PlanSafetyChecker {
         issues.filter { $0.dayIndex == dayIndex }
     }
 
+    public static func reliefs(for soreParts: Set<BodyPart>) -> [ExerciseEntry] {
+        guard soreParts.isEmpty == false else { return [] }
+        return ExerciseLibrary.all.filter { entry in
+            entry.relievedParts.isDisjoint(with: soreParts) == false
+                && entry.affectedParts.isDisjoint(with: soreParts)
+        }
+    }
+
     private static func alternative(
         for entry: ExerciseEntry,
         avoiding soreParts: Set<BodyPart>

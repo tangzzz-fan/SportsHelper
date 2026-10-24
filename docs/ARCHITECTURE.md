@@ -467,9 +467,10 @@ P1 接回时的设计结论保留备查：把计划当不可变模板，偏离�
 | 字段 | 口径 |
 |---|---|
 | `affectedParts` | **只标主要负荷**——发力肌群和承受大部分体重的关节。稳定肌、姿势代偿不算。理由：标宽了，用户一说「腰不好」整张表都会被禁掉，计划直接没法生成 |
-| `purposes` | 默认 `[.strength]`。区块取词：`warmup` 只取含 `.warmup` 的，`cooldown` 只取含 `.stretch` 的。一个动作可以多用途——开合跳既能热身也能当低强度有氧 |
 | `regressionId` | 低阶替代。指向库内动作时必须是另一条，不能指向自己；为空则只显示 `regressionName` 文案。**这是「同一个动作更轻的做法」，不负责绕开部位** |
 | `alternativeId` | 换动作：库内**完全绕开**本动作负荷部位的另一条动作。`PlanSafetyChecker` 只在目标动作与不适部位不相交时采用，否则回退到 `regressionName`。与 `regressionId` 是两种语义，不能互借：深蹲的降阶是靠墙静蹲（同样用膝），换动作是臀推（不用膝） |
+| `relievedParts` | 这个动作对哪个部位**有帮助**，与 `affectedParts` 互补而非重叠。只有康复向动作会标，普通训练动作留空。`PlanSafetyChecker.reliefs` 推荐时**额外要求 `affectedParts` 与不适部位不相交**——一个动作不能既被推荐又让同一部位吃力 |
+| `purposes` | 默认 `[.strength]`。区块取词：`warmup` 只取含 `.warmup` 的，`cooldown` 只取含 `.stretch` 的。一个动作可以多用途——开合跳既能热身也能当低强度有氧。康复动作标 `[.mobility]`：**不含 `.strength` 就不会进生成器的力量池**，这是它们不被排进主训练的唯一机制 |
 | `isStatic` | 静力保持动作。数据上仍有 3 帧，渲染期只取第 1 帧 |
 
 **部位词表只有一个来源**：`BodyPart.keywords`。`PlanBriefParser` 的避让识别、`PlanSafetyChecker` 的校验、`PlanCatalog` 的排除都从它派生（`BodyPart.avoidVocabulary` 是它按长度降序的投影，长词优先，「肩颈」不会被「肩」先吃掉）。曾经这三处各维护一张词表，结果生成器避开的动作和校验器标出的不是同一批。

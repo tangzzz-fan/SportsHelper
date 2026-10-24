@@ -87,7 +87,14 @@ public enum ExerciseAliasResolver {
         ("单腿桥", "single_leg_glute_bridge"), ("single leg glute bridge", "single_leg_glute_bridge"),
         ("蚌式开合", "clamshell"), ("蚌式", "clamshell"), ("蚌壳式", "clamshell"), ("clamshell", "clamshell"),
         ("侧卧抬腿", "side_lying_leg_raise"), ("侧躺抬腿", "side_lying_leg_raise"),
-        ("侧抬腿", "side_lying_leg_raise"), ("side lying leg raise", "side_lying_leg_raise")
+        ("侧抬腿", "side_lying_leg_raise"), ("side lying leg raise", "side_lying_leg_raise"),
+
+        ("下巴回收", "chin_tuck"), ("收下巴", "chin_tuck"), ("颈部回收", "chin_tuck"), ("chin tuck", "chin_tuck"),
+        ("肩胛后缩", "scapular_retraction"), ("肩胛骨后收", "scapular_retraction"),
+        ("肩胛收紧", "scapular_retraction"), ("scapular retraction", "scapular_retraction"),
+        ("靠墙天使", "wall_slide"), ("靠墙滑臂", "wall_slide"), ("墙面天使", "wall_slide"), ("wall slide", "wall_slide"),
+        ("颈部等长", "neck_isometric"), ("颈部静力", "neck_isometric"),
+        ("颈部等长收缩", "neck_isometric"), ("neck isometric", "neck_isometric")
     ]
 
     public static let modifiers: [String] = [

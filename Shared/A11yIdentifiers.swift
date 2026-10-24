@@ -49,6 +49,7 @@ enum A11y {
         static let voiceHint = "import.voice.hint"
         static let sorePart = "import.sorePart"
         static let safetyNotice = "import.safety.notice"
+        static let safetyRelief = "import.safety.relief"
     }
 
     enum Plan {

@@ -52,15 +52,21 @@ struct PlanSorePicker: View {
 
 struct PlanSafetyCard: View {
     let issues: [SafetyIssue]
+    let reliefs: [ExerciseEntry]
     let plan: WorkoutPlan
     let soreParts: Set<BodyPart>
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        if issues.isEmpty {
-            cleanCard
-        } else {
-            warningCard
+        VStack(alignment: .leading, spacing: 10) {
+            if issues.isEmpty {
+                cleanCard
+            } else {
+                warningCard
+            }
+            if reliefs.isEmpty == false {
+                reliefCard
+            }
         }
     }
 
@@ -113,6 +119,25 @@ struct PlanSafetyCard: View {
         case .reduce:
             return "\(issue.exerciseName) · \(day) · 建议减量"
         }
+    }
+
+    private var reliefCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("下面这几个对\(names)有帮助")
+                .font(.footnote.weight(.semibold))
+            Text(reliefs.map(\.name).joined(separator: "、"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("保持 5 秒左右，不用加负荷；疼痛加重就停。")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.halo(for: colorScheme).opacity(0.5), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityIdentifier(A11y.Import.safetyRelief)
     }
 }
 

@@ -141,6 +141,39 @@ struct PlanSafetyTests {
         }
     }
 
+    @Test("肩颈不适时推荐四个康复动作，不是一句「没有」就完了")
+    func shoulderNeckReliefs() {
+        let reliefs = PlanSafetyChecker.reliefs(for: [.shoulderNeck])
+        #expect(Set(reliefs.map(\.id)) == [
+            "chin_tuck", "scapular_retraction", "wall_slide", "neck_isometric"
+        ])
+    }
+
+    @Test("推荐的动作自己不能让同一个部位吃力")
+    func reliefsDoNotConflictWithItself() {
+        for part in BodyPart.allCases {
+            for entry in PlanSafetyChecker.reliefs(for: [part]) {
+                #expect(
+                    entry.affectedParts.isDisjoint(with: [part]),
+                    "\(entry.id) 被推荐给\(part.chineseName)，却又会让这里吃力"
+                )
+            }
+        }
+    }
+
+    @Test("没有不适就不推荐")
+    func noReliefsWithoutSoreParts() {
+        #expect(PlanSafetyChecker.reliefs(for: []).isEmpty)
+    }
+
+    @Test("舒缓动作不进生成器的力量池")
+    func reliefEntriesStayOutOfGeneratorPool() {
+        let pool = Set(PlanCatalog.items.map(\.id))
+        for entry in ExerciseLibrary.all where entry.relievedParts.isEmpty == false {
+            #expect(pool.contains(entry.id) == false, "\(entry.id) 是舒缓动作，不该被排进主训练")
+        }
+    }
+
     @Test("生成器避开的动作，正好是校验器会标出的动作")
     func generatorAndCheckerAgree() {
         for part in BodyPart.allCases {

@@ -26,6 +26,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
     public var regressionId: String?
     public var alternativeId: String?
     public var affectedParts: Set<BodyPart>
+    public var relievedParts: Set<BodyPart>
     public var purposes: Set<ExercisePurpose>
 
     public init(
@@ -40,6 +41,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
         regressionId: String? = nil,
         alternativeId: String? = nil,
         affectedParts: Set<BodyPart> = [],
+        relievedParts: Set<BodyPart> = [],
         purposes: Set<ExercisePurpose> = [.strength]
     ) {
         self.id = id
@@ -53,6 +55,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
         self.regressionId = regressionId
         self.alternativeId = alternativeId
         self.affectedParts = affectedParts
+        self.relievedParts = relievedParts
         self.purposes = purposes
     }
 

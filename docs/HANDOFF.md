@@ -730,6 +730,16 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 
 **另一个坑：`regressionId` 不等于「换动作」。** 深蹲降阶到靠墙静蹲，两个都压膝——那是「更轻的做法」。要表达「完全绕开不适部位」用 `alternativeId`（§5.6）。之前 `PlanSafetyChecker` 拿 `regressionId` 判「可换成」，而库里所有降阶目标都命中同样的部位，那条分支恒为空。
 
+**康复类动作要同时满足三条**，缺一条就会出问题：
+
+| 字段 | 值 | 缺了会怎样 |
+|---|---|---|
+| `affectedParts` | `[]` | 标上部位的话，用户在「哪里不舒服」里选中它，这个动作会被自己的警告标红——而它正是开给用户的 |
+| `relievedParts` | 受益部位 | 校对页不会推荐它，「加法」还是没做 |
+| `purposes` | `[.mobility]`，**不含 `.strength`** | 会被排进训练主项。`PlanCatalog` 的入选条件就是 `purposes.contains(.strength)` |
+
+`PlanSafetyChecker.reliefs` 里还有一条运行时约束：推荐的动作必须 `affectedParts` 与不适部位不相交，写成了测试 `reliefsDoNotConflictWithItself`。
+
 ## 7. 换机后容易踩的坑
 
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。

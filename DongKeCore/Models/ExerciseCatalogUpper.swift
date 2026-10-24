@@ -144,6 +144,54 @@ extension ExerciseLibrary {
             mistakes: ["肘前后晃", "靠腰部摆动借力"],
             regressionName: "弹力带弯举",
             affectedParts: [.elbow]
+        ),
+        ExerciseEntry(
+            id: "chin_tuck",
+            name: "下巴回收",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: true,
+            cues: ["坐直或靠墙站，眼睛平视前方", "下巴水平向后收，像做出双下巴", "保持 5 秒再放松，不要低头"],
+            mistakes: ["低头代替后收", "用力过猛，脖子前侧发紧"],
+            regressionName: "仰卧下巴回收",
+            relievedParts: [.shoulderNeck],
+            purposes: [.mobility]
+        ),
+        ExerciseEntry(
+            id: "scapular_retraction",
+            name: "肩胛后缩",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: true,
+            cues: ["坐或站直，双臂自然下垂", "两侧肩胛骨向后、向下收拢", "保持 5 秒，不要耸肩"],
+            mistakes: ["耸肩代替后缩", "挺腰把胸口顶出去"],
+            regressionName: "小幅肩胛后缩",
+            relievedParts: [.shoulderNeck],
+            purposes: [.mobility]
+        ),
+        ExerciseEntry(
+            id: "wall_slide",
+            name: "靠墙天使",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["背靠墙站，后脑、上背、臀部贴墙", "手臂贴墙成 W 形，沿墙面缓慢上滑", "到能力上限停住，再慢慢回到 W"],
+            mistakes: ["腰离墙拱起", "手臂离开墙面借力"],
+            regressionName: "靠墙手臂小幅上滑",
+            relievedParts: [.shoulderNeck],
+            purposes: [.mobility]
+        ),
+        ExerciseEntry(
+            id: "neck_isometric",
+            name: "颈部等长",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: true,
+            cues: ["坐直，手掌抵住额头", "头手互顶，脖子不动，保持 5 秒", "前后左右四个方向各做一次"],
+            mistakes: ["头真的移动了", "憋气用力"],
+            regressionName: "轻力度颈部等长",
+            relievedParts: [.shoulderNeck],
+            purposes: [.mobility]
         )
     ]
 }

@@ -6,7 +6,7 @@
 
 ## 1. 动作库的「加法」：康复向动作 + 主动推荐
 
-状态：待开 spec（2026-10-24 记录，董事长要求）
+状态：**第一批已落地（2026-10-25）**，ticket 见 `.scratch/exercise-expansion/issues/02-肩颈康复动作与反向推荐.md`。剩「剂量按保持时间进阶」未做
 关联代码：`DongKeCore/Parsing/PlanSafetyChecker.swift`、`DongKeCore/Models/BodyPart.swift`、`DongKeCore/Models/ExerciseCatalog.swift`
 
 ### 问题
@@ -60,6 +60,16 @@
 动作库扩到 39 个之后，「肩颈不适 + 缓解」这句话跑了 4 次，**每次都是 0 条冲突、0 个库外动作**——减法做得很干净。但整份计划里没有一个动作是朝着「改善」去的，全是「不碰肩颈的下肢和核心」。
 
 这条实测把问题钉死了：**不是模型不会，是库里没有可选项。** 做加法时可以直接拿这句话当验收口径。
+
+### 2026-10-25 01:30 落地：加了动作，也把「推荐」接上了
+
+四条肩颈康复动作进了库（下巴回收 / 肩胛后缩 / 靠墙天使 / 颈部等长），全标 `relievedParts: [.shoulderNeck]`、`affectedParts: []`、`purposes: [.mobility]`。`PlanSafetyChecker.reliefs(for:)` 和校对页的推荐块也接上了——用户选「肩颈」之后，看到的是「有 N 个动作会让肩颈吃力」**加上**「下面这几个对肩颈有帮助：下巴回收、肩胛后缩…」。
+
+**没有加 `category` 字段。** 原文提的是「加 `category` 区分训练/舒缓」，但 `purposes` 已经在管「放哪个区块」，再加一个分类维度会重叠。真正缺的是「对哪个部位有帮助」这个部位关系，所以加的是 `relievedParts`。而「不进训练池」这件事由 `purposes` 不含 `.strength` 天然保证，有测试锁着。
+
+**推荐和警告不能同时指向同一个部位。** 靠墙天使确实大幅上举肩关节，标 `affectedParts: [.shoulderNeck]` 的话用户会被标红——而这个动作正是开给他的。所以 `reliefs` 里多一条约束：推荐的动作必须 `affectedParts` 与不适部位不相交。
+
+**还缺一条**：剂量口径。原文要求「舒缓以保持时间进阶（5 秒 → 10 秒），不是加负荷」。现在四个动作都是 `isStatic`，`PlanGenerator` 会按秒给，但**按水平进阶（5→10 秒）没有实现**，AI 路径也仍由模型自己写秒数。这条留到下一批。
 
 ---
 

@@ -75,6 +75,8 @@ UNMAPPED = [
     'hip_circle', 'scapular_circle', 'ankle_circle',
     'neck_stretch', 'thread_needle', 'back_stretch', 'dumbbell_floor_press',
     'march_in_place',
+    # 2026-10-25 肩颈康复四条：上游 neck / trap / cervical 全为 0，没有可接的。
+    'chin_tuck', 'scapular_retraction', 'wall_slide', 'neck_isometric',
 ]
 
 # Explicit whitelist: isometric holds. Do not infer from upstream exerciseType --

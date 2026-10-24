@@ -39,6 +39,8 @@
 
 **器械示意与 `equipment` 不一致时改文字不改图**（臀推用杠铃版素材、蚌式素材带弹力带），前提是动作模式没变。
 
+**康复类动作要同时满足三条**，缺一条就出错：`affectedParts: []`（标了部位会被自己的警告标红）、`relievedParts`（否则校对页不推荐）、`purposes` 不含 `.strength`（否则被排进训练主项，`PlanCatalog` 的入选条件就是这条）。`PlanSafetyChecker.reliefs` 另有一条运行时约束：推荐的动作与不适部位必须不相交。
+
 ## 动作图示（2026-10-24 定稿）
 
 - 图是**矢量 path**（`DongKeCore/Figure/GeneratedFigureData.swift`，3MB，别手改），不是 GIF。35 个动作 × 3 帧 + `_generic` 占位。
