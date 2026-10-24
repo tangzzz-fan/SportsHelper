@@ -710,6 +710,26 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 - 388 张图里 300 张来自我们已有的 bryllim 302，剩 88 张全是器械向——**图示没有增量**
 - 448 条**一条中文都没有**，扩库的成本大头是写中文要点，不是拿数据
 
+## 6.28 扩库时最容易漏的不是动作，是「第二份清单」（2026-10-24）
+
+动作库从 39 扩到 43 时挖出来的。**`ExerciseLibrary` 之外还有一处地方在维护动作清单，扩库不跟就会静默失效**：
+
+| 位置 | 漏了会怎样 |
+|---|---|
+| `PlanCatalog.items` | 本地生成器永远排不到新动作。上一轮 18→39 时漏了，21 条动作对生成器完全不可见，而且**没有任何测试会红** |
+| `ExerciseAliasResolver.aliases` | 用户说新动作名认不出，走「猜」的降级路径，校对页标橙 |
+| `gen_figures.py` 的 `MAPPING` | 新动作回落 `_generic` 占位图，同样是静默的 |
+| `FigureLibraryTests.records.count` | 这个是唯一会红的，但红在「数字不对」，不告诉你**漏了哪个动作** |
+
+`PlanCatalog` 已改成从动作库派生（`purposes` 含 `.strength` 的进池，`isDynamic` 取 `purposes` 含 `.warmup`），核对过原 18 条四个字段能精确复现。别名与图示两处仍是手工，扩库时按下面的顺序走：
+
+1. 动作进 `ExerciseCatalogLower/Upper/Core`（含 `cues` ≥2、`mistakes` ≥1、`regressionName` 非空）
+2. 别名补 ≥3 个叫法，**并且自己的名字必须能认出自己**（`ExerciseNounTests.everyEntryHasEnoughAliases` 会查）
+3. `gen_figures.py` 加 MAPPING，重跑生成器
+4. 门禁数字：`FigureLibraryTests` records = MAPPING 条数 + 1、`ExerciseLibraryTests` dedicated ≥ 同数、SPEC §11
+
+**另一个坑：`regressionId` 不等于「换动作」。** 深蹲降阶到靠墙静蹲，两个都压膝——那是「更轻的做法」。要表达「完全绕开不适部位」用 `alternativeId`（§5.6）。之前 `PlanSafetyChecker` 拿 `regressionId` 判「可换成」，而库里所有降阶目标都命中同样的部位，那条分支恒为空。
+
 ## 7. 换机后容易踩的坑
 
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。

@@ -24,6 +24,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
     public var mistakes: [String]
     public var regressionName: String
     public var regressionId: String?
+    public var alternativeId: String?
     public var affectedParts: Set<BodyPart>
     public var purposes: Set<ExercisePurpose>
 
@@ -37,6 +38,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
         mistakes: [String],
         regressionName: String,
         regressionId: String? = nil,
+        alternativeId: String? = nil,
         affectedParts: Set<BodyPart> = [],
         purposes: Set<ExercisePurpose> = [.strength]
     ) {
@@ -49,6 +51,7 @@ public struct ExerciseEntry: Identifiable, Equatable, Sendable {
         self.mistakes = mistakes
         self.regressionName = regressionName
         self.regressionId = regressionId
+        self.alternativeId = alternativeId
         self.affectedParts = affectedParts
         self.purposes = purposes
     }

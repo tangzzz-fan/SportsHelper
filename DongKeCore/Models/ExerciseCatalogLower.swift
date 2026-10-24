@@ -12,6 +12,7 @@ extension ExerciseLibrary {
             mistakes: ["膝盖内扣", "脚跟离地、重心压到前脚掌"],
             regressionName: "靠墙静蹲",
             regressionId: "wall_sit",
+            alternativeId: "hip_thrust",
             affectedParts: [.knee, .hip]
         ),
         ExerciseEntry(
@@ -24,6 +25,7 @@ extension ExerciseLibrary {
             mistakes: ["步子太窄，膝盖顶到地面", "身体左右晃"],
             regressionName: "徒手深蹲",
             regressionId: "squat",
+            alternativeId: "hip_thrust",
             affectedParts: [.knee, .hip]
         ),
         ExerciseEntry(
@@ -35,6 +37,51 @@ extension ExerciseLibrary {
             cues: ["仰卧屈膝，脚跟靠近臀部", "先收紧臀部再抬髋，别用腰发力", "顶点停一秒再落下"],
             mistakes: ["腰过度反弓", "靠腰部把身体顶起来"],
             regressionName: "幅度减半的臀桥",
+            affectedParts: []
+        ),
+        ExerciseEntry(
+            id: "hip_thrust",
+            name: "臀推",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["肩胛下缘靠在沙发或床沿，双脚与髋同宽", "收紧臀部把髋顶到躯干成一条线，别用腰反弓", "顶点停一秒，下巴微收，想加负荷就把哑铃放在髋上"],
+            mistakes: ["腰过度反弓代替伸髋", "脚放得太远，变成腿后侧发力"],
+            regressionName: "幅度减半的臀推",
+            affectedParts: []
+        ),
+        ExerciseEntry(
+            id: "single_leg_glute_bridge",
+            name: "单腿臀桥",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["仰卧屈膝，一只脚踩地，另一条腿伸直抬起", "用踩地那条腿把髋顶起，骨盆保持水平", "落下时控制住，别直接砸地"],
+            mistakes: ["骨盆一侧下沉、左右不平", "抬起的腿勾脚借力"],
+            regressionName: "双腿臀桥",
+            regressionId: "glute_bridge",
+            affectedParts: []
+        ),
+        ExerciseEntry(
+            id: "clamshell",
+            name: "蚌式开合",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["侧卧屈膝约 90 度，脚跟并拢，髋部垂直地面", "脚跟不离，上侧膝盖向上打开", "打开到最大停一秒再慢慢合上，没有弹力带就空手做"],
+            mistakes: ["骨盆跟着向后翻", "靠转腰代替髋外展"],
+            regressionName: "小幅蚌式",
+            affectedParts: []
+        ),
+        ExerciseEntry(
+            id: "side_lying_leg_raise",
+            name: "侧卧抬腿",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["侧卧，下侧腿微屈，上侧腿伸直", "脚尖朝前，把腿抬到约 45 度", "落下时控制住，不要碰到下侧腿"],
+            mistakes: ["腿向前甩", "骨盆后翻、身体变成半仰卧"],
+            regressionName: "屈膝侧卧抬腿",
             affectedParts: []
         ),
         ExerciseEntry(
@@ -180,6 +227,7 @@ extension ExerciseLibrary {
             cues: ["站姿，哑铃在大腿前", "髋部后移，膝盖微屈", "下放到小腿中段，感受腿后侧拉长"],
             mistakes: ["弓背下放", "靠弯腰代替髋铰链"],
             regressionName: "徒手髋铰链",
+            alternativeId: "hip_thrust",
             affectedParts: [.lowerBack, .hip]
         ),
     ]

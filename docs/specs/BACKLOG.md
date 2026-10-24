@@ -65,8 +65,8 @@
 
 ## 2. 臀部主导动作的缺口
 
-状态：待开 spec（2026-10-24 记录）
-关联：`DongKeCore/Models/ExerciseCatalog.swift`
+状态：**done（2026-10-24）**。ticket 见 `.scratch/exercise-expansion/issues/01-臀部主项扩容.md`
+关联：`DongKeCore/Models/ExerciseCatalogLower.swift`、`DongKeCore/Scheduling/PlanCatalog.swift`
 
 ### 问题
 
@@ -110,6 +110,20 @@
 结论修正：这条从「补 4 个自建动作」降级为「从现成清单里挑 4–8 条，中文化 + 加 4 行 MAPPING」。成本大头从「画图」变成「写中文要点」。
 
 **新增前置**：这 4 条 id 一旦进库，`ExerciseAliasResolver` 里现有的 `("单腿臀桥", "glute_bridge")` + `modifier: 单腿` 这条映射必须改成指向新 id，否则「单腿臀桥」永远走降级路径（见 `UnknownExerciseTests.variantAndUnilateralModifiers`）。
+
+> **更正（22:55）**：别名表里其实**没有**那条显式映射。「单腿臀桥」是靠 `contains("臀桥")` 命中 `glute_bridge`，再由 `uncoveredModifier` 标出「单腿」走降级路径的。所以要做的是**新增**一条显式别名，不是改指。
+
+### 2026-10-24 23:50 落地：真正的堵点不在动作数
+
+四条动作（臀推 / 单腿臀桥 / 蚌式 / 侧卧抬腿）都进了库，四个上游 slug 都接上了图。但做的时候发现一个更要紧的东西：
+
+**`PlanCatalog.items` 是手工维护的第二份动作清单，只有最初那 18 条。** 上一轮把库从 18 扩到 39 时，它没跟着改——也就是说**新增的 21 条对本地生成器完全不可见**，模型要排臀推，本地路径永远排不出来。光补 4 条动作照样过不了验收。
+
+已改成从 `ExerciseLibrary` 派生（`purposes` 含 `.strength` 的才进池，`isDynamic` 取 `purposes` 含 `.warmup`）。逐条核对过：原 18 条的 `joint` / `equipment` / `isStatic` / `isDynamic` 四个字段全部能被派生规则精确复现，不是「差不多」。
+
+顺带修掉一个同源的既有 bug：核心收尾块的筛选条件是 `isStatic || joint == .core`，而 `wall_sit` 是静态下肢动作、排在 `bird_dog` 前面——「核心收尾」一直排的是靠墙静蹲。已改成只取 `joint == .core`。
+
+**验收完成度**：膝不适时生成器池里的臀部动作从 1 个变 5 个（`glutePoolSurvivesKneeSoreness` 钉住），安全检查一条都不挡（`gluteWorkSurvivesKneeSoreness`）。AI 路径靠 `catalogList` 直接遍历动作库，已加 `systemPromptListsEveryCatalogId` 保证不漏。**「同一句话跑 4 次」这条没有复跑**——它需要真实端点，本轮只做了静态验证。
 
 ---
 

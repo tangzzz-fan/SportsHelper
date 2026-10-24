@@ -27,15 +27,16 @@ struct UnknownExerciseTests {
         #expect(ExerciseAliasResolver.match(for: "保加利亚分腿蹲")?.catalogId == "lunge")
         #expect(ExerciseAliasResolver.match(for: "保加利亚分腿蹲")?.modifier == "保加利亚")
 
-        #expect(ExerciseAliasResolver.match(for: "单腿臀桥")?.catalogId == "glute_bridge")
-        #expect(ExerciseAliasResolver.match(for: "单腿臀桥")?.modifier == "单腿")
+        #expect(ExerciseAliasResolver.match(for: "单腿提踵")?.catalogId == "calf_raise")
+        #expect(ExerciseAliasResolver.match(for: "单腿提踵")?.modifier == "单腿")
 
         #expect(ExerciseAliasResolver.match(for: "单手哑铃划船")?.modifier == "单手")
     }
 
     @Test("别名自己就带这个限定词时，不标猜测")
     func coveredModifiersStayQuiet() {
-        for name in ["哑铃划船", "哑铃推举", "徒手深蹲", "自重深蹲", "靠墙静蹲", "臀桥", "平板支撑", "开合跳"] {
+        for name in ["哑铃划船", "哑铃推举", "徒手深蹲", "自重深蹲", "靠墙静蹲", "臀桥", "平板支撑", "开合跳",
+                     "臀推", "单腿臀桥", "蚌式开合", "侧卧抬腿"] {
             #expect(ExerciseAliasResolver.match(for: name)?.needsReview == false, "\(name) 不该被标")
         }
         #expect(ExerciseAliasResolver.match(for: "哑铃划船")?.catalogId == "dumbbell_row")

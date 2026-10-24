@@ -53,6 +53,15 @@ MAPPING = {
     'dumbbell_rdl': 'dumbbell-romanian-deadlift',
     'lateral_raise': 'lateral-raise',
     'biceps_curl': 'bicep-curl',
+
+    # 2026-10-24 臀部主项扩容（.scratch/exercise-expansion/issues/01）。
+    # 四条都是自重动作，取自重版素材；hip-thrust 同族有 dumbbell / banded
+    # 两个变式，墨量更稳（6.8-8.1 / 5.3-7.3）但把器械画进了动作本身，
+    # 而这条动作定的是自重，所以仍取杠铃版（墨量 6.3-9.7）。
+    'hip_thrust': 'hip-thrust',
+    'single_leg_glute_bridge': 'single-leg-glute-bridge',
+    'clamshell': 'clamshell',
+    'side_lying_leg_raise': 'side-lying-leg-raise',
 }
 
 # 上游 302 个素材里确实没有的，一律走 _generic 兜底，不做近似替换：
@@ -149,7 +158,7 @@ def record(catalog_id, motion, dsls, source):
 
 
 def main():
-    assert len(MAPPING) == 31, f'expected 31 catalog ids, got {len(MAPPING)}'
+    assert len(MAPPING) == 35, f'expected 35 catalog ids, got {len(MAPPING)}'
     assert not (set(UNMAPPED) & set(MAPPING)), 'unmapped id leaked into MAPPING'
     blocks = []
     for catalog_id, slug in MAPPING.items():

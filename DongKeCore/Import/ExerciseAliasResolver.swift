@@ -80,7 +80,14 @@ public enum ExerciseAliasResolver {
         ("哑铃地板卧推", "dumbbell_floor_press"), ("dumbbell floor press", "dumbbell_floor_press"), ("floor press", "dumbbell_floor_press"),
         ("哑铃罗马尼亚硬拉", "dumbbell_rdl"), ("dumbbell romanian deadlift", "dumbbell_rdl"), ("rdl", "dumbbell_rdl"),
         ("哑铃侧平举", "lateral_raise"), ("dumbbell lateral raise", "lateral_raise"), ("lateral raise", "lateral_raise"),
-        ("哑铃弯举", "biceps_curl"), ("dumbbell curl", "biceps_curl"), ("biceps curl", "biceps_curl")
+        ("哑铃弯举", "biceps_curl"), ("dumbbell curl", "biceps_curl"), ("biceps curl", "biceps_curl"),
+
+        ("臀推", "hip_thrust"), ("臀冲", "hip_thrust"), ("卧凳臀推", "hip_thrust"), ("hip thrust", "hip_thrust"),
+        ("单腿臀桥", "single_leg_glute_bridge"), ("单腿臀举", "single_leg_glute_bridge"),
+        ("单腿桥", "single_leg_glute_bridge"), ("single leg glute bridge", "single_leg_glute_bridge"),
+        ("蚌式开合", "clamshell"), ("蚌式", "clamshell"), ("蚌壳式", "clamshell"), ("clamshell", "clamshell"),
+        ("侧卧抬腿", "side_lying_leg_raise"), ("侧躺抬腿", "side_lying_leg_raise"),
+        ("侧抬腿", "side_lying_leg_raise"), ("side lying leg raise", "side_lying_leg_raise")
     ]
 
     public static let modifiers: [String] = [

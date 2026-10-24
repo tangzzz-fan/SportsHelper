@@ -5,9 +5,7 @@ public struct SafetyIssue: Equatable, Sendable, Identifiable {
     public var itemId: String
     public var exerciseName: String
     public var parts: [BodyPart]
-    /// 库内可完全替代的动作（不会用到不适部位）
     public var alternativeName: String?
-    /// 更轻的做法。仍可能用到不适部位，只是负荷更低。
     public var regressionName: String?
 
     public var id: String { "\(dayIndex)-\(itemId)" }
@@ -89,12 +87,11 @@ public enum PlanSafetyChecker {
         issues.filter { $0.dayIndex == dayIndex }
     }
 
-    /// 降阶动作如果同样会用到不适部位，就不算替代方案
     private static func alternative(
         for entry: ExerciseEntry,
         avoiding soreParts: Set<BodyPart>
     ) -> String? {
-        guard let id = entry.regressionId,
+        guard let id = entry.alternativeId,
               id != entry.id,
               let target = ExerciseLibrary.entry(for: id),
               target.affectedParts.isDisjoint(with: soreParts)
@@ -102,7 +99,6 @@ public enum PlanSafetyChecker {
         return target.name
     }
 
-    /// 降阶只是更轻的做法，不等于绕开不适部位，文案上必须区分。
     private static func lighter(_ entry: ExerciseEntry) -> String? {
         let name = entry.regressionName.trimmingCharacters(in: .whitespaces)
         guard name.isEmpty == false, name != entry.name else { return nil }

@@ -75,12 +75,43 @@ struct PlanSafetyTests {
         #expect(Set(names) == ["哑铃划船", "俄罗斯转体"])
     }
 
-    @Test("降阶动作同样压到不适部位时不给替代，但给降阶出口")
-    func alternativeRejectedWhenAlsoSore() {
-        let plan = makePlan(items: ["squat"])
-        let issues = PlanSafetyChecker.check(plan, soreParts: [.knee])
-        #expect(issues.first?.alternativeName == nil)
-        #expect(issues.first?.regressionName == "靠墙静蹲")
+    @Test("换动作只在目标绕开不适部位时才给，否则回退到降阶")
+    func alternativeOnlyWhenTargetClearsSorePart() {
+        let knee = PlanSafetyChecker.check(makePlan(items: ["squat"]), soreParts: [.knee])
+        #expect(knee.first?.alternativeName == "臀推")
+        #expect(knee.first?.regressionName == nil)
+
+        let shoulder = PlanSafetyChecker.check(makePlan(items: ["push_up"]), soreParts: [.shoulderNeck])
+        #expect(shoulder.first?.alternativeName == nil)
+        #expect(shoulder.first?.regressionName == "跪姿俯卧撑")
+    }
+
+    @Test("换动作不能指向自己，也不能指向库外")
+    func alternativeIsValid() {
+        for entry in ExerciseLibrary.all {
+            guard let id = entry.alternativeId else { continue }
+            #expect(id != entry.id, "\(entry.id) 的换动作指向自己")
+            #expect(ExerciseLibrary.entry(for: id) != nil, "\(entry.id) 的换动作 \(id) 不在库内")
+        }
+    }
+
+    @Test("膝不适时五个臀部主项一个都不该被挡")
+    func gluteWorkSurvivesKneeSoreness() {
+        let plan = makePlan(items: [
+            "hip_thrust", "single_leg_glute_bridge", "clamshell",
+            "side_lying_leg_raise", "glute_bridge"
+        ])
+        #expect(PlanSafetyChecker.check(plan, soreParts: [.knee]).isEmpty)
+    }
+
+    @Test("腰不适时只剩罗马尼亚硬拉被挡，臀部主项仍然可用")
+    func gluteWorkSurvivesLowerBackSoreness() {
+        let plan = makePlan(items: [
+            "dumbbell_rdl", "hip_thrust", "single_leg_glute_bridge",
+            "clamshell", "side_lying_leg_raise"
+        ])
+        let names = PlanSafetyChecker.check(plan, soreParts: [.lowerBack]).map(\.exerciseName)
+        #expect(names == ["哑铃罗马尼亚硬拉"])
     }
 
     @Test("没有库内替代时仍然给出更轻的做法")

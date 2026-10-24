@@ -411,6 +411,26 @@ grep -rn "#[0-9A-Fa-f]\{6\}" DongKe --include=*.swift
 
 所有带 `ownerId` 的模型：`ownerId` 是首次启动生成的本地匿名 UUID（`user_local_id`），本期恒等于 `"local"` 段内唯一值，不参与任何查询条件，只为 P1 云同步预留。同时所有可持久化模型带 `updatedAt`（P1 做同步冲突判定用）。**预留字段不等于预留功能**：本期不实现同步、不实现"待同步"状态、UI 不出现同步相关字样。
 
+### 5.1 为什么 `ExerciseCatalogItem` 不进数据库
+
+动作库是只读常量，MVP 为 18 条（`plan-schema.json` 的 catalogId 白名单），体积几十 KB。放进 SwiftData 只会引入"首次启动播种失败"这类失败模式，收益为零。做法：`CatalogRepository` 在 App 启动时从 bundle 解码一次，建 `[String: ExerciseCatalogItem]` 与别名倒排索引，常驻内存。用户自定义动作（`catalogId` 以 `custom_` 前缀）本期只存在计划 JSON 里，不做编辑。
+
+### 5.2 `WorkoutFlowModel`：把计划展开成线性执行序列
+
+训练页不能直接遍历三层嵌套结构，要一个线性序列驱动"当前第几个动作第几组"。`WorkoutFlowModel(plan:)` 在进入训练时一次性展开为 `[FlowStep]`：
+
+```
+FlowStep
+├── .set(prescriptionId, setIndex, target, restAfterSec)   # 完成这一组后给 restAfterSec 秒休息
+├── .roundBreak(seconds)                                   # 循环块换轮的休息
+├── .blockBreak(seconds, nextBlockTitle)                    # 换块的提示
+└── .finished
+```
+
+循环块展开规则：`rounds` 轮，每轮依次走 `items`，轮内动作间用 `restBetweenItemsSec`，每轮结束插一条 `.roundBreak(restBetweenRoundsSec)`（最后一轮不插）。超级组同理（`restBetweenItemsSec = 0`）。`plannedSets` 等于展开后 `.set` 的数量，写进 `WorkoutSession` 作为分母，完成率分母从此固定，改计划不影响历史。
+
+这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。
+
 ### 5.4 排期解析：本期只有 weekday 匹配
 
 FROZEN-BASELINE §2 把「跳过并顺延」列为本期不做。本期的排期解析因此只有一条规则：
@@ -440,27 +460,7 @@ P1 接回时的设计结论保留备查：把计划当不可变模板，偏离�
 
 "改今天的一组"由此天然被约束在 `SetLogRecord` 的追加与 active session 的末条删除范围内，物理上碰不到昨天的历史，也碰不到计划模板。这一条要在 `SessionRepository` 里用前置断言保证，并有单测覆盖"对已 finish 的 session 调 undo 必须抛错"。
 
-### 5.1 为什么 `ExerciseCatalogItem` 不进数据库
-
-动作库是只读常量，MVP 为 18 条（`plan-schema.json` 的 catalogId 白名单），体积几十 KB。放进 SwiftData 只会引入"首次启动播种失败"这类失败模式，收益为零。做法：`CatalogRepository` 在 App 启动时从 bundle 解码一次，建 `[String: ExerciseCatalogItem]` 与别名倒排索引，常驻内存。用户自定义动作（`catalogId` 以 `custom_` 前缀）本期只存在计划 JSON 里，不做编辑。
-
-### 5.2 `WorkoutFlowModel`：把计划展开成线性执行序列
-
-训练页不能直接遍历三层嵌套结构，要一个线性序列驱动"当前第几个动作第几组"。`WorkoutFlowModel(plan:)` 在进入训练时一次性展开为 `[FlowStep]`：
-
-```
-FlowStep
-├── .set(prescriptionId, setIndex, target, restAfterSec)   # 完成这一组后给 restAfterSec 秒休息
-├── .roundBreak(seconds)                                   # 循环块换轮的休息
-├── .blockBreak(seconds, nextBlockTitle)                    # 换块的提示
-└── .finished
-```
-
-循环块展开规则：`rounds` 轮，每轮依次走 `items`，轮内动作间用 `restBetweenItemsSec`，每轮结束插一条 `.roundBreak(restBetweenRoundsSec)`（最后一轮不插）。超级组同理（`restBetweenItemsSec = 0`）。`plannedSets` 等于展开后 `.set` 的数量，写进 `WorkoutSession` 作为分母，完成率分母从此固定，改计划不影响历史。
-
-这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。
-
-### 5.1 动作库字段口径
+### 5.6 动作库字段口径
 
 代码里不写注释，字段语义全部收在这里。改这些字段前先读本节。
 
@@ -468,7 +468,8 @@ FlowStep
 |---|---|
 | `affectedParts` | **只标主要负荷**——发力肌群和承受大部分体重的关节。稳定肌、姿势代偿不算。理由：标宽了，用户一说「腰不好」整张表都会被禁掉，计划直接没法生成 |
 | `purposes` | 默认 `[.strength]`。区块取词：`warmup` 只取含 `.warmup` 的，`cooldown` 只取含 `.stretch` 的。一个动作可以多用途——开合跳既能热身也能当低强度有氧 |
-| `regressionId` | 低阶替代。指向库内动作时必须是另一条，不能指向自己；为空则只显示 `regressionName` 文案 |
+| `regressionId` | 低阶替代。指向库内动作时必须是另一条，不能指向自己；为空则只显示 `regressionName` 文案。**这是「同一个动作更轻的做法」，不负责绕开部位** |
+| `alternativeId` | 换动作：库内**完全绕开**本动作负荷部位的另一条动作。`PlanSafetyChecker` 只在目标动作与不适部位不相交时采用，否则回退到 `regressionName`。与 `regressionId` 是两种语义，不能互借：深蹲的降阶是靠墙静蹲（同样用膝），换动作是臀推（不用膝） |
 | `isStatic` | 静力保持动作。数据上仍有 3 帧，渲染期只取第 1 帧 |
 
 **部位词表只有一个来源**：`BodyPart.keywords`。`PlanBriefParser` 的避让识别、`PlanSafetyChecker` 的校验、`PlanCatalog` 的排除都从它派生（`BodyPart.avoidVocabulary` 是它按长度降序的投影，长词优先，「肩颈」不会被「肩」先吃掉）。曾经这三处各维护一张词表，结果生成器避开的动作和校验器标出的不是同一批。

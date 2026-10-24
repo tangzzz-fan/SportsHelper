@@ -17,7 +17,7 @@ struct ConfusableNounTests {
     func unknownExercisesStayUnknown() {
         let names = [
             "卧推", "杠铃卧推", "硬拉", "腿举", "引体向上", "仰卧起坐",
-            "二头弯举", "侧平举", "臀推", "绳索下压", "俯身飞鸟", "山羊挺身", "波比跳"
+            "二头弯举", "侧平举", "绳索下压", "俯身飞鸟", "山羊挺身", "波比跳"
         ]
         for name in names {
             #expect(id(name) == nil, "「\(name)」不在库里，不该被认成 \(id(name) ?? "")")

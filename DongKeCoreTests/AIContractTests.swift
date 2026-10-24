@@ -53,6 +53,14 @@ struct AIRequestBodyTests {
         #expect(body(.plain)["response_format"] == nil)
     }
 
+    @Test("提示词列出库里每一个动作，扩库不会漏")
+    func systemPromptListsEveryCatalogId() {
+        let prompt = AIPromptBuilder.systemPrompt()
+        let listed = Set(prompt.matches(of: /([a-z][a-z0-9_]+)\(/).map { String($0.output.1) })
+        let missing = ExerciseLibrary.identifiers.subtracting(listed)
+        #expect(missing.isEmpty, "提示词里缺这些动作：\(missing.sorted())")
+    }
+
     @Test func degradationOrderIsFixed() {
         #expect(AIResponseMode.jsonSchema.next == .jsonObject)
         #expect(AIResponseMode.jsonObject.next == .plain)

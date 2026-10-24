@@ -20,7 +20,7 @@ struct ExerciseLibraryTests {
         let dedicated = ExerciseLibrary.all.filter {
             FigureLibrary.bundled.figure(for: $0.id).catalogId == $0.id
         }
-        #expect(dedicated.count >= 31, "专属素材掉到 31 个以下，说明生成映射被改了")
+        #expect(dedicated.count >= 35, "专属素材掉到 35 个以下，说明生成映射被改了")
     }
 
     @Test("要点与常见错误都不为空")

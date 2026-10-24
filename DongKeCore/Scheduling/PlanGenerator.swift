@@ -127,7 +127,7 @@ public enum PlanGenerator {
     ) -> PlanDay {
         let warmup = pool.filter(\.isDynamic).first
         let mainCandidates = pool.filter { $0.joint != .core && !$0.isDynamic }
-        let coreCandidates = pool.filter { $0.isStatic || $0.joint == .core }
+        let coreCandidates = pool.filter { $0.joint == .core }
 
         var main: [CatalogItem] = []
         switch focus {

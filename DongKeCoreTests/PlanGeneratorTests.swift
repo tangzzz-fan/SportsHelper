@@ -53,23 +53,24 @@ struct PlanGeneratorTests {
         #expect(plan.meta.daysPerWeek == 2)
     }
 
-    @Test("only catalog ids from the frozen whitelist are used")
-    func onlyWhitelistedIds() {
-        let whitelist: Set<String> = [
-            "squat", "push_up", "plank", "lunge", "glute_bridge", "dumbbell_row",
-            "shoulder_press", "jumping_jack", "dead_bug", "wall_sit", "side_plank",
-            "calf_raise", "superman", "crunch", "mountain_climber", "high_knees",
-            "bird_dog", "russian_twist"
-        ]
+    @Test("生成器只排库内力量动作，且只用用户有的器械")
+    func generatedIdsAreLibraryStrength() {
+        let equipment: [Equipment] = [.bodyweight, .dumbbell]
         let plan = PlanGenerator.makePlan(profile: profile(
             weekdays: [.monday, .tuesday, .wednesday, .thursday, .friday],
             minutes: 60,
-            equipment: [.bodyweight, .dumbbell]
+            equipment: equipment
         ))
         for day in plan.days {
             for block in day.blocks {
                 for item in block.items {
-                    #expect(whitelist.contains(item.catalogId), "unexpected id \(item.catalogId)")
+                    let entry = ExerciseLibrary.entry(for: item.catalogId)
+                    #expect(entry != nil, "库外动作 \(item.catalogId)")
+                    #expect(entry?.purposes.contains(.strength) == true, "\(item.catalogId) 不是力量动作")
+                    #expect(
+                        entry.map { equipment.contains($0.equipment) } == true,
+                        "\(item.catalogId) 用了用户没有的器械"
+                    )
                 }
             }
         }
@@ -144,6 +145,38 @@ struct PlanGeneratorTests {
             for day in training {
                 let ratio = Double(day.estimatedMinutes) / Double(minutes)
                 #expect(ratio > 0.6 && ratio < 1.5, "\(minutes) 分钟的计划估成了 \(day.estimatedMinutes)")
+            }
+        }
+    }
+
+    @Test("膝不适时生成器池里仍有五个臀部选项")
+    func glutePoolSurvivesKneeSoreness() {
+        let blocked = PlanGenerator.blockedCatalogIds(for: "膝盖疼")
+        let gluteIds: Set<String> = [
+            "glute_bridge", "hip_thrust", "single_leg_glute_bridge",
+            "clamshell", "side_lying_leg_raise"
+        ]
+        let available = PlanCatalog.items.map(\.id).filter {
+            gluteIds.contains($0) && !blocked.contains($0)
+        }
+        #expect(Set(available) == gluteIds, "膝不适时可用臀部动作只剩 \(available)")
+    }
+
+    @Test("核心收尾块只排核心动作，不拿静态下肢动作凑数")
+    func coreBlockUsesCoreOnly() {
+        let plan = PlanGenerator.makePlan(profile: profile(
+            weekdays: Array(Weekday.allCases),
+            minutes: 40,
+            equipment: [.bodyweight, .dumbbell]
+        ))
+        for day in plan.days where !day.isRestDay {
+            for block in day.blocks where block.kind == .cooldown {
+                for item in block.items {
+                    #expect(
+                        ExerciseLibrary.entry(for: item.catalogId)?.group == .core,
+                        "核心收尾排了 \(item.catalogId)"
+                    )
+                }
             }
         }
     }

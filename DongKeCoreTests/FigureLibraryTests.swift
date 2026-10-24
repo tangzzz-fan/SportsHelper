@@ -98,10 +98,10 @@ struct FigureLibraryTests {
         }
     }
 
-    @Test("generated dataset holds thirty-two records, all with three frames")
+    @Test("generated dataset holds thirty-six records, all with three frames")
     func generatedDatasetGate() {
         let records = GeneratedFigureData.records
-        #expect(records.count == 32)
+        #expect(records.count == 36)
         #expect(records.filter { $0.catalogId == "_generic" }.count == 1)
         let generic = records.first { $0.catalogId == "_generic" }
         #expect(generic?.frames.count == 1)
