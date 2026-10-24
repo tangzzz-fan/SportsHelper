@@ -4,7 +4,7 @@
 
 **UI 测试默认不跑**——一轮 6 分钟。日常只跑单测，UI 显式 `--with-ui` 才跑：
 
-- `ui`（动了 `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/`）→ `--run` 只跑单测 487 条，`--with-ui` 追加 UI 16 条
+- `ui`（动了 `DongKe/`、`Shared/`、`DongKeUITests/`、`project.yml`、`DongKe.xcodeproj/`）→ `--run` 只跑单测 539 条，`--with-ui` 追加 UI 21 条
 - `core`（只动 `DongKeCore/`、`DongKeCoreTests/`、`Tools/`）→ 只跑单测
 - `none`（纯文档）→ 都不跑，仍要过 ARCHITECTURE §4.3 门禁
 
@@ -25,11 +25,25 @@
 
 改文案后必跑 `scripts/voice-dump.sh` 复核三种（现四种）计划形态。见 §6.23。
 
+## 动作库扩容：只有三处要手工同步（2026-10-24）
+
+库已 43 条。**加动作只需动三处**，第四处已改成派生：
+
+1. `DongKeCore/Models/ExerciseCatalog{Lower,Upper,Core}.swift` —— `cues` ≥2、`mistakes` ≥1、`regressionName` 非空
+2. `ExerciseAliasResolver.aliases` —— 每动作 ≥3 个叫法，且**自己的名字要能认出自己**（`ExerciseNounTests` 会查）
+3. `gen_figures.py` 的 `MAPPING` + `FigureLibraryTests.records` 数字（= MAPPING + 1）
+
+**`PlanCatalog.items` 不用动**：2026-10-24 已改成从 `ExerciseLibrary` 派生（`purposes` 含 `.strength` 进池、`isDynamic` 取 `.warmup`）。在此之前它是第二份手工清单，18→39 那轮漏改，21 条动作对本地生成器完全不可见且无测试会红。见 HANDOFF §6.28。
+
+**`regressionId` ≠ 换动作**。降阶是「同一动作更轻」（深蹲→靠墙静蹲，都压膝），换动作是完全绕开部位，用 `alternativeId`。口径在 ARCHITECTURE §5.6。
+
+**器械示意与 `equipment` 不一致时改文字不改图**（臀推用杠铃版素材、蚌式素材带弹力带），前提是动作模式没变。
+
 ## 动作图示（2026-10-24 定稿）
 
-- 图是**矢量 path**（`DongKeCore/Figure/GeneratedFigureData.swift`，3MB，别手改），不是 GIF。31 个动作 × 3 帧 + `_generic` 占位。
+- 图是**矢量 path**（`DongKeCore/Figure/GeneratedFigureData.swift`，3MB，别手改），不是 GIF。35 个动作 × 3 帧 + `_generic` 占位。
 - 素材 = bryllim/workout-guide（302 个，906 帧，CC BY-SA 4.0），**上游是 Everkinetic**。根目录 `everkinetic-data/` 是同一脉的 raster 版（277 个），已在 `.gitignore`，**不是更大的库**。
-- 「同风格」有量化判据：线宽/图高 **0.67%–2.90%**（中位 1.23）、墨量 **3%–8%**（中位 5.4）、宽高比 0.87、留白 4.5%、图高 433–470 单位 / 512 画布。
+- 「同风格」有量化判据：线宽/图高 **0.67%–2.90%**（中位 1.23）、墨量 **3%–8%**（中位 5.4）、宽高比 0.87、留白 4.5%、图高 433–470 单位 / 512 画布。**宽高比 0.87 是站姿口径**，躺姿动作本来就在 2.0 上下（`glute_bridge` 2.10），别拿一个数卡所有。
 - **取景也要同档**：上游颈部那两张是胸像特写（图高 138），190pt 并排就是另一个档位，不能用。
 - 判定「能不能接」= 语义对 + 取景同档 + 有矢量源。缺一条就走占位，不用近似素材。
 - 生成器 `.scratch/figure-and-glass/tools/gen_figures.py`（手动跑，不进构建）；`svgcmd.py` 已支持 `A` 弧线 flag 连写。
