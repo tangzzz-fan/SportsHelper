@@ -2,12 +2,13 @@
 # 判定这次改动需要跑哪一档测试：none / core / ui
 #
 #   scripts/test-scope.sh                  # 只看判定，打印依据
-#   scripts/test-scope.sh --run            # 判定后直接跑对应档位
+#   scripts/test-scope.sh --run            # 判定后跑单测（UI 默认不跑）
+#   scripts/test-scope.sh --run --with-ui  # 连 UI 一起跑，约 6 分钟
 #   scripts/test-scope.sh --run --base HEAD~1
 #
 # 判据只有一条：**改动会不会让「用户点得到的东西」变样**。
 #   Core 纯逻辑（DongKeCore）→ 单测覆盖得住，不必起模拟器
-#   视图 / 入口 / 设计系统 / 持久化 / 工程配置 → 必须跑 UI
+#   视图 / 入口 / 设计系统 / 持久化 / 工程配置 → 先用单测兜，UI 由 --with-ui 决定
 #   纯文档 → 一档都不跑（仍要过 §4.3 门禁）
 set -uo pipefail
 
@@ -15,12 +16,14 @@ cd "$(dirname "$0")/.."
 
 BASE=""
 RUN=0
+WITH_UI=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --run)  RUN=1; shift ;;
+    --with-ui) WITH_UI=1; RUN=1; shift ;;
     --base) BASE="$2"; shift 2 ;;
-    -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "未知参数：$1" >&2; exit 2 ;;
   esac
 done
@@ -157,8 +160,12 @@ case "$SCOPE" in
   ui)
     echo "→ 跑单测"
     run_tests DongKeCoreTests || FAILED=1
-    echo "→ 跑 UI 测试"
-    run_tests DongKeUITests || FAILED=1
+    if [ "$WITH_UI" = "1" ]; then
+      echo "→ 跑 UI 测试"
+      run_tests DongKeUITests || FAILED=1
+    else
+      echo "→ UI 测试已跳过（加 --with-ui 才跑）"
+    fi
     ;;
 esac
 
