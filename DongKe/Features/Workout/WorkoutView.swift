@@ -319,7 +319,7 @@ struct WorkoutView: View {
                     .padding(.top, 12)
             }
 
-            if session.isLastSetOfDay {
+            if session.isLastSetOfItem {
                 effortRow
                     .padding(.top, 10)
             }

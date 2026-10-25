@@ -86,12 +86,9 @@ final class WorkoutSession: Identifiable {
         currentTarget?.type == .reps
     }
 
-    var isLastSetOfDay: Bool {
-        guard case .set? = currentStep else { return false }
-        return !flow.steps.dropFirst(stepIndex + 1).contains { step in
-            if case .set = step { return true }
-            return false
-        }
+    var isLastSetOfItem: Bool {
+        guard case let .set(prescriptionId, _, _, _)? = currentStep else { return false }
+        return flow.isLastSet(of: prescriptionId, at: stepIndex)
     }
 
     var completedSets: Int {

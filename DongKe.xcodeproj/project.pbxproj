@@ -113,6 +113,7 @@
 		6A3E39839E419DC9E4EC252B /* ExerciseAliasResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5EABB2150760A258EAD5C5 /* ExerciseAliasResolver.swift */; };
 		6BD733CF2B12E31ABEB85361 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 773AB6EF665D07DFC65D3C55 /* Haptics.swift */; };
 		6D56107CAFD19405568CB248 /* HistoryStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08858064C4587155DEFFB92D /* HistoryStatsTests.swift */; };
+		6DA4E5928C28831DD9B1C7DB /* DoseAdjustment+Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEEC54348FCE3A15FBF42DB /* DoseAdjustment+Safety.swift */; };
 		6DA7B6FEFEBBDE472F9FF9CB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78924005EB823B3946C2AB57 /* HistoryView.swift */; };
 		718A04257FD48EBF52B5806D /* AITransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF788ADBAC45107B831FFD6 /* AITransport.swift */; };
 		71CE0FA9214CE7DA4126AD28 /* UserExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0036F18982FE6ABB6F67477 /* UserExerciseDetailView.swift */; };
@@ -128,6 +129,7 @@
 		7E63F9E457189407097A7F74 /* DraftLineScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95F2EC7CE530776A90723C5E /* DraftLineScanner.swift */; };
 		7F980A67E6D2F59B85B4F0B6 /* VoiceInputLimit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D0865D917976B35B540784 /* VoiceInputLimit.swift */; };
 		8046F35D90A991C5FF6F90E1 /* WorkoutAnnouncement.swift in Sources */ = {isa = PBXBuildFile; fileRef = C530F68A3B848420FADD1268 /* WorkoutAnnouncement.swift */; };
+		8109FCC603664487679CD181 /* DoseReserveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930FFA9FD566FF041238DE01 /* DoseReserveTests.swift */; };
 		81278E2D70FBF56A0B8B3D75 /* GeneratedFigureData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4258105F5D20BAA7B02B2D8 /* GeneratedFigureData.swift */; };
 		83034C0C6188573AE65AF0F5 /* AppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5C42B631AEEA9DEE954410 /* AppShell.swift */; };
 		830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D87F13E5E0F8B3E53D513D /* SecretStoring.swift */; };
@@ -174,6 +176,7 @@
 		AD12AAEB83C8F0FD65D1A25D /* SpeechCueCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEBFA19A1BC52C87ACFDAE30 /* SpeechCueCoordinatorTests.swift */; };
 		AD989CEA80D00BACA2DC891C /* LargeTextStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917E30899C9FB8E4BFAAAE4 /* LargeTextStore.swift */; };
 		B20EAB16993A03B27277C0AF /* ExerciseFigure.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64AE095E82BB634A080D671 /* ExerciseFigure.swift */; };
+		B2B91C42D77FE564C87A4802 /* DoseAdjustment+Reduction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */; };
 		B3BEEBA5111A92B4E36F1F65 /* PlanNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F0141EDD96F94F8781B2D4 /* PlanNormalizer.swift */; };
 		B47934793DB3300AB9518B73 /* FigurePlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266CCAEF6FD251113BC44158 /* FigurePlaybackTests.swift */; };
 		B92290989E3D5007C320C2AC /* TextNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCE26FA1AA5E22266904F7B /* TextNormalization.swift */; };
@@ -232,6 +235,7 @@
 		F3DF874F5F4E82A86BA4C3FC /* AIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7D6D2A01E591F53D074CF0 /* AIEndpoint.swift */; };
 		F3FC0980C6166A48CBE160EB /* AIPlanGenerating.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904DF836831AE69987D87364 /* AIPlanGenerating.swift */; };
 		F46DF4E0625991C1A2CFD22D /* SpeechCueCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2ED666E1F2886D06EC8035 /* SpeechCueCoordinator.swift */; };
+		F511057EE644F8A09B95CC99 /* DoseAdjustment+Progression.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEDB90916394C95BA2F38EEC /* DoseAdjustment+Progression.swift */; };
 		FB0D5D1EA291B14EA2D32280 /* AIGenerateCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B42B1F0F88B24A1DD63EC3 /* AIGenerateCard.swift */; };
 		FB3F564F3BD3CD9FF43A8310 /* VoiceSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92531CE0BF491411AEF9B75 /* VoiceSettingsStore.swift */; };
 		FCA5C002FD1EDE716A849C7C /* AISettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F6846CFE5A7573B8AA0E7C /* AISettingsSheet.swift */; };
@@ -387,6 +391,7 @@
 		6777977A3DE4E258F58418FB /* AIResponseMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIResponseMode.swift; sourceTree = "<group>"; };
 		68621B8F97685F11DE0DB586 /* SetCountdownBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetCountdownBadge.swift; sourceTree = "<group>"; };
 		68AD01435AC5E1585B434024 /* VoiceInputAuthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputAuthTests.swift; sourceTree = "<group>"; };
+		68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DoseAdjustment+Reduction.swift"; sourceTree = "<group>"; };
 		6A297E93E0814A3360E164D1 /* VoiceInputCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputCopy.swift; sourceTree = "<group>"; };
 		6B5C42B631AEEA9DEE954410 /* AppShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShell.swift; sourceTree = "<group>"; };
 		6BF788ADBAC45107B831FFD6 /* AITransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITransport.swift; sourceTree = "<group>"; };
@@ -419,6 +424,7 @@
 		8729F16CB3D106637E9F6D20 /* AITransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITransportTests.swift; sourceTree = "<group>"; };
 		8AF7A67536D7E5BD768D0CB9 /* DraftLineScanner+Aliases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DraftLineScanner+Aliases.swift"; sourceTree = "<group>"; };
 		8B7586B4E6B3CEFE75F71141 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		8BEEC54348FCE3A15FBF42DB /* DoseAdjustment+Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DoseAdjustment+Safety.swift"; sourceTree = "<group>"; };
 		8C2A2581E972C723D503D94E /* PlanValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanValidator.swift; sourceTree = "<group>"; };
 		8D0512AB7665A2E191E5DEE3 /* CorrectionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionMemory.swift; sourceTree = "<group>"; };
 		8E1B5156E356E910E994D94B /* PlanAdjustView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanAdjustView.swift; sourceTree = "<group>"; };
@@ -426,6 +432,7 @@
 		904DF836831AE69987D87364 /* AIPlanGenerating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlanGenerating.swift; sourceTree = "<group>"; };
 		90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DongKeCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9302C2D156CA902E7273C836 /* ParseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseModels.swift; sourceTree = "<group>"; };
+		930FFA9FD566FF041238DE01 /* DoseReserveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReserveTests.swift; sourceTree = "<group>"; };
 		942E3F6B487D7BC3DCCACC68 /* AIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfiguration.swift; sourceTree = "<group>"; };
 		94C4B19BCDDE7265796B7BF3 /* WorkoutSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSummaryView.swift; sourceTree = "<group>"; };
 		94E557F93442D77AA1593C8B /* DoseReportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReportTests.swift; sourceTree = "<group>"; };
@@ -470,6 +477,7 @@
 		BC27B3FE5BB66F047654D9AC /* DongKeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DongKeApp.swift; sourceTree = "<group>"; };
 		BDF387A545E2EA53EC10AC76 /* AISettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsStore.swift; sourceTree = "<group>"; };
 		BED05AD05035D57A69C23F0E /* SetTimerStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimerStateMachineTests.swift; sourceTree = "<group>"; };
+		BEDB90916394C95BA2F38EEC /* DoseAdjustment+Progression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DoseAdjustment+Progression.swift"; sourceTree = "<group>"; };
 		BF7D6D2A01E591F53D074CF0 /* AIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEndpoint.swift; sourceTree = "<group>"; };
 		BFEE9131C4D93D2F91008CDD /* PlanSchemaJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanSchemaJSON.swift; sourceTree = "<group>"; };
 		C23CB30472A893A7C9508EFA /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
@@ -659,6 +667,9 @@
 			isa = PBXGroup;
 			children = (
 				A0319F624ACE677C4A53E75D /* DoseAdjustment.swift */,
+				BEDB90916394C95BA2F38EEC /* DoseAdjustment+Progression.swift */,
+				68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */,
+				8BEEC54348FCE3A15FBF42DB /* DoseAdjustment+Safety.swift */,
 				07EFACD7A20E5D2454374AB8 /* DoseContext.swift */,
 				96756A522ECB326E955CA1AF /* PlanProposal.swift */,
 				D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */,
@@ -965,6 +976,7 @@
 				A8F4AD124AFA07118CD8E94A /* DoseAdjustmentTests.swift */,
 				DB8F20CFD7D6BA91738249E3 /* DoseBudgetTests.swift */,
 				94E557F93442D77AA1593C8B /* DoseReportTests.swift */,
+				930FFA9FD566FF041238DE01 /* DoseReserveTests.swift */,
 				361A74D9C66BE56BD904E0E0 /* DoseRulesTests.swift */,
 				D9784B1F95EBFA597F7DAC94 /* ExerciseLibraryTests.swift */,
 				339585D7FCB670DF5AB70DD3 /* ExerciseMergeMapTests.swift */,
@@ -1171,6 +1183,9 @@
 				1C8EFDDD44CFD1AAA3E11362 /* ChatMessage.swift in Sources */,
 				EA46780A5FF8F18078F578BD /* ChatRequestBodyBuilder.swift in Sources */,
 				7D31FEBD55FA8287E7DFC30B /* CorrectionMemory.swift in Sources */,
+				F511057EE644F8A09B95CC99 /* DoseAdjustment+Progression.swift in Sources */,
+				B2B91C42D77FE564C87A4802 /* DoseAdjustment+Reduction.swift in Sources */,
+				6DA4E5928C28831DD9B1C7DB /* DoseAdjustment+Safety.swift in Sources */,
 				2542507649CC3BE537B9F908 /* DoseAdjustment.swift in Sources */,
 				520D13F95364873F5593442B /* DoseContext.swift in Sources */,
 				90CAFC365D7E731872493020 /* DoseReport.swift in Sources */,
@@ -1257,6 +1272,7 @@
 				9F7F946F63222E80DD78B0F4 /* DoseAdjustmentTests.swift in Sources */,
 				117BD82AB4C3B948C64A5969 /* DoseBudgetTests.swift in Sources */,
 				A1AD88B707CFD751C30608DD /* DoseReportTests.swift in Sources */,
+				8109FCC603664487679CD181 /* DoseReserveTests.swift in Sources */,
 				4A98A9F971D5AA63706090CC /* DoseRulesTests.swift in Sources */,
 				BFE77BF1E9D0DB45C51360C9 /* ExerciseLibraryTests.swift in Sources */,
 				38FBD483312173981B322239 /* ExerciseMergeMapTests.swift in Sources */,

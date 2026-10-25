@@ -71,4 +71,12 @@ public struct WorkoutFlowModel: Equatable, Sendable {
         steps = built
         setCounts = counts
     }
+
+    public func isLastSet(of prescriptionId: String, at stepIndex: Int) -> Bool {
+        guard stepIndex < steps.count else { return false }
+        return steps.dropFirst(stepIndex + 1).contains { step in
+            if case let .set(id, _, _, _) = step { return id == prescriptionId }
+            return false
+        } == false
+    }
 }
