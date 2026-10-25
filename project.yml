@@ -32,6 +32,9 @@ targets:
     sources:
       - path: DongKe
       - path: Shared
+      - path: VoiceClips
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: DongKeCore
     settings:

@@ -20,3 +20,7 @@ xcuserdata/
 # Everkinetic 原始 raster 库：27MB 的离线参考，不是 App 资源
 # 用法与许可风险见 docs/FIGURE-STYLE.md §6
 everkinetic-data/
+
+# 音条原型：由 macOS `say` 渲染，仅内部试听，不能随包上架
+VoiceClips/*.wav
+VoiceClips/*.txt

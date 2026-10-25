@@ -41,19 +41,20 @@ Apple 必须实时生成，因为它的句子是无限组合（配速、心率�
 - 单位：次 / 秒 / 分 / 组 / 每侧
 - 连接词：第、共、休息、接下来、完成、另有
 
-按 `WorkoutAnnouncement` 的六种句式展开，**约 117 条片段**。总量 3 分钟音频，AAC 64kbps 后约 2MB。
+按 `WorkoutAnnouncement` 的六种句式展开，**实测 316 条片段**（`VoiceClipBank.inventory`，含动作名 43、组数 1–20、共 N 组 1–30、次数 1–30、每侧 1–20、秒 5–120 步长 5、百分比 0–100 步长 5 等）。22.05kHz 单声道 16 位，约 6MB。
 
 也就是说：**「教练音色」对我们不是一个实时合成问题，而是一个离线渲染 + 运行时拼接问题。**
 
 ## 3. 复原路线
 
-### 阶段 0：验证架构，不验证音色（半天）
+### 阶段 0：验证架构，不验证音色（已落）
 
-用系统 TTS（`say -v` 或现有渲染器）把 117 条片段渲染成 WAV，写一个 `ClipSpeechRenderer`（实现 `SpeechRendering`，**Core 一行不改**），段间留 60–90ms 静音，用 `AVAudioPlayerNode` 串起来。
+- `DongKeCore/Workout/VoiceClipBank.swift`：把整句切成短语（最长匹配），切不出来返回 `.fallback`
+- `scripts/render-voice-clips.sh`：`say` 渲染 316 条 WAV 到 `VoiceClips/`（不进 git，见该目录 README）
+- `DongKe/Services/ClipSpeechRenderer.swift`：`AVAudioEngine` 拼接播放，段间 70ms 静音，缺失片段整句回落系统 TTS
+- 开关：`DK_VOICE_CLIPS=0` 强制走系统 TTS，用来 A/B
 
-- 产出：音条清单（= 文案片段表的单一来源）+ 渲染器 + 拼接器
-- 判据：拼接后能不能听懂、有没有明显的"机器人在念单词"
-- **这一步就能证伪最大的风险：拼接感**
+**判据：拼接后能不能听懂、有没有"机器人在念单词"的感觉。** 这一步就能证伪最大的风险。
 
 ### 阶段 1：换生成器（1–2 天）
 

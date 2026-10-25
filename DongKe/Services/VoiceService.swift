@@ -118,7 +118,12 @@ final class VoiceService {
         if ProcessInfo.processInfo.environment["DK_VOICE_FAKE"] == "1" {
             return FileLoggingRenderer()
         }
+        if ProcessInfo.processInfo.environment["DK_VOICE_CLIPS"] == "0" {
+            return SystemSpeechRenderer()
+        }
         #endif
+        // 音条在就用音条，缺片段的句子自己回落到系统 TTS（ClipSpeechRenderer 内部处理）。
+        if let clips = ClipSpeechRenderer.makeIfAvailable() { return clips }
         return SystemSpeechRenderer()
     }
 }
