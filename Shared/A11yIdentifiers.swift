@@ -31,6 +31,9 @@ enum A11y {
         static func effort(_ level: Int) -> String { "workout.effort.\(level)" }
         static let skipReasonNoTime = "workout.skipReason.noTime"
         static let skipRest = "workout.rest.skip"
+        static let addExtraSet = "workout.extra.add"
+        static let undoExtraSet = "workout.extra.undo"
+        static let extraQueued = "workout.extra.queued"
         static let summaryTitle = "workout.summary.title"
     }
 

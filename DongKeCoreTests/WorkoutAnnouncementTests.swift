@@ -176,6 +176,24 @@ struct WorkoutAnnouncementTests {
         #expect(text == "完成 0 组，完成率 0%")
     }
 
+    @Test("有额外组时补一句加练，完成率仍按计划组数")
+    func finishedWithExtras() {
+        let text = WorkoutAnnouncement.finishedWithExtras(
+            completedSets: 12, plannedSets: 12, extraSets: 2
+        ).text
+        #expect(text.contains("完成 12 组"))
+        #expect(text.contains("完成率 100%"))
+        #expect(text.contains("另有 2 组加练"))
+    }
+
+    @Test("额外组为 0 时与原文案逐字一致，1 / 3 组都带加练")
+    func extraAnnouncementBoundaries() {
+        let builder = builder(items: [makeItem(sets: 3)])
+        #expect(builder.finished(completedSets: 3).text == "完成 3 组，完成率 100%")
+        #expect(builder.finished(completedSets: 3, extraSets: 1).text.contains("另有 1 组加练"))
+        #expect(builder.finished(completedSets: 3, extraSets: 3).text.contains("另有 3 组加练"))
+    }
+
     @Test("动作名很长时先丢「共 N 组」和下一个，再截断")
     func longNameDropsOptionalPartsFirst() {
         let longName = String(repeating: "侧向弓步蹲", count: 4)

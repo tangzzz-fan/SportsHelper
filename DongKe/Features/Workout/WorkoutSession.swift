@@ -4,11 +4,14 @@ import DongKeCore
 @MainActor
 @Observable
 final class WorkoutSession: Identifiable {
+    static let maxExtraSets = 3
+
     let id: UUID
     let plan: WorkoutPlan
     let dayIndex: Int
     let planDate: Date?
     let flow: WorkoutFlowModel
+    var script: [FlowStep]
     let startedAt: Date
     var store: SessionStore?
     var setLogStore: SetLogStore?
@@ -41,12 +44,23 @@ final class WorkoutSession: Identifiable {
         self.store = store
         self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
+        self.script = checkpoint?.steps ?? self.flow.steps
 
         if let checkpoint {
-            let lastIndex = max(0, flow.steps.count - 1)
+            let lastIndex = max(0, script.count - 1)
             self.stepIndex = min(max(0, checkpoint.stepIndex), lastIndex)
             self.logs = checkpoint.logs
             self.rest = WorkoutResumePolicy.restState(checkpoint, now: now)
+
+            if case let .set(id, setIndex, _, _) = script[self.stepIndex],
+               self.logs.contains(where: { $0.prescriptionId == id && $0.setIndex == setIndex }),
+               case .idle = self.rest {
+                self.stepIndex = min(self.stepIndex + 1, lastIndex)
+            }
+        }
+
+        if case .finished? = currentStep {
+            finish(now: now)
         }
     }
 
@@ -59,7 +73,7 @@ final class WorkoutSession: Identifiable {
     }
 
     var currentStep: FlowStep? {
-        stepIndex < flow.steps.count ? flow.steps[stepIndex] : nil
+        stepIndex < script.count ? script[stepIndex] : nil
     }
 
     var currentPrescription: ExercisePrescription? {
@@ -74,7 +88,7 @@ final class WorkoutSession: Identifiable {
 
     var currentSetTotal: Int {
         guard let id = currentPrescription?.itemId else { return 1 }
-        return flow.setCounts[id] ?? 1
+        return max(flow.setCounts[id] ?? 1, currentSetIndex)
     }
 
     var currentTarget: SetTarget? {
@@ -86,9 +100,34 @@ final class WorkoutSession: Identifiable {
         currentTarget?.type == .reps
     }
 
+    var isExtraCurrentSet: Bool {
+        guard case let .set(id, setIndex, _, _)? = currentStep else { return false }
+        return setIndex > (flow.setCounts[id] ?? 0)
+    }
+
     var isLastSetOfItem: Bool {
-        guard case let .set(prescriptionId, _, _, _)? = currentStep else { return false }
-        return flow.isLastSet(of: prescriptionId, at: stepIndex)
+        guard case let .set(id, setIndex, _, _)? = currentStep else { return false }
+        return setIndex == (flow.setCounts[id] ?? 0)
+    }
+
+    var extraSetsCompleted: Int {
+        logs.filter { $0.origin == .extra }.count
+    }
+
+    var canAddExtraSet: Bool {
+        guard isResting,
+              case let .set(id, setIndex, _, _)? = currentStep else { return false }
+        let planned = flow.setCounts[id] ?? 0
+        guard planned > 0, setIndex >= planned else { return false }
+        guard extraSetsCompleted < WorkoutSession.maxExtraSets else { return false }
+        return hasQueuedExtra == false
+    }
+
+    var hasQueuedExtra: Bool {
+        guard case let .set(id, setIndex, _, _)? = currentStep,
+              stepIndex + 1 < script.count,
+              case let .set(nextId, nextSetIndex, _, _) = script[stepIndex + 1] else { return false }
+        return nextId == id && nextSetIndex > setIndex
     }
 
     var ledger: SessionLedger {

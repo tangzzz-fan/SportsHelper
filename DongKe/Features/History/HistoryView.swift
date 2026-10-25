@@ -113,6 +113,9 @@ struct HistoryView: View {
             return "练完一组记下来，这里会告诉你这一周每块肌肉练了几组。"
         }
         var parts = ["完成 \(report.completedSets) 组"]
+        if report.extraSets > 0 {
+            parts.append("额外 \(report.extraSets) 组")
+        }
         if report.skippedSets > 0 {
             parts.append("跳过 \(report.skippedSets) 组")
         }

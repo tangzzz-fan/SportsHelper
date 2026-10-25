@@ -158,7 +158,8 @@ struct WorkoutView: View {
         let voice = WorkoutVoiceSession(
             plan: session.plan,
             dayIndex: session.dayIndex,
-            coordinator: coordinator
+            coordinator: coordinator,
+            steps: session.script
         )
         session.voice = voice
         voice.start()
@@ -219,6 +220,11 @@ struct WorkoutView: View {
             Text("已完成 \(session.completedSets) / \(session.plannedSets) 组")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            if session.extraSetsCompleted > 0 {
+                Text("另有 \(session.extraSetsCompleted) 组额外加练")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             if let done = weeklyDone {
                 Text(done)
                     .font(.footnote)

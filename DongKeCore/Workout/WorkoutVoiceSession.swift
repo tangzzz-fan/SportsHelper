@@ -2,7 +2,9 @@ import Foundation
 
 @MainActor
 public final class WorkoutVoiceSession {
-    private let builder: WorkoutAnnouncementBuilder
+    private let plan: WorkoutPlan
+    private let dayIndex: Int
+    private var builder: WorkoutAnnouncementBuilder
     private let cues: SpeechCueCoordinator
     private var lastStepIndex: Int?
     private var lastCountdown: Int?
@@ -13,9 +15,15 @@ public final class WorkoutVoiceSession {
 
     public var allowsEncouragement = false
 
-    public init(plan: WorkoutPlan, dayIndex: Int, coordinator: SpeechCueCoordinator) {
-        self.builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: dayIndex)
+    public init(plan: WorkoutPlan, dayIndex: Int, coordinator: SpeechCueCoordinator, steps: [FlowStep]? = nil) {
+        self.plan = plan
+        self.dayIndex = dayIndex
+        self.builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: dayIndex, steps: steps)
         self.cues = coordinator
+    }
+
+    public func updateScript(_ steps: [FlowStep]) {
+        builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: dayIndex, steps: steps)
     }
 
     public var lastSpokenText: String? {
@@ -83,10 +91,10 @@ public final class WorkoutVoiceSession {
         cues.announce(announcement)
     }
 
-    public func finished(completedSets: Int) {
+    public func finished(completedSets: Int, extraSets: Int = 0) {
         guard isActive else { return }
         isActive = false
-        cues.announce(builder.finished(completedSets: completedSets))
+        cues.announce(builder.finished(completedSets: completedSets, extraSets: extraSets))
     }
 
     public func stop() {

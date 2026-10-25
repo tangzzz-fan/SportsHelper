@@ -8,6 +8,7 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
     case restFinished(nextName: String?, nextDose: String?)
     case blockBreak(seconds: Int, nextLabel: String)
     case finished(completedSets: Int, plannedSets: Int)
+    case finishedWithExtras(completedSets: Int, plannedSets: Int, extraSets: Int)
     case setPrompt(WorkoutPrompt)
 
     public static let textLimit = 40
@@ -68,6 +69,15 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
             return Self.compose([
                 ("完成 \(completedSets) 组", true),
                 ("完成率 \(min(100, max(0, percent)))%", false)
+            ])
+        case let .finishedWithExtras(completedSets, plannedSets, extraSets):
+            let percent = plannedSets > 0
+                ? Int((Double(completedSets) / Double(plannedSets) * 100).rounded())
+                : 0
+            return Self.compose([
+                ("完成 \(completedSets) 组", true),
+                ("完成率 \(min(100, max(0, percent)))%", false),
+                ("另有 \(extraSets) 组加练", false)
             ])
         }
     }

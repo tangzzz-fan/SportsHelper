@@ -10,6 +10,7 @@ public struct WorkoutCheckpoint: Codable, Equatable, Sendable {
     public var restEndsAt: Date?
     public var restTotalSeconds: Int
     public var logs: [SetLog]
+    public var steps: [FlowStep]?
 
     public init(
         sessionId: UUID,
@@ -20,7 +21,8 @@ public struct WorkoutCheckpoint: Codable, Equatable, Sendable {
         updatedAt: Date,
         restEndsAt: Date? = nil,
         restTotalSeconds: Int = 0,
-        logs: [SetLog] = []
+        logs: [SetLog] = [],
+        steps: [FlowStep]? = nil
     ) {
         self.sessionId = sessionId
         self.dayIndex = dayIndex
@@ -31,6 +33,7 @@ public struct WorkoutCheckpoint: Codable, Equatable, Sendable {
         self.restEndsAt = restEndsAt
         self.restTotalSeconds = restTotalSeconds
         self.logs = logs
+        self.steps = steps
     }
 }
 

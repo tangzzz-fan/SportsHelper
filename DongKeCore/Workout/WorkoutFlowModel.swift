@@ -1,6 +1,6 @@
 import Foundation
 
-public enum FlowStep: Equatable, Sendable {
+public enum FlowStep: Equatable, Codable, Sendable {
     case set(prescriptionId: String, setIndex: Int, target: SetTarget, restAfterSec: Int)
     case roundBreak(seconds: Int)
     case blockBreak(seconds: Int, nextBlockTitle: String)
@@ -78,5 +78,27 @@ public struct WorkoutFlowModel: Equatable, Sendable {
             if case let .set(id, _, _, _) = step { return id == prescriptionId }
             return false
         } == false
+    }
+
+    public static func insertingExtraSet(
+        in steps: [FlowStep],
+        after index: Int,
+        prescriptionId: String,
+        setIndex: Int,
+        target: SetTarget,
+        restAfterSec: Int
+    ) -> [FlowStep] {
+        guard steps.indices.contains(index), case .set = steps[index] else { return steps }
+        var next = steps
+        next.insert(
+            .set(
+                prescriptionId: prescriptionId,
+                setIndex: setIndex,
+                target: target,
+                restAfterSec: restAfterSec
+            ),
+            at: index + 1
+        )
+        return next
     }
 }

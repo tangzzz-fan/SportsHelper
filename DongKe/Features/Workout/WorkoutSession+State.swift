@@ -7,7 +7,7 @@ extension WorkoutSession {
         finishedAt = now
         persist(finishedAt: now)
         saveCheckpoint(now: now)
-        voice?.finished(completedSets: completedSets)
+        voice?.finished(completedSets: completedSets, extraSets: ledger.extraSets)
     }
 
     func appendLog(_ log: SetLog, now: Date) {
@@ -34,12 +34,13 @@ extension WorkoutSession {
             sessionId: id,
             dayIndex: dayIndex,
             stepIndex: stepIndex,
-            totalSteps: flow.steps.count,
+            totalSteps: script.count,
             startedAt: startedAt,
             updatedAt: now,
             restEndsAt: restEndsAt,
             restTotalSeconds: restTotal,
-            logs: logs
+            logs: logs,
+            steps: script
         ))
     }
 
@@ -68,7 +69,7 @@ extension WorkoutSession {
     }
 
     var nextStep: FlowStep? {
-        stepIndex + 1 < flow.steps.count ? flow.steps[stepIndex + 1] : nil
+        stepIndex + 1 < script.count ? script[stepIndex + 1] : nil
     }
 
     func startRest(seconds: Int, kicker: String, now: Date) {
@@ -96,7 +97,7 @@ extension WorkoutSession {
 
     func advance(silent: Bool = false) {
         rest = .idle
-        guard stepIndex + 1 < flow.steps.count else {
+        guard stepIndex + 1 < script.count else {
             saveCheckpoint()
             return
         }

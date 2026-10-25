@@ -73,6 +73,10 @@ struct RestSheetView: View {
                 .frame(width: 64, height: 64)
                 .padding(.top, 16)
 
+                extraSetRow
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
                 Spacer(minLength: 0)
 
                 HStack(spacing: 8) {
@@ -84,13 +88,47 @@ struct RestSheetView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
             }
-            .frame(height: 331)
+            .frame(height: showsExtraSetRow ? 393 : 331)
             .frame(maxWidth: .infinity)
             .glassSurface(radius: Theme.Radius.glassSheet)
             .padding(.horizontal, 0)
         }
         .onReceive(Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()) { _ in
             now = Date()
+        }
+    }
+
+    private var showsExtraSetRow: Bool {
+        session.canAddExtraSet || session.hasQueuedExtra
+    }
+
+    @ViewBuilder
+    private var extraSetRow: some View {
+        if session.hasQueuedExtra {
+            HStack(spacing: 8) {
+                Text("已加一组，休息完继续")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier(A11y.Workout.extraQueued)
+                Spacer(minLength: 8)
+                Button("撤销") { session.undoExtraSet() }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier(A11y.Workout.undoExtraSet)
+            }
+        } else if session.canAddExtraSet {
+            Button { session.addExtraSet() } label: {
+                Text("今天再加一组")
+                    .font(Typography.body)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(PressableGlassStyle())
+            .glassSurface(radius: 20)
+            .accessibilityIdentifier(A11y.Workout.addExtraSet)
         }
     }
 

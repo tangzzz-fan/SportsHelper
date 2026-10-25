@@ -16,7 +16,8 @@ extension WorkoutSession {
             plannedValue: target.value,
             actualValue: target.value + max(0, bonus),
             rpe: rpe,
-            completedAt: now
+            completedAt: now,
+            origin: isExtraCurrentSet ? .extra : .prescribed
         ), now: now)
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
     }
@@ -35,7 +36,8 @@ extension WorkoutSession {
             plannedValue: target.value,
             actualValue: max(1, target.value / 2),
             skipReason: .tooHard,
-            completedAt: now
+            completedAt: now,
+            origin: isExtraCurrentSet ? .extra : .prescribed
         ), now: now)
         beginRestIfNeeded(seconds: restAfterSec, kicker: "组间休息", now: now)
     }
@@ -43,6 +45,11 @@ extension WorkoutSession {
     func skipSet(reason: SkipReason = .noTime, now: Date = Date()) {
         guard case let .set(prescriptionId, setIndex, target, _)? = currentStep else {
             advance()
+            return
+        }
+        if isExtraCurrentSet {
+            advance(silent: true)
+            saveCheckpoint(now: now)
             return
         }
         appendLog(.skipped(
@@ -107,6 +114,30 @@ extension WorkoutSession {
     func skipRest(now: Date = Date()) {
         rest = .idle
         advance()
+        saveCheckpoint(now: now)
+    }
+
+    func addExtraSet(now: Date = Date()) {
+        guard canAddExtraSet,
+              case let .set(id, setIndex, target, restAfterSec)? = currentStep else { return }
+        let planned = flow.setCounts[id] ?? setIndex
+        let nextIndex = max(setIndex, planned) + 1
+        script = WorkoutFlowModel.insertingExtraSet(
+            in: script,
+            after: stepIndex,
+            prescriptionId: id,
+            setIndex: nextIndex,
+            target: target,
+            restAfterSec: restAfterSec
+        )
+        voice?.updateScript(script)
+        saveCheckpoint(now: now)
+    }
+
+    func undoExtraSet(now: Date = Date()) {
+        guard hasQueuedExtra else { return }
+        script.remove(at: stepIndex + 1)
+        voice?.updateScript(script)
         saveCheckpoint(now: now)
     }
 

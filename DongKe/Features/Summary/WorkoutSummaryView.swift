@@ -52,6 +52,14 @@ struct WorkoutSummaryView: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 12)
 
+                        if recap.extraSets > 0 {
+                            Text("另有 \(recap.extraSets) 组额外加练，计剂量，不计完成率。")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.top, 4)
+                        }
+
                         Spacer(minLength: 0)
                     }
                     .frame(maxWidth: .infinity, minHeight: contentMinHeight(proxy.size.height))

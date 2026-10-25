@@ -11,12 +11,14 @@ public struct WorkoutAnnouncementBuilder: Sendable {
     private let steps: [FlowStep]
     private let exercises: [String: Exercise]
     private let setCounts: [String: Int]
+    private let basePlannedSets: Int
     private let dayTitle: String
 
-    public init(plan: WorkoutPlan, dayIndex: Int) {
+    public init(plan: WorkoutPlan, dayIndex: Int, steps: [FlowStep]? = nil) {
         let flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
-        self.steps = flow.steps
+        self.steps = steps ?? flow.steps
         self.setCounts = flow.setCounts
+        self.basePlannedSets = flow.plannedSets
         self.dayTitle = plan.days.first(where: { $0.dayIndex == dayIndex })?.title
             ?? plan.meta.title
 
@@ -37,9 +39,7 @@ public struct WorkoutAnnouncementBuilder: Sendable {
     }
 
     public var plannedSets: Int {
-        steps.reduce(into: 0) { count, step in
-            if case .set = step { count += 1 }
-        }
+        basePlannedSets
     }
 
     public var exerciseCount: Int {
@@ -65,10 +65,11 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         case let .set(prescriptionId, setIndex, target, _):
             guard let exercise = exercises[prescriptionId] else { return nil }
             let upcoming = nextExerciseName(after: index)
+            let total = max(setCounts[prescriptionId] ?? exercise.totalSets, setIndex)
             return .setStart(
                 name: exercise.name,
                 setIndex: setIndex,
-                totalSets: setCounts[prescriptionId] ?? exercise.totalSets,
+                totalSets: total,
                 dose: Self.doseText(target),
                 nextName: upcoming == exercise.name ? nil : upcoming
             )
@@ -82,7 +83,7 @@ public struct WorkoutAnnouncementBuilder: Sendable {
               case let .set(prescriptionId, setIndex, target, _) = steps[index],
               let exercise = exercises[prescriptionId]
         else { return [] }
-        let total = setCounts[prescriptionId] ?? exercise.totalSets
+        let total = max(setCounts[prescriptionId] ?? exercise.totalSets, setIndex)
         return WorkoutPromptPlanner.prompts(
             target: target,
             cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first,
@@ -123,8 +124,15 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         return nil
     }
 
-    public func finished(completedSets: Int) -> WorkoutAnnouncement {
-        .finished(completedSets: completedSets, plannedSets: plannedSets)
+    public func finished(completedSets: Int, extraSets: Int = 0) -> WorkoutAnnouncement {
+        if extraSets > 0 {
+            return .finishedWithExtras(
+                completedSets: completedSets,
+                plannedSets: plannedSets,
+                extraSets: extraSets
+            )
+        }
+        return .finished(completedSets: completedSets, plannedSets: plannedSets)
     }
 
     private func nextExerciseName(after index: Int) -> String? {
