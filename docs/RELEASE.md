@@ -12,7 +12,7 @@
 | 签名 | 顶层写死 `Apple Development` 会让 Archive 签不出来，已给 Release 配 `Apple Distribution`（本机证书 `B1147DF3…`，team `UKXWZ3FS84`） |
 | 真机验证 | 已装 iPhone 16 Pro，浅/深色截图均正确 |
 
-## 1. 阻断项（必须解决）
+## 1. 阻断项
 
 ### 1.1 内置 API Key 是明文，且在包里
 
@@ -25,27 +25,29 @@
 这个文件会被打进 `.app`，**任何人下载 ipa 解压就能拿到 Key**，直接刷你的 DeepSeek 账户。
 它也已经进了 git 历史，删文件不等于泄露解除。
 
-三条路，按工作量排：
+**决策（2026-10-25）：保留内置 Key，由服务商侧配额兜底。** 提交前必须做完这四步：
 
-| 方案 | 做法 | 代价 |
-|---|---|---|
-| **A 移除内置 Key（推荐先做）** | 把 `apiKey` 删空，只保留 `baseURL`/`model` 作默认值。`AISettingsCard` 已经支持用户自填并存钥匙串，代码不用改 | "用 AI 生成"变成要自己配 Key 的高级功能。本地规则生成器 `PlanGenerator` 不受影响，核心流程照常 |
-| B 自建代理 | 客户端请求自己的服务，Key 留在服务端，服务端加配额与鉴权 | 要服务器 + 计费控制，工作量以周计 |
-| C 申请一个只读限额 Key 并接受风险 | 无 | 不建议。Key 在客户端等于公开 |
+1. **去 DeepSeek 控制台给这个 Key 设消费上限**，额度按「够审核与早期用户用」定。这是唯一真正的护栏——
+   客户端限流没有意义，Key 一旦被提取就在你控制之外
+2. **确认这家 Key 所在账户不绑其他服务**，避免配额被刷穿时牵连别的业务
+3. **换掉现在这把**（`sk-ec91…3428` 已在 git 历史里，视为已泄露）。新 Key 只写进
+   `ai-defaults.json`，不要再粘到聊天、日志、截图里
+4. **把这一条写进隐私政策**：说明了「app 内置 Key，只有你点『用 AI 生成』时才把档案发给服务商」。
+   `AISettingsCard` 里已有同义文案，商店隐私政策要再写一次
 
-**无论选哪个，第一件事都是去 DeepSeek 控制台吊销 `sk-ec91…3428`**，它已经泄露。
+残留风险（知情后接受）：有人解包把 Key 拿去做别的事、额度被刷光导致正常用户用不了 AI。
+App 隐私问卷要如实填「收集 → 用户内容 → App 功能」，因为数据确实会发到 DeepSeek。
 
-选 A 还顺带简化隐私问卷：默认不发任何数据出去，App 隐私可以填「不收集」。
+备选路线（若日后想收回这条风险）：删空 `apiKey` 字段，`AISettingsCard` 已支持用户自填并存钥匙串，
+代码不用改；本地规则生成器 `PlanGenerator` 不受影响。
 
-### 1.2 现在声明支持 iPad，但从没适配过
+### 1.2 iPad 支持 —— 已解决
 
-`TARGETED_DEVICE_FAMILY = "1,2"`，而 `UISupportedInterfaceOrientations` 只有 iPhone 那一份，
-没有任何 iPad 布局分支。这种状态提交上去，审核会在 iPad 上跑，大概率按 2.1（完整性）或 4.2 拒。
+原状态：`TARGETED_DEVICE_FAMILY = "1,2"`，但没有 iPad 布局分支，
+`UISupportedInterfaceOrientations` 也只有 iPhone 那份。这样提交，审核会在 iPad 上跑，按 2.1 / 4.2 拒。
 
-两条路：
-
-- **改成 iPhone only（建议）**：`TARGETED_DEVICE_FAMILY: "1"`。一行改动，截图只需 iPhone 一套
-- 真做 iPad：补布局、补 `UISupportedInterfaceOrientations~ipad`、补 13" 截图。这是另一个迭代
+**决策（2026-10-25）：改成 iPhone only**，`project.yml` 里 `TARGETED_DEVICE_FAMILY: "1"`。
+iPad 上仍能以兼容模式安装，只是不做原生适配。截图只需 iPhone 一套。
 
 ## 2. 提交前要准备的素材
 

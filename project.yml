@@ -59,6 +59,9 @@ targets:
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # 只做 iPhone。界面没有 iPad 布局分支，方向声明也只有 iPhone 那套，
+        # 声明支持 iPad（默认的 1,2）会让审核在 iPad 上跑一遍再按 2.1/4.2 拒。
+        TARGETED_DEVICE_FAMILY: "1"
       configs:
         # 顶层写死了 Apple Development，Archive 走 Release 会签不出来。
         # 分发用单独的 Distribution 身份（本机已有 Apple Distribution: zhenzhi Tang）。
