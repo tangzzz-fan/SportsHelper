@@ -9,7 +9,7 @@
 |---|---|
 | 启动屏 | `UILaunchScreen` = 背景 `LaunchBackground`（浅 `#F2F2F7` / 深 `#000`）+ 居中 `LaunchMark`（`#0E7C66` / `#34B39A`），与首屏 `systemGroupedBackground` 同色，切进内容不闪 |
 | Info.plist | 从 `GENERATE_INFOPLIST_FILE` + `INFOPLIST_KEY_*` 迁到 `DongKe/Info.plist`（`UILaunchScreen` 是嵌套字典，build setting 传不了）。产物逐键核对过，版本号仍由 `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` 注入 |
-| 签名 | 顶层写死 `Apple Development` 会让 Archive 签不出来，已给 Release 配 `Apple Distribution`（本机证书 `B1147DF3…`，team `UKXWZ3FS84`） |
+| 签名 | 自动签名下**不要**写 `CODE_SIGN_IDENTITY`。Xcode 按用途自己挑（debug → Apple Development，Archive → Apple Distribution）。手动指定会和自动签名打架，报 `conflicting provisioning settings` |
 | 真机验证 | 已装 iPhone 16 Pro，浅/深色截图均正确 |
 
 ## 1. 阻断项
@@ -87,23 +87,39 @@ iPad 上仍能以兼容模式安装，只是不做原生适配。截图只需 iP
 #    改 project.yml 的 CURRENT_PROJECT_VERSION，然后
 xcodegen generate
 
-# 2. Archive（Release 配置，走 Distribution 证书）
+# 2. Archive（Release 配置）
+#    自动签名下这里签的是 Apple Development，正常——分发证书要到第 3 步导出时才换上
 xcodebuild -project DongKe.xcodeproj -scheme DongKe -configuration Release \
   -destination 'generic/platform=iOS' -derivedDataPath /tmp/dk-archive \
   -archivePath /tmp/dk-archive/DongKe.xcarchive archive \
   OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -disable-sandbox'
 
-# 3. 导出 ipa（Xcode 27 的 method 叫 app-store-connect，旧值 app-store 仍兼容）
-#    ExportOptions.plist 里写 method / teamID / signingStyle=automatic
+# 3. 导出 ipa
 xcodebuild -exportArchive -archivePath /tmp/dk-archive/DongKe.xcarchive \
-  -exportOptionsPlist ExportOptions.plist -exportPath /tmp/dk-export
+  -exportOptionsPlist ExportOptions.plist -exportPath /tmp/dk-export \
+  -allowProvisioningUpdates
 ```
 
-之后两条路任选：
+**第 2 步实测通过**（`ARCHIVE SUCCEEDED`，签的是 `Apple Development`，符合预期）。
 
-- **图形**：Xcode → Window → Organizer → 选 archive → Distribute App → App Store Connect → Upload
-- **命令行**：`xcrun altool --upload-app -f /tmp/dk-export/DongKe.ipa -t ios --apiKey <key> --apiIssuer <issuer>`
-  （需要先在 ASC 生成 App Store Connect API Key，本机还没有）
+**第 3 步在命令行会失败**，报这两条：
+
+```
+error: exportArchive No Accounts
+error: exportArchive No profiles for 'app.dongke.ios' were found
+```
+
+不是配置问题，是这台机器上没有命令行的 Apple 账号凭据（Xcode 里登录了不算），
+也还没有 App Store 分发描述文件。两条解法：
+
+- **走图形（推荐第一次）**：Xcode → Window → Organizer → 选 archive → Distribute App →
+  App Store Connect → Upload。GUI 有账号，会自动建 profile，顺带把包传上去
+- 走命令行：先在 ASC 生成 App Store Connect API Key，导出时加
+  `-authenticationKeyPath <p8> -authenticationKeyID <id> -authenticationKeyIssuerID <issuer>`，
+  上传用 `xcrun altool --upload-app -f DongKe.ipa -t ios --apiKey … --apiIssuer …`
+
+⚠️ 首次导出前要**先在 App Store Connect 建好 app 记录**（bundle id `app.dongke.ios`），
+否则 profile 建不出来。这一步只能你自己做，需要你的账号。
 
 上传后走 TestFlight 内测一轮，确认安装包、音条、通知在真机上都正常，再提交审核。
 

@@ -11,8 +11,10 @@ settings:
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     DEVELOPMENT_TEAM: UKXWZ3FS84
+    # Automatic 模式下**不要**写 CODE_SIGN_IDENTITY：Xcode 会按用途自己挑
+    # （debug 用 Apple Development，Archive 用 Apple Distribution）。
+    # 手动指定会和自动签名打架，报 "conflicting provisioning settings"。
     CODE_SIGN_STYLE: Automatic
-    "CODE_SIGN_IDENTITY[sdk=iphoneos*]": Apple Development
     "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
     "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": NO
 targets:
@@ -62,11 +64,6 @@ targets:
         # 只做 iPhone。界面没有 iPad 布局分支，方向声明也只有 iPhone 那套，
         # 声明支持 iPad（默认的 1,2）会让审核在 iPad 上跑一遍再按 2.1/4.2 拒。
         TARGETED_DEVICE_FAMILY: "1"
-      configs:
-        # 顶层写死了 Apple Development，Archive 走 Release 会签不出来。
-        # 分发用单独的 Distribution 身份（本机已有 Apple Distribution: zhenzhi Tang）。
-        Release:
-          "CODE_SIGN_IDENTITY[sdk=iphoneos*]": Apple Distribution
   DongKeCoreTests:
     type: bundle.unit-test
     platform: iOS
