@@ -424,15 +424,15 @@ let result = try await transport.generate(request)   // result.text / result.mod
 
 | 层 | 文件 | 职责 |
 |---|---|---|
-| 文案 | `DongKeCore/Workout/WorkoutAnnouncement.swift`、`+Builder` | `WorkoutPlan` + `FlowStep` → 一句 ≤40 字的中文 |
-| 闸门 | `DongKeCore/Ports/SpeechAnnouncing.swift`、`Workout/SpeechCueCoordinator.swift` | 开关 / 前台 / VoiceOver 三条件；不可播时立刻停 |
-| 出声 | `DongKe/Services/SystemSpeechAnnouncer.swift` | `AVSpeechSynthesizer`（zh-CN，rate 0.5）+ `AVAudioSession .ambient` |
+| 文案 | `DongKeCore/Workout/WorkoutAnnouncement.swift`、`+Builder` | `WorkoutPlan` + `FlowStep` → 一句 ≤20 字的中文（实测 ≤4 秒） |
+| 闸门 | `DongKeCore/Workout/SpeechCueCoordinator.swift` | 开关 / 前台 / VoiceOver 三条件 + 优先级；不可播时立刻停 |
+| 出声 | `DongKe/Services/SystemSpeechRenderer.swift` | `AVSpeechSynthesizer`（已安装最高档中文音色，rate 0.5）+ 会话租约 |
 
 - **闸门放 Core 的理由**：「什么时候不该说话」是产品规则，不该埋在 App 里靠手测。`SpeechCuePolicy` 三个布尔，配假 speaker 就能把让路、打断、恢复全测了。
 - `.ambient` + `.mixWithOthers`：尊重静音键（图书馆里不会突然出声），代价是不 duck 音乐。
 - 念完 / 取消时 `setActive(false, options: .notifyOthersOnDeactivation)`，不长期占着音频会话。
 - 开关在设置页「语音提示」，默认关，键 `dk.voice.enabled`；持久化本身由 `VoiceSettingsStore` 的单测覆盖（原 UI 测试 `testSettingsVoiceTogglePersists` 已随 UI 目标删除，见 §6.6）。
-- 文案上限 40 字：超长先丢「下一个」，再丢「共 N 组」，动作名与剂量最后才动——别在 08 里改成按字数硬截。
+- 文案预算按**秒**算：实测 4.0–4.3 字/秒，组开始最短也要 3.8 秒。字段口径见 ADR-0007 与 `WorkoutAnnouncement` 里的 `*Budget`；超预算先丢「共 N 组」，动作名与剂量最后才动。
 
 **还没接的**：无——09 已把触发接进 `WorkoutSession`。剩下 `10 真机验收`。
 

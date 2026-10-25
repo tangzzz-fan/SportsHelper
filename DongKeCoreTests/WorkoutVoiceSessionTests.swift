@@ -12,7 +12,7 @@ struct WorkoutVoiceSessionTests {
         let speaker = FakeSpeaker()
         let coordinator = SpeechCueCoordinator(
             policy: SpeechCuePolicy(isEnabled: enabled, isForeground: true, isVoiceOverRunning: false),
-            announcer: speaker
+            renderer: speaker
         )
         let plan = makePlan(days: makeSevenDays(
             training: [1],
@@ -28,7 +28,7 @@ struct WorkoutVoiceSessionTests {
         voice.start()
         voice.start()
         #expect(speaker.spoken.count == 1)
-        #expect(speaker.spoken.first == "开始训练，训练，2 个动作，共 2 组")
+        #expect(speaker.spoken.first == "开始训练，训练，共 2 组")
     }
 
     @Test("进入第一组先说动作名")
@@ -36,7 +36,7 @@ struct WorkoutVoiceSessionTests {
         let (voice, speaker) = makeVoice()
         voice.start()
         voice.stepChanged(to: 0)
-        #expect(speaker.spoken.last == "深蹲，第 1 组，共 1 组，12 次，下一个：臀桥")
+        #expect(speaker.spoken.last == "深蹲，第 1 组，共 1 组，12 次")
     }
 
     @Test("同一个步骤重复渲染不重播")
@@ -86,7 +86,7 @@ struct WorkoutVoiceSessionTests {
         let speaker = FakeSpeaker()
         let coordinator = SpeechCueCoordinator(
             policy: SpeechCuePolicy(isEnabled: true, isForeground: true, isVoiceOverRunning: false),
-            announcer: speaker
+            renderer: speaker
         )
         let voice = WorkoutVoiceSession(plan: plan, dayIndex: 1, coordinator: coordinator)
         let breakIndex = try #require(WorkoutFlowModel(plan: plan, dayIndex: 1).steps.firstIndex {
@@ -131,20 +131,21 @@ struct WorkoutVoiceSessionTests {
         #expect(speaker.spoken.filter { $0 == "3" }.count == 2)
     }
 
-    @Test("休息结束只报一次，换动作时报名字")
-    func restFinishedAnnouncement() {
+    @Test("休息归零只出一句：下一组自己报，休息结束不说")
+    func restFinishedDefersToSetStart() {
         let (voice, speaker) = makeVoice()
         voice.start()
+        voice.stepChanged(to: 0)
+        let before = speaker.spoken.count
         voice.restFinished(nextStepIndex: 1)
-        #expect(speaker.spoken.last?.contains("下一个：臀桥") == true)
+        #expect(speaker.spoken.count == before)
     }
 
-    @Test("下一组还是同一个动作时不报名")
-    func restFinishedSameExercise() {
-        let (voice, speaker) = makeVoice(items: [makeItem(id: "i1", sets: 2)])
+    @Test("没有下一组时才念休息结束")
+    func restFinishedWithoutNext() {
+        let (voice, speaker) = makeVoice(items: [makeItem(id: "i1", sets: 1)])
         voice.start()
-        voice.stepChanged(to: 0)
-        voice.restFinished(nextStepIndex: 1)
+        voice.restFinished(nextStepIndex: nil)
         #expect(speaker.spoken.last == "休息结束")
     }
 
@@ -193,11 +194,10 @@ struct WorkoutVoiceSessionTests {
         voice.finished(completedSets: 1)
 
         #expect(speaker.spoken == [
-            "开始训练，训练，2 个动作，共 2 组",
-            "深蹲，第 1 组，共 1 组，12 次，下一个：臀桥",
+            "开始训练，训练，共 2 组",
+            "深蹲，第 1 组，共 1 组，12 次",
             "休息，30 秒",
             "1",
-            "休息结束，下一个：臀桥，12 次",
             "完成 1 组，完成率 50%"
         ])
     }
@@ -226,8 +226,8 @@ struct WorkoutVoiceSessionTests {
         #expect(speaker.spoken.count == afterPrompts)
     }
 
-    @Test("撑到点念时间到，重复喂满秒数不重播")
-    func announcesTimeUpOnce() {
+    @Test("撑到点不再念「时间到」，归零交给提示音与触觉")
+    func doesNotAnnounceTimeUp() {
         let (voice, speaker) = makeVoice(items: [
             makeItem(id: "i1", sets: 1, value: 30, rest: 0, targetType: .durationSec)
         ])
@@ -235,18 +235,14 @@ struct WorkoutVoiceSessionTests {
         voice.stepChanged(to: 0)
         voice.setElapsed(10)
         voice.setElapsed(27)
+        let before = speaker.spoken.count
 
         voice.setElapsed(30)
-        #expect(speaker.spoken.last == "时间到")
-
-        let afterTimeUp = speaker.spoken.count
-        voice.setElapsed(30)
-        voice.setElapsed(45)
-        #expect(speaker.spoken.count == afterTimeUp)
+        #expect(speaker.spoken.count == before)
     }
 
-    @Test("短组只念时间到，不念要领")
-    func shortHoldOnlySpeaksTimeUp() {
+    @Test("短组组内一句都不念")
+    func shortHoldIsSilent() {
         let (voice, speaker) = makeVoice(items: [
             makeItem(id: "i1", sets: 1, value: 10, rest: 0, targetType: .durationSec)
         ])
@@ -254,13 +250,10 @@ struct WorkoutVoiceSessionTests {
         voice.stepChanged(to: 0)
         let afterSetStart = speaker.spoken.count
 
-        for second in 1...9 {
+        for second in 1...10 {
             voice.setElapsed(second)
         }
         #expect(speaker.spoken.count == afterSetStart)
-
-        voice.setElapsed(10)
-        #expect(speaker.spoken.last == "时间到")
     }
 
     @Test("次数型动作组内不念，免得数数打断节奏")
@@ -301,16 +294,22 @@ struct WorkoutVoiceSessionTests {
 }
 
 @MainActor
-private final class FakeSpeaker: SpeechAnnouncing {
+private final class FakeSpeaker: SpeechRendering {
     private(set) var spoken: [String] = []
-    private(set) var isSpeaking = false
 
-    func speak(_ text: String) {
-        spoken.append(text)
-        isSpeaking = true
+    var availability: SpeechAvailability { .ready }
+
+    var profile: SpeechProfile {
+        SpeechProfile(engineId: "fake", voiceName: "假引擎", charactersPerSecond: 4)
     }
 
-    func stop() {
-        isSpeaking = false
+    func prepare() {}
+
+    func render(_ request: SpeechRequest, on event: @escaping (SpeechOutputEvent) -> Void) {
+        spoken.append(request.text)
+        event(.started(request.id))
+        event(.finished(request.id, seconds: 0))
     }
+
+    func cancel() {}
 }

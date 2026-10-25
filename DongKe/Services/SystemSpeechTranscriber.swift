@@ -9,6 +9,13 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var isTapping = false
+    private var onEvent: ((SpeechEvent) -> Void)?
+
+    init() {
+        AudioSessionArbiter.shared.onInterruption { [weak self] in
+            self?.handleInterruption()
+        }
+    }
 
     var supportsOnDeviceRecognition: Bool {
         recognizer?.supportsOnDeviceRecognition ?? false
@@ -46,8 +53,9 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
         request.taskHint = .dictation
         request.addsPunctuation = true
         self.request = request
+        onEvent = events
 
-        try activateSession()
+        AudioSessionArbiter.shared.borrow(.record)
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
@@ -92,21 +100,18 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
         task?.cancel()
         task = nil
         request = nil
-        deactivateSession()
+        onEvent = nil
+        AudioSessionArbiter.shared.give(.record)
     }
 
     func cancel() {
         stop()
     }
 
-    private func activateSession() throws {
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement, options: [.mixWithOthers, .allowBluetooth])
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
-    }
-
-    private func deactivateSession() {
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    private func handleInterruption() {
+        guard isTapping else { return }
+        onEvent?(.failed)
+        stop()
     }
 
     private func requestSpeechPermission() async {

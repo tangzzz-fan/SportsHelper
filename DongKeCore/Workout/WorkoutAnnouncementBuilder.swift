@@ -64,31 +64,26 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         switch steps[index] {
         case let .set(prescriptionId, setIndex, target, _):
             guard let exercise = exercises[prescriptionId] else { return nil }
-            let upcoming = nextExerciseName(after: index)
             let total = max(setCounts[prescriptionId] ?? exercise.totalSets, setIndex)
             return .setStart(
                 name: exercise.name,
                 setIndex: setIndex,
                 totalSets: total,
-                dose: Self.doseText(target),
-                nextName: upcoming == exercise.name ? nil : upcoming
+                dose: Self.doseText(target)
             )
         case .roundBreak, .blockBreak, .finished:
             return nil
         }
     }
 
-    public func prompts(at index: Int, allowsEncouragement: Bool) -> [TimedPrompt] {
+    public func prompts(at index: Int) -> [TimedPrompt] {
         guard steps.indices.contains(index),
-              case let .set(prescriptionId, setIndex, target, _) = steps[index],
+              case let .set(prescriptionId, _, target, _) = steps[index],
               let exercise = exercises[prescriptionId]
         else { return [] }
-        let total = max(setCounts[prescriptionId] ?? exercise.totalSets, setIndex)
         return WorkoutPromptPlanner.prompts(
             target: target,
-            cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first,
-            isLastSet: setIndex >= total - 1,
-            allowsEncouragement: allowsEncouragement
+            cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first
         )
     }
 
@@ -102,15 +97,12 @@ public struct WorkoutAnnouncementBuilder: Sendable {
         return .restCountdown(secondsLeft: secondsLeft)
     }
 
-    public func restFinished(nextStepIndex: Int?) -> WorkoutAnnouncement {
+    public func restFinished(nextStepIndex: Int?) -> WorkoutAnnouncement? {
         guard let nextStepIndex,
               steps.indices.contains(nextStepIndex),
-              case let .set(prescriptionId, _, target, _) = steps[nextStepIndex],
-              let exercise = exercises[prescriptionId]
-        else {
-            return .restFinished(nextName: nil, nextDose: nil)
-        }
-        return .restFinished(nextName: exercise.name, nextDose: Self.doseText(target))
+              case .set = steps[nextStepIndex]
+        else { return .restFinished }
+        return nil
     }
 
     public func nextActionLabel(afterBlockBreakAt index: Int) -> String? {
@@ -133,15 +125,6 @@ public struct WorkoutAnnouncementBuilder: Sendable {
             )
         }
         return .finished(completedSets: completedSets, plannedSets: plannedSets)
-    }
-
-    private func nextExerciseName(after index: Int) -> String? {
-        for step in steps.dropFirst(index + 1) {
-            if case let .set(prescriptionId, _, _, _) = step {
-                return exercises[prescriptionId]?.name
-            }
-        }
-        return nil
     }
 
     public static func doseText(_ target: SetTarget) -> String {

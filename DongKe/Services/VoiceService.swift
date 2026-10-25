@@ -7,11 +7,28 @@ final class VoiceService {
     static let shared = VoiceService()
 
     private var coordinator: SpeechCueCoordinator?
+    private var previewCoordinator: SpeechCueCoordinator?
 
-    private init() {}
+    private init() {
+        NotificationCenter.default.addObserver(
+            forName: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.refreshPolicy() }
+        }
+    }
 
     var isAvailable: Bool {
         coordinator != nil
+    }
+
+    static var voiceName: String {
+        VoicePicker.bestChinese().name
+    }
+
+    static var isEnhancedVoice: Bool {
+        VoicePicker.bestChinese().isEnhanced
     }
 
     func activeCoordinator() -> SpeechCueCoordinator {
@@ -19,24 +36,36 @@ final class VoiceService {
             refreshPolicy(isForeground: true)
             return coordinator
         }
-        let created = SpeechCueCoordinator(announcer: Self.makeAnnouncer())
+        let created = SpeechCueCoordinator(renderer: Self.makeRenderer())
         coordinator = created
         refreshPolicy(isForeground: true)
         return created
     }
 
     func refreshPolicy(isForeground: Bool? = nil) {
-        guard let target = coordinator else { return }
-        target.policy = SpeechCuePolicy(
+        let policy = SpeechCuePolicy(
             isEnabled: Self.isEnabledByUser,
             isForeground: isForeground ?? (UIApplication.shared.applicationState == .active),
             isVoiceOverRunning: UIAccessibility.isVoiceOverRunning
         )
+        coordinator?.policy = policy
+    }
+
+    func preview() {
+        previewCoordinator?.stop()
+        let created = SpeechCueCoordinator(
+            policy: SpeechCuePolicy(isEnabled: true, isForeground: true, isVoiceOverRunning: false),
+            renderer: Self.makeRenderer()
+        )
+        previewCoordinator = created
+        created.announce(.sessionStart(title: "上肢与核心", exerciseCount: 3, totalSets: 9))
     }
 
     func shutdown() {
         coordinator?.stop()
         coordinator = nil
+        previewCoordinator?.stop()
+        previewCoordinator = nil
     }
 
     static var isEnabledByUser: Bool {
@@ -48,26 +77,40 @@ final class VoiceService {
         return VoiceSettingsStore.shared.isEnabled
     }
 
-    private static func makeAnnouncer() -> SpeechAnnouncing {
+    private static func makeRenderer() -> SpeechRendering {
         #if DEBUG
         if ProcessInfo.processInfo.environment["DK_VOICE_FAKE"] == "1" {
-            return FileLoggingAnnouncer()
+            return FileLoggingRenderer()
         }
         #endif
-        return SystemSpeechAnnouncer()
+        return SystemSpeechRenderer()
     }
 }
 
 #if DEBUG
 @MainActor
-final class FileLoggingAnnouncer: SpeechAnnouncing {
+final class FileLoggingRenderer: SpeechRendering {
     private let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("dk-voice.log")
-    private(set) var isSpeaking = false
 
-    func speak(_ text: String) {
-        isSpeaking = true
-        let line = text + "\n"
-        guard let data = line.data(using: .utf8) else { return }
+    var availability: SpeechAvailability { .ready }
+
+    var profile: SpeechProfile {
+        SpeechProfile(engineId: "file", voiceName: "调试日志", charactersPerSecond: 4.2)
+    }
+
+    func prepare() {}
+
+    func render(_ request: SpeechRequest, on event: @escaping (SpeechOutputEvent) -> Void) {
+        append(request.text)
+        event(.started(request.id))
+        event(.finished(request.id, seconds: 0))
+    }
+
+    func cancel() {}
+
+    private func append(_ text: String) {
+        let data = (text + "\n").data(using: .utf8)
+        guard let data else { return }
         if FileManager.default.fileExists(atPath: url.path) {
             if let handle = try? FileHandle(forWritingTo: url) {
                 handle.seekToEndOfFile()
@@ -77,10 +120,6 @@ final class FileLoggingAnnouncer: SpeechAnnouncing {
         } else {
             try? data.write(to: url)
         }
-    }
-
-    func stop() {
-        isSpeaking = false
     }
 }
 #endif

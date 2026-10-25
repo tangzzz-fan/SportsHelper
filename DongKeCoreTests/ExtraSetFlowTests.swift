@@ -96,7 +96,7 @@ struct ExtraSetFlowTests {
         #expect(builder.plannedSets == 3)
 
         let announcement = try #require(builder.announcement(forStepAt: 3))
-        guard case let .setStart(_, setIndex, totalSets, _, _) = announcement else {
+        guard case let .setStart(_, setIndex, totalSets, _) = announcement else {
             Issue.record("应是组开始播报")
             return
         }

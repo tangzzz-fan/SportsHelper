@@ -15,19 +15,19 @@ struct WorkoutAnnouncementTests {
         WorkoutAnnouncementBuilder(plan: plan(items: items), dayIndex: 1)
     }
 
-    @Test("开始训练读当天主题、动作数与总组数")
-    func sessionStartReadsTitleAndSets() {
+    @Test("开始训练先报名与主题，超出预算时先丢动作数")
+    func sessionStartReadsTitleFirst() {
         let text = WorkoutAnnouncement.sessionStart(
             title: "居家弹力带背部", exerciseCount: 4, totalSets: 14
         ).text
-        #expect(text == "开始训练，居家弹力带背部，4 个动作，共 14 组")
+        #expect(text == "开始训练，居家弹力带背部")
     }
 
-    @Test("没有计划名时只剩动作数与总数")
+    @Test("没有计划名时保留总组数，动作数让位")
     func sessionStartWithoutTitle() {
         #expect(
             WorkoutAnnouncement.sessionStart(title: "  ", exerciseCount: 3, totalSets: 9).text
-                == "开始训练，3 个动作，共 9 组"
+                == "开始训练，共 9 组"
         )
     }
 
@@ -39,20 +39,20 @@ struct WorkoutAnnouncementTests {
         )
     }
 
-    @Test("每组先把动作名说出来，再报第几组")
+    @Test("每组先说动作名，再报第几组与剂量")
     func setStartBasic() {
         let text = WorkoutAnnouncement.setStart(
-            name: "深蹲", setIndex: 1, totalSets: 3, dose: "12 次", nextName: nil
+            name: "深蹲", setIndex: 1, totalSets: 3, dose: "12 次"
         ).text
         #expect(text == "深蹲，第 1 组，共 3 组，12 次")
     }
 
-    @Test("不是最后一组时带上下一个动作")
-    func setStartWithNext() {
+    @Test("每侧剂量放不下时先丢「共 N 组」，剂量一定保留")
+    func setStartDropsTotalBeforeDose() {
         let text = WorkoutAnnouncement.setStart(
-            name: "深蹲", setIndex: 2, totalSets: 3, dose: "12 次", nextName: "臀桥"
+            name: "哑铃划船", setIndex: 2, totalSets: 3, dose: "每侧 12 次"
         ).text
-        #expect(text.contains("下一个：臀桥"))
+        #expect(text == "哑铃划船，第 2 组，每侧 12 次")
     }
 
     @Test("四种剂量读法：次数、秒、每侧、距离")
@@ -103,20 +103,17 @@ struct WorkoutAnnouncementTests {
         #expect(WorkoutAnnouncement.restStart(seconds: 30).isCountdown == false)
     }
 
-    @Test("休息结束报下一个动作与剂量")
-    func restFinishedWithNext() {
+    @Test("下一组是动作时不报「休息结束」，交给组开始说一句")
+    func restFinishedDefersToSetStart() {
         let items = [makeItem(id: "i1"), makeItem(id: "i2", name: "臀桥")]
         let builder = builder(items: items)
-        let text = builder.restFinished(nextStepIndex: 3).text
-        #expect(text.contains("休息结束"))
-        #expect(text.contains("下一个：臀桥"))
-        #expect(text.contains("12 次"))
+        #expect(builder.restFinished(nextStepIndex: 1) == nil)
     }
 
-    @Test("最后一组休息结束不编造下一个动作")
+    @Test("没有下一组时才念「休息结束」")
     func restFinishedWithoutNext() {
         let builder = builder(items: [makeItem(id: "i1")])
-        #expect(builder.restFinished(nextStepIndex: nil).text == "休息结束")
+        #expect(builder.restFinished(nextStepIndex: nil)?.text == "休息结束")
     }
 
     @Test("区块切换报休息时长与下一个动作")
@@ -194,20 +191,20 @@ struct WorkoutAnnouncementTests {
         #expect(builder.finished(completedSets: 3, extraSets: 3).text.contains("另有 3 组加练"))
     }
 
-    @Test("动作名很长时先丢「共 N 组」和下一个，再截断")
+    @Test("动作名很长时先丢可选段，再按硬上限截断")
     func longNameDropsOptionalPartsFirst() {
         let longName = String(repeating: "侧向弓步蹲", count: 4)
         let text = WorkoutAnnouncement.setStart(
-            name: longName, setIndex: 3, totalSets: 4, dose: "12 次", nextName: "臀桥"
+            name: longName, setIndex: 3, totalSets: 4, dose: "12 次"
         ).text
 
-        #expect(text.count <= WorkoutAnnouncement.textLimit)
+        #expect(text.count <= WorkoutAnnouncement.hardLimit)
         #expect(text.contains("12 次"))
         #expect(text.contains("第 3 组"))
-        #expect(text.contains("下一个") == false)
+        #expect(text.contains("共 4 组") == false)
     }
 
-    @Test("整份计划的每条播报都不超过 40 字")
+    @Test("整份计划的每条播报都不超过硬上限")
     func everyLineFitsBudget() {
         let items = [
             makeItem(id: "i1", name: String(repeating: "保加利亚分腿蹲", count: 3)),
@@ -225,50 +222,9 @@ struct WorkoutAnnouncementTests {
         texts.append(builder.finished(completedSets: 8).text)
 
         for text in texts {
-            #expect(text.count <= WorkoutAnnouncement.textLimit)
+            #expect(text.count <= WorkoutAnnouncement.hardLimit)
             #expect(text.isEmpty == false)
         }
-    }
-
-    @Test("最后一组不报下一个动作")
-    func lastSetHasNoNext() throws {
-        let builder = builder(items: [makeItem(id: "i1")])
-        let flow = WorkoutFlowModel(plan: plan(items: [makeItem(id: "i1")]), dayIndex: 1)
-        let lastSetIndex = try #require(flow.steps.lastIndex {
-            if case .set = $0 { true } else { false }
-        })
-
-        guard case let .setStart(_, _, _, _, nextName)? = builder.announcement(forStepAt: lastSetIndex) else {
-            Issue.record("最后一个 set 应产出 setStart")
-            return
-        }
-        #expect(nextName == nil)
-    }
-
-    @Test("下一个仍是同一个动作时不重复报名")
-    func sameExerciseNextIsOmitted() throws {
-        let builder = builder(items: [makeItem(id: "i1", sets: 2)])
-        guard case let .setStart(_, _, _, _, nextName)? = builder.announcement(forStepAt: 0) else {
-            Issue.record("第一个 set 应产出 setStart")
-            return
-        }
-        #expect(nextName == nil)
-    }
-
-    @Test("循环区块里「下一个」是本轮的下一个动作")
-    func circuitNextIsWithinRound() {
-        let items = [makeItem(id: "i1", name: "深蹲", sets: 1), makeItem(id: "i2", name: "划船", sets: 1)]
-        let plan = makePlan(days: makeSevenDays(
-            training: [1],
-            blocks: [makeBlock(kind: .circuit, rounds: 3, items: items, restBetweenRounds: 60)]
-        ))
-        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
-
-        guard case let .setStart(_, _, _, _, nextName)? = builder.announcement(forStepAt: 0) else {
-            Issue.record("第一个 set 应产出 setStart")
-            return
-        }
-        #expect(nextName == "划船")
     }
 
     @Test("休息日的流程里只有完成，没有 set 播报")
@@ -298,7 +254,7 @@ struct WorkoutAnnouncementTests {
         #expect(indices == [1, 2, 3, 4, 5, 6])
         #expect(flow.setCounts["i1"] == 6)
 
-        guard case let .setStart(name, setIndex, totalSets, _, _)? = builder.announcement(forStepAt: 6) else {
+        guard case let .setStart(name, setIndex, totalSets, _)? = builder.announcement(forStepAt: 6) else {
             Issue.record("第 7 个 step 应是 set")
             return
         }
@@ -315,6 +271,6 @@ struct WorkoutAnnouncementTests {
         ))
         let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
 
-        #expect(builder.sessionStart().text == "开始训练，训练，1 个动作，共 2 组")
+        #expect(builder.sessionStart().text == "开始训练，训练，共 2 组")
     }
 }

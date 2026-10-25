@@ -238,7 +238,7 @@ DongKeCore/                            # framework：纯 Foundation，可脱离�
 ├── AI/                                # BYOK 客户端、提示词、响应映射
 ├── VoiceInput/                        # 语音输入状态机与文案
 ├── Figure/                            # GeneratedFigureData.swift（3MB 生成数据，勿手改）
-└── Ports/                             # AIPlanGenerating / SecretStoring / SpeechAnnouncing
+└── Ports/                             # AIPlanGenerating / SecretStoring / SpeechRendering / AudioSessionLease
 
 DongKe/                                # app
 ├── App/
@@ -276,7 +276,7 @@ DongKe/                                # app
 └── Services/
     ├── NotificationService.swift / NotificationRouter.swift / ReminderSettingsStore.swift
     ├── AIPlanClient.swift / AISettingsStore.swift / KeychainService.swift
-    ├── VoiceService.swift / VoiceInputService.swift / SystemSpeech*.swift / ScriptedSpeechTranscriber.swift
+    ├── VoiceService.swift / VoiceInputService.swift / SystemSpeechRenderer.swift / SystemSpeechTranscriber.swift / AudioSessionArbiter.swift
     └── DaySkipStore.swift / LargeTextStore.swift / Haptics.swift
 
 Shared/A11yIdentifiers.swift           # VoiceOver 词汇；DongKe 与测试共用，不入 Core

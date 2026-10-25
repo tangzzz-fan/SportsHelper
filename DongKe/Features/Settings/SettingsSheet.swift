@@ -251,6 +251,35 @@ struct SettingsSheet: View {
                     .accessibilityLabel("语音提示")
             }
             .padding(16)
+
+            Divider()
+                .padding(.leading, 16)
+
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(VoiceService.voiceName)
+                        .font(Typography.secondary)
+                    Text(VoiceService.isEnhancedVoice ? "增强音色" : "默认音色 · 系统设置里可下载更自然的中文语音")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Button {
+                    VoiceService.shared.preview()
+                } label: {
+                    Text("试听")
+                        .font(Typography.secondary)
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(voice.isEnabled == false)
+                .opacity(voice.isEnabled ? 1 : 0.4)
+                .accessibilityLabel("试听当前音色")
+            }
+            .padding(16)
         }
         .glassSurface(radius: Theme.Radius.card)
     }

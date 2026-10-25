@@ -138,3 +138,12 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 3. 只认日志里 `Test run with` / `✘ Test "..." failed`，**不认退出码**
 
 ⚠️ macOS 没有 GNU `timeout`，写 `timeout 200 xcodebuild` 会 `command not found`，随后 grep 空输出会被误读成「通过」。同一套写法推广到 `xcrun simctl`、`devicectl`、`swift test` 等会挂住的长命令。
+
+## 播报：一拍一句（2026-10-25，ADR-0007）
+
+- **一拍一句**：下一组存在时 `restFinished` 返回 nil，由 `setStart` 独唱；实测原来同 tick 连发两句 8.79 秒。
+- **预算按秒**：zh-CN rate 0.5 ≈ 4.0–4.3 字/秒；组开始最短 3.8 秒，所以上限是 **≤4 秒**（20 字），硬上限 32。超预算先丢「共 N 组」。
+- **端口**：`SpeechRendering`（id/priority/事件/可用性/profile），不是 `SpeechAnnouncing`（只有 `isSpeaking` 轮询）。**禁止**再用 `if isSpeaking { stop }` 当打断规则——`speak()` 返回瞬间它恒为 false，行为取决于调度时机。
+- **会话**：`AudioSessionArbiter` + `AudioSessionLease` 引用计数；播报整段持有，播完 2 秒才释放（否则倒数 3/2/1 会断三次）。播报与收音都不许直接 `setActive`。
+- **音色**：只传 `language: "zh-CN"` 会拿到 compact Tingting；按 `quality` 取最高档（本机有 premium「声音2」）。
+- **引擎**：`matcha-icefall-zh-baker` 语料非商用、Kokoro 中文 RTF>1 且 G2P 是 eSpeak GPL——都不能闭源上架。只剩 MeloTTS（MIT / 44.1kHz / 163MB）。
