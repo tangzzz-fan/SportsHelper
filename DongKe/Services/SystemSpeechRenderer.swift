@@ -18,9 +18,11 @@ enum VoicePicker {
     }
 
     private static func pick() -> Choice {
-        let chinese = AVSpeechSynthesisVoice.speechVoices().filter { $0.language == "zh-CN" }
+        let chinese = AVSpeechSynthesisVoice.speechVoices().filter {
+            $0.language == "zh-CN" && $0.voiceTraits.contains(.isNoveltyVoice) == false
+        }
         if let best = chinese.max(by: { $0.quality.rawValue < $1.quality.rawValue }) {
-            let names = chinese.map { $0.name }.joined(separator: "/")
+            let names = chinese.map { "\($0.name)(q\($0.quality.rawValue))" }.joined(separator: "/")
             voiceLog.notice("voice pick: \(best.name, privacy: .public) quality=\(best.quality.rawValue, privacy: .public) candidates=\(names, privacy: .public)")
             return Choice(
                 voice: best,

@@ -95,6 +95,28 @@ struct SpeechCueCoordinatorTests {
         #expect(renderer.cancelled == 1)
     }
 
+    @Test("倒数还没念完，组开始也不能被丢掉")
+    func setStartWinsOverUnfinishedCountdown() {
+        let (coordinator, renderer) = coordinator()
+        coordinator.announce(.restCountdown(secondsLeft: 1))
+        coordinator.announce(.setStart(name: "俯卧撑", setIndex: 1, totalSets: 3, dose: "12 次"))
+
+        #expect(renderer.spoken == ["1", "俯卧撑，第 1 组，共 3 组，12 次"])
+        #expect(coordinator.lastSpokenText == "俯卧撑，第 1 组，共 3 组，12 次")
+    }
+
+    @Test("倒数与组开始同级：短促提示不阻挡下一拍")
+    func countdownSharesPriorityWithInstruction() {
+        let countdown = WorkoutAnnouncement.restCountdown(secondsLeft: 1).priority
+        let setStart = WorkoutAnnouncement.setStart(
+            name: "俯卧撑", setIndex: 1, totalSets: 3, dose: "12 次"
+        ).priority
+        let aside = WorkoutAnnouncement.restStart(seconds: 30).priority
+
+        #expect(countdown == setStart)
+        #expect(aside < countdown)
+    }
+
     @Test("关掉开关会立刻掐断正在念的")
     func disablingStopsCurrentSpeech() {
         let (coordinator, renderer) = coordinator()

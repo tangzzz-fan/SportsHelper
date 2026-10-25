@@ -1,9 +1,13 @@
 import Foundation
 
+/// 只有两档：必须现在说（instruction）和可说可不说（aside）。
+///
+/// 曾经有第三档 `countdown`，本意是让倒数压过组开始。实际后果反过来：
+/// 倒数「1」还没念完时组开始那一拍优先级更低，被**整句丢掉**，
+/// 用户听到「3、2、1」之后就是静默。倒数只是三个字，让后到的那一拍赢才对。
 public enum SpeechPriority: Int, Comparable, Sendable {
     case aside = 0
     case instruction = 1
-    case countdown = 2
 
     public static func < (lhs: SpeechPriority, rhs: SpeechPriority) -> Bool {
         lhs.rawValue < rhs.rawValue

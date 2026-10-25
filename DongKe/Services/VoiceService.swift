@@ -11,6 +11,7 @@ final class VoiceService {
 
     private var coordinator: SpeechCueCoordinator?
     private var previewCoordinator: SpeechCueCoordinator?
+    private var holdsSession = false
 
     private init() {
         NotificationCenter.default.addObserver(
@@ -37,11 +38,13 @@ final class VoiceService {
     func activeCoordinator() -> SpeechCueCoordinator {
         if let coordinator {
             refreshPolicy(isForeground: true)
+            holdSession()
             return coordinator
         }
         let created = SpeechCueCoordinator(renderer: Self.makeRenderer())
         coordinator = created
         refreshPolicy(isForeground: true)
+        holdSession()
         return created
     }
 
@@ -52,9 +55,31 @@ final class VoiceService {
             isVoiceOverRunning: UIAccessibility.isVoiceOverRunning
         )
         coordinator?.policy = policy
+        if policy.allowsSpeech, coordinator != nil {
+            holdSession()
+        } else {
+            releaseSession()
+        }
         voicePolicyLog.notice(
-            "policy enabled=\(policy.isEnabled, privacy: .public) foreground=\(policy.isForeground, privacy: .public) voiceOver=\(policy.isVoiceOverRunning, privacy: .public) allows=\(policy.allowsSpeech, privacy: .public) coordinator=\(self.coordinator != nil, privacy: .public)"
+            "policy enabled=\(policy.isEnabled, privacy: .public) foreground=\(policy.isForeground, privacy: .public) voiceOver=\(policy.isVoiceOverRunning, privacy: .public) allows=\(policy.allowsSpeech, privacy: .public) coordinator=\(self.coordinator != nil, privacy: .public) held=\(self.holdsSession, privacy: .public)"
         )
+    }
+
+    /// 整节课按住音频会话。
+    ///
+    /// 每句播报自己 `setActive(true)` 时，真机上重新激活要 100–300ms，短句（倒数 3/2/1）
+    /// 会被吞掉开头甚至整句——GymMane 用「循环播放静音文件」绕开的就是这个坑。
+    /// 这里改成整节课持有一份租约，渲染器再按句借还，归零只在课程结束时发生。
+    private func holdSession() {
+        guard holdsSession == false else { return }
+        holdsSession = true
+        AudioSessionArbiter.shared.borrow(.playback)
+    }
+
+    private func releaseSession() {
+        guard holdsSession else { return }
+        holdsSession = false
+        AudioSessionArbiter.shared.give(.playback)
     }
 
     func preview() {
@@ -72,6 +97,7 @@ final class VoiceService {
         coordinator = nil
         previewCoordinator?.stop()
         previewCoordinator = nil
+        releaseSession()
     }
 
     static var isEnabledByUser: Bool {

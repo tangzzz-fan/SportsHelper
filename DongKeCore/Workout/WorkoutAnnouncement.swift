@@ -79,9 +79,8 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
 
     public var priority: SpeechPriority {
         switch self {
-        case .restCountdown, .setPrompt(.remaining):
-            return .countdown
-        case .sessionStart, .setStart, .finished, .finishedWithExtras:
+        case .sessionStart, .setStart, .finished, .finishedWithExtras,
+             .restCountdown, .setPrompt(.remaining):
             return .instruction
         case .restStart, .restFinished, .blockBreak, .setPrompt(.focus):
             return .aside
