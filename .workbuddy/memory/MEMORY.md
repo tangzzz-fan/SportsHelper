@@ -172,3 +172,9 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - **动作要点（150 条）已在词表里**。加动作后必须重跑 `scripts/render-voice-clips.sh`，否则新要点会回落——`VoiceClipBankTests.fullSessionIsFullyCovered` 会红。
 - 词表容易漏的是**词形**，不是词：`durationText` 整分钟是「N 分钟」不是「N 分」，漏一个词形就让默认 60 秒休息整句回落。靠守卫测试枚举真实播报，别靠人读。
 - 兜底（`.fallback`）是安全网不是常态。日志里出现 `clip fallback` 就算 bug。
+
+### 仲裁器的三条契约（2026-10-25，00e3525）
+
+- **`observeInterruptions(of: self)` 必须传 owner**：闭包弱引用注册者，owner 释放自动剪枝。不要再用无 owner 的 `[() -> Void]` 列表——只增不减，转写器每建一次就多一条。
+- **`addObserver` 的 token 必须留住**：block 版注册不因 token 释放而注销，丢了就永远无法取消。
+- **借了必须还，早退也要还**：`borrow(.record)` 之后任何 `throw` 都要先 release（否则会话常驻 `.record`，橙点不灭、播报静默）；音条渲染器要先确认引擎起得来再借播放租约。
