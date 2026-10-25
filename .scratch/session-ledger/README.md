@@ -1,6 +1,6 @@
 # 会话账本与「今天再加一组」
 
-口径已定，账本、加组入口、断点续练与三处可见数字都已落。**唯一没做的是静态动作的减量轴**，见 BACKLOG §1 文末。
+口径已定，账本、加组入口、断点续练、三处可见数字与静态减量轴都已落。**唯一没做的是静态动作的强证据**（UI 不记录超时秒数）。
 
 ## 已定口径（ADR-0006）
 
@@ -18,7 +18,7 @@
 - `SessionRecap` 改为账本投影；`WorkoutSession.completedSets` / `progress` / `recap` 全部从账本取数。
 - `SetLogEntity.originRaw` 可选列；`SetLogStore` 读写来源。
 - `DoseReport.extraSets`；`effectiveSets` 含额外组，`completedSets` / `skips` 只数计划内。
-- `ProgressionAxis` + `PlanProposal.Change.Field.hold`；静态动作余力进阶与减量边界见 BACKLOG §1。
+- `ProgressionAxis` + `PlanProposal.Change.Field.hold`；静态动作余力进阶（+5 秒），疼减 20% 取整到 5 秒、太累 −5 秒。
 - 休息页「今天再加一组」：`WorkoutSession.script` 插入 `.set`，一节课最多 3 组，可撤销。
 - 断点续练：`WorkoutCheckpoint.steps` 直接存脚本，旧断点没有这个字段就回落到计划展开。
 - 结束页 / 记录页 / 播报补「额外 N 组」；播报用独立 case，完成率仍按计划组数。
@@ -33,4 +33,4 @@
 - 不把加组写回计划（ADR-0004：当场加的是训练量，不是处方）。
 - 不做「补练昨天欠的组」——那是排期偏移，属于 BACKLOG §14 的另一件事。
 - 不按肌群拆分母。分母只有一个：计划组数。
-- 静态动作的减量仍走减组，不改成减保持时间（授权边界，BACKLOG §1 文末）。
+- 静态动作的**强证据**还没开：UI 不记录「多撑了几秒」，`clearedEverySet` 对静态没有可用数据。见 BACKLOG §1 文末。

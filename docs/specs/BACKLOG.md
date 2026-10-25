@@ -6,7 +6,7 @@
 
 ## 1. 动作库的「加法」：康复向动作 + 主动推荐
 
-状态：**两批都已落地（2026-10-25）**，ticket 见 `.scratch/exercise-expansion/issues/02-肩颈康复动作与反向推荐.md` 与 `.scratch/reserve-evidence/issues/01-余力进规则.md`。剩「静态动作的减量轴」未做（见文末）
+状态：**全部落地（2026-10-25）**，ticket 见 `.scratch/exercise-expansion/issues/02-肩颈康复动作与反向推荐.md` 与 `.scratch/reserve-evidence/issues/01-余力进规则.md`。剩「静态动作的强证据」未做（见文末）
 关联代码：`DongKeCore/Parsing/PlanSafetyChecker.swift`、`DongKeCore/Models/BodyPart.swift`、`DongKeCore/Models/ExerciseCatalog.swift`
 
 ### 问题
@@ -79,10 +79,14 @@
 
 `ProgressionAxis` 把「进阶轴」从 reps 里抽出来：`reps` 与 `holdSeconds` 两根，`distanceM` 没有轴。静态动作的余力不再沉默：连续两次最后一组 `rpe ≤ 2`，保持时间 +5 秒，上限 60 秒；到顶后沉默，不转成加组。`PlanProposal.Change.Field` 增加 `hold`，文案单位「秒」。余力档位对静态动作映射为 10 / 5 / 2 秒，使「还能撑 10 秒」加 5 秒后仍留有半档余力。
 
-**没有做的两件**：
+**2026-10-25 12:45 补：静态动作的减量轴已落**
 
-- **静态动作的减量轴**。疼痛仍走 `soften` 的「减组数」分支，太累仍不处理静态动作。统一成减保持时间需要单独定「疼的时候是减时间还是停做」，这轮不越权。
-- **静态动作的强证据**。`clearedEverySet` 要求实际值超过目标，当前 UI 不记录「多撑了几秒」，所以静态只走余力（弱证据）。等训练页支持记录超时秒数再开。
+- 疼：保持时间 −20%，向下取整到 5 秒（5 秒地板）；到 5 秒地板回落到减组，保住原来那条兜底。
+- 太累：保持时间 −5 秒；到 5 秒地板沉默（原来静态对太累本来就沉默，不是回归）。
+- 连着加三次的降量与停练恢复也走同一根轴：×0.6 / ×0.8，按 5 秒向下取整。
+- 距离动作不变：疼仍减组，太累仍沉默。
+
+**只剩一件没做：静态动作的强证据。** `clearedEverySet` 要求实际值超过目标，当前 UI 不记录「多撑了几秒」，所以静态只走余力（弱证据）。等训练页支持记录超时秒数再开。
 
 ---
 
