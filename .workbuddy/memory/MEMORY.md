@@ -71,7 +71,7 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 
 ## 动作库扩容：只有三处要手工同步（2026-10-24）
 
-库已 43 条。**加动作只需动三处**，第四处已改成派生：
+库已 **50 条**（2026-10-26 核；其中 35 条有三帧图示，15 条回落 `_generic`）。**加动作只需动三处**，第四处已改成派生：
 
 1. `DongKeCore/Models/ExerciseCatalog{Lower,Upper,Core}.swift` —— `cues` ≥2、`mistakes` ≥1、`regressionName` 非空
 2. `ExerciseAliasResolver.aliases` —— 每动作 ≥3 个叫法，且**自己的名字要能认出自己**（`ExerciseNounTests` 会查）
@@ -105,8 +105,12 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | 动作库字段口径 | ARCHITECTURE §5.6 | — |
 | 完成率 / 剂量口径 | ARCHITECTURE §11 + ADR-0006 | 别在视图里另算 |
 | 术语 | `GLOSSARY.md` | — |
+| 商店文案 / 分级 / 隐私问卷 / 审核备注 | `docs/APPSTORE.md` | RELEASE §2 只许指过来 |
+| 隐私政策 / 支持页正文 | `docs/appstore/*.html` | 占位符 `SUPPORT_EMAIL` 发布前必换 |
 
-**ARCHITECTURE 会撒谎，别以为它记得住现状。** 2026-10-25 对齐过一次（v1.3 → v1.4，767 行改动）：里面有整章讲着没实现的方案（自绘骨架 / 埋点 / `AppLog` / `BackupService`）、9 个不存在的类型名、18 条动作库（实际 43）、`DongKe/Domain` 目录（实际是 `DongKeCore` framework）。
+**ASC 字数上限**：名称 30 / 副标题 30 / 促销文本 170 / 描述 4000 / 关键词 100。核字数从 md 的 ``` 块里抠出来用 `len()`，别肉眼数。
+
+**ARCHITECTURE 会撒谎，别以为它记得住现状。** 2026-10-25 对齐过一次（v1.3 → v1.4，767 行改动）：里面有整章讲着没实现的方案（自绘骨架 / 埋点 / `AppLog` / `BackupService`）、9 个不存在的类型名、18 条动作库（实际 50）、`DongKe/Domain` 目录（实际是 `DongKeCore` framework）。
 
 校验办法（改完文档跑一次）：把文档里所有 `` `CamelCase` `` 抓出来，对代码里 `struct|enum|class|protocol` 的名字表，差集就是可疑项。**纯人工读发现不了**。
 
