@@ -28,6 +28,7 @@ struct PlanReviewView: View {
     @State private var editing: PlanEditRow?
     @State private var soreParts: Set<BodyPart> = []
     private let memo = AliasMemoStore()
+    private let corrections = CorrectionStore()
 
     init(draft: ParsedPlanDraft, plan: WorkoutPlan, onSave: @escaping (WorkoutPlan) -> Void) {
         self.draft = draft
@@ -113,6 +114,13 @@ struct PlanReviewView: View {
                     if let catalogId = result.catalogId,
                        catalogId != row.catalogId || draft.guessedItems[row.itemId] != nil {
                         memo.remember(row.originalName, catalogId: catalogId)
+                    }
+                    let effectiveCatalog = result.catalogId ?? row.catalogId
+                    if result.sets != row.sets {
+                        corrections.remember(catalogId: effectiveCatalog, field: .sets, to: result.sets)
+                    }
+                    if result.value != row.value {
+                        corrections.remember(catalogId: effectiveCatalog, field: .value, to: result.value)
                     }
                     if result.saveAsMine {
                         userExercises.add(UserExercise(

@@ -16,6 +16,7 @@ struct ImportView: View {
     @State private var showReview = false
     @State private var copiedPrompt = false
     private let memo = AliasMemoStore()
+    private let corrections = CorrectionStore()
 
     private static let sampleText = """
     增肌计划 第一周
@@ -189,8 +190,9 @@ struct ImportView: View {
 
     private func parse() {
         let parsed = PlanImportService.parse(text, memory: memo.load(), exercises: userExercises.catalog)
-        draft = parsed
-        if parsed.plan != nil {
+        let corrected = corrections.load().applying(to: parsed)
+        draft = corrected
+        if corrected.plan != nil {
             showReview = true
         }
     }
