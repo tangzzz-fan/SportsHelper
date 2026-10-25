@@ -7,10 +7,11 @@
 
 | 项 | 结果 |
 |---|---|
-| 启动屏 | `UILaunchScreen` = 背景 `LaunchBackground`（浅 `#F2F2F7` / 深 `#000`）+ 居中 `LaunchMark`（`#0E7C66` / `#34B39A`），与首屏 `systemGroupedBackground` 同色，切进内容不闪 |
-| Info.plist | 从 `GENERATE_INFOPLIST_FILE` + `INFOPLIST_KEY_*` 迁到 `DongKe/Info.plist`（`UILaunchScreen` 是嵌套字典，build setting 传不了）。产物逐键核对过，版本号仍由 `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` 注入 |
-| 签名 | 自动签名下**不要**写 `CODE_SIGN_IDENTITY`。Xcode 按用途自己挑（debug → Apple Development，Archive → Apple Distribution）。手动指定会和自动签名打架，报 `conflicting provisioning settings` |
-| 真机验证 | 已装 iPhone 16 Pro，浅/深色截图均正确 |
+| Info.plist | 全部交给 `GENERATE_INFOPLIST_FILE` + `INFOPLIST_KEY_*`，仓库里**不维护自己的 plist**（与 `Fluent work/fluentwork-ios` 同一做法） |
+| 启动屏 | 系统默认 `INFOPLIST_KEY_UILaunchScreen_Generation`。为了品牌 logo 单开 plist 或 storyboard 不值得——首屏是 `systemGroupedBackground`，纯白启动屏切过去几乎看不出 |
+| 版本号 | `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` 提到顶层。**embed 的 framework 缺 `CFBundleShortVersionString` 会被 App Store 直接拒**：`The bundle 'Payload/DongKe.app/Frameworks/DongKeCore.framework' is missing plist key` |
+| 签名 | 自动签名下**不要**写 `CODE_SIGN_IDENTITY`。Xcode 按用途自己挑（debug → Apple Development，Archive → Apple Distribution）。手动指定会报 `conflicting provisioning settings` |
+| 真机 / 归档 | 真机 build、模拟器 build、`ARCHIVE SUCCEEDED` 均通过；archive 内 `DongKeCore.framework` 版本号已是 `1.0.0 / 1` |
 
 ## 1. 阻断项
 
