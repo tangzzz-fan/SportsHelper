@@ -60,6 +60,7 @@ extension SetLog {
     public static func skipped(
         sessionId: UUID,
         prescriptionId: String,
+        catalogId: String? = nil,
         setIndex: Int,
         plannedValue: Int,
         reason: SkipReason,
@@ -68,6 +69,7 @@ extension SetLog {
         SetLog(
             sessionId: sessionId,
             prescriptionId: prescriptionId,
+            catalogId: catalogId,
             setIndex: setIndex,
             status: .skipped,
             plannedValue: plannedValue,

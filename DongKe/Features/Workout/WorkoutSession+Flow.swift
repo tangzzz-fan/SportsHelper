@@ -10,6 +10,7 @@ extension WorkoutSession {
         appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
+            catalogId: currentPrescription?.catalogId,
             setIndex: setIndex,
             status: .done,
             plannedValue: target.value,
@@ -28,6 +29,7 @@ extension WorkoutSession {
         appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
+            catalogId: currentPrescription?.catalogId,
             setIndex: setIndex,
             status: .downgraded,
             plannedValue: target.value,
@@ -46,6 +48,7 @@ extension WorkoutSession {
         appendLog(.skipped(
             sessionId: id,
             prescriptionId: prescriptionId,
+            catalogId: currentPrescription?.catalogId,
             setIndex: setIndex,
             plannedValue: target.value,
             reason: reason,

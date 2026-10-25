@@ -61,6 +61,7 @@ struct DongKeApp: App {
         }
         #endif
         _userExerciseStore = State(initialValue: userStore)
+
     }
 
     var body: some Scene {

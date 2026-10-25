@@ -52,12 +52,23 @@ public enum SkipReason: String, Codable, Sendable, CaseIterable {
     case pain
     case noEquipment
     case other
+
+    public var chineseName: String {
+        switch self {
+        case .noTime: "没时间"
+        case .tooHard: "太累"
+        case .pain: "疼"
+        case .noEquipment: "没器械"
+        case .other: "其他"
+        }
+    }
 }
 
 public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var sessionId: UUID
     public var prescriptionId: String
+    public var catalogId: String?
     public var setIndex: Int
     public var status: SetStatus
     public var plannedValue: Int
@@ -70,6 +81,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         id: UUID = UUID(),
         sessionId: UUID,
         prescriptionId: String,
+        catalogId: String? = nil,
         setIndex: Int,
         status: SetStatus,
         plannedValue: Int,
@@ -81,6 +93,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.id = id
         self.sessionId = sessionId
         self.prescriptionId = prescriptionId
+        self.catalogId = catalogId
         self.setIndex = setIndex
         self.status = status
         self.plannedValue = plannedValue

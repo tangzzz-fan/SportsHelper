@@ -6,6 +6,7 @@ final class SetLogEntity {
     @Attribute(.unique) var id: UUID
     var sessionId: UUID
     var prescriptionId: String
+    var catalogId: String?
     var setIndex: Int
     var statusRaw: String
     var plannedValue: Int
@@ -18,6 +19,7 @@ final class SetLogEntity {
         id: UUID,
         sessionId: UUID,
         prescriptionId: String,
+        catalogId: String? = nil,
         setIndex: Int,
         statusRaw: String,
         plannedValue: Int,
@@ -29,6 +31,7 @@ final class SetLogEntity {
         self.id = id
         self.sessionId = sessionId
         self.prescriptionId = prescriptionId
+        self.catalogId = catalogId
         self.setIndex = setIndex
         self.statusRaw = statusRaw
         self.plannedValue = plannedValue
