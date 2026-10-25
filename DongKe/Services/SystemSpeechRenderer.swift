@@ -52,7 +52,7 @@ final class SystemSpeechRenderer: NSObject, SpeechRendering {
     override init() {
         super.init()
         synthesizer.delegate = self
-        AudioSessionArbiter.shared.onInterruption { [weak self] in
+        AudioSessionArbiter.shared.observeInterruptions(of: self) { [weak self] in
             self?.cancel()
         }
     }

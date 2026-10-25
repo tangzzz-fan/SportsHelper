@@ -38,7 +38,7 @@ final class ClipSpeechRenderer: SpeechRendering {
 
     init(folder: URL? = Bundle.main.resourceURL?.appendingPathComponent("VoiceClips")) {
         self.folder = folder
-        AudioSessionArbiter.shared.onInterruption { [weak self] in
+        AudioSessionArbiter.shared.observeInterruptions(of: self) { [weak self] in
             self?.cancel()
         }
     }
@@ -76,8 +76,15 @@ final class ClipSpeechRenderer: SpeechRendering {
             return
         }
 
-        acquireLease()
         startEngineIfNeeded()
+        // 引擎起不来就没有播完的回调，此时借租约等于永久占用（会话不释放、
+        // 之后所有播报都被判成「已在播」）。直接整句回落系统 TTS。
+        guard isEngineReady else {
+            clipLog.error("clip engine not ready, fallback text=\(request.text, privacy: .public)")
+            fallback.render(request, on: event)
+            return
+        }
+        acquireLease()
         current = request
         self.onEvent = event
         let token = UUID()

@@ -9,10 +9,13 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var isTapping = false
+    /// 借还必须成对。早退（format 拿不到）时若不还，录音会话会永久驻留：
+    /// 麦克风橙点不灭，之后 `borrow(.playback)` 也不再触发激活，播报直接哑掉。
+    private var holdsRecordLease = false
     private var onEvent: ((SpeechEvent) -> Void)?
 
     init() {
-        AudioSessionArbiter.shared.onInterruption { [weak self] in
+        AudioSessionArbiter.shared.observeInterruptions(of: self) { [weak self] in
             self?.handleInterruption()
         }
     }
@@ -55,11 +58,14 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
         self.request = request
         onEvent = events
 
-        AudioSessionArbiter.shared.borrow(.record)
+        acquireRecordLease()
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
-        guard format.sampleRate > 0 else { throw SpeechTranscriberError.audioUnavailable }
+        guard format.sampleRate > 0 else {
+            releaseRecordLease()
+            throw SpeechTranscriberError.audioUnavailable
+        }
         input.installTap(onBus: 0, bufferSize: 2048, format: format) { buffer, _ in
             request.append(buffer)
         }
@@ -101,6 +107,18 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
         task = nil
         request = nil
         onEvent = nil
+        releaseRecordLease()
+    }
+
+    private func acquireRecordLease() {
+        guard holdsRecordLease == false else { return }
+        holdsRecordLease = true
+        AudioSessionArbiter.shared.borrow(.record)
+    }
+
+    private func releaseRecordLease() {
+        guard holdsRecordLease else { return }
+        holdsRecordLease = false
         AudioSessionArbiter.shared.give(.record)
     }
 
