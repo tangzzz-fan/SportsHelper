@@ -1,6 +1,9 @@
 import SwiftUI
 import SwiftData
 import DongKeCore
+import os
+
+private let launchLog = Logger(subsystem: "app.dongke.ios", category: "voice")
 
 @main
 struct DongKeApp: App {
@@ -62,6 +65,9 @@ struct DongKeApp: App {
         #endif
         _userExerciseStore = State(initialValue: userStore)
 
+        launchLog.notice(
+            "launch voice=\(VoiceService.voiceName, privacy: .public) enhanced=\(VoiceService.isEnhancedVoice, privacy: .public) enabled=\(VoiceService.isEnabledByUser, privacy: .public) build=\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?", privacy: .public)"
+        )
     }
 
     var body: some Scene {

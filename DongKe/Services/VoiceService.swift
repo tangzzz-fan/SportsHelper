@@ -1,6 +1,9 @@
 import Foundation
 import UIKit
 import DongKeCore
+import os
+
+private let voicePolicyLog = Logger(subsystem: "app.dongke.ios", category: "voice-policy")
 
 @MainActor
 final class VoiceService {
@@ -49,6 +52,9 @@ final class VoiceService {
             isVoiceOverRunning: UIAccessibility.isVoiceOverRunning
         )
         coordinator?.policy = policy
+        voicePolicyLog.notice(
+            "policy enabled=\(policy.isEnabled, privacy: .public) foreground=\(policy.isForeground, privacy: .public) voiceOver=\(policy.isVoiceOverRunning, privacy: .public) allows=\(policy.allowsSpeech, privacy: .public) coordinator=\(self.coordinator != nil, privacy: .public)"
+        )
     }
 
     func preview() {

@@ -1,5 +1,8 @@
 import AVFoundation
 import DongKeCore
+import os
+
+private let sessionLog = Logger(subsystem: "app.dongke.ios", category: "audio-session")
 
 @MainActor
 final class AudioSessionArbiter {
@@ -38,11 +41,14 @@ final class AudioSessionArbiter {
                     try session.setCategory(.record, mode: .measurement, options: [.mixWithOthers, .allowBluetooth])
                 }
                 try session.setActive(true)
+                sessionLog.notice("activate \(String(describing: mode), privacy: .public)")
             } catch {
+                sessionLog.error("activate \(String(describing: mode), privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
                 notifyListeners()
             }
         case .deactivate:
             try? session.setActive(false, options: [.notifyOthersOnDeactivation])
+            sessionLog.notice("deactivate")
         }
     }
 

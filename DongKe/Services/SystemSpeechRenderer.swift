@@ -1,5 +1,8 @@
 import AVFoundation
 import DongKeCore
+import os
+
+private let voiceLog = Logger(subsystem: "app.dongke.ios", category: "voice")
 
 enum VoicePicker {
     struct Choice {
@@ -17,6 +20,8 @@ enum VoicePicker {
     private static func pick() -> Choice {
         let chinese = AVSpeechSynthesisVoice.speechVoices().filter { $0.language == "zh-CN" }
         if let best = chinese.max(by: { $0.quality.rawValue < $1.quality.rawValue }) {
+            let names = chinese.map { $0.name }.joined(separator: "/")
+            voiceLog.notice("voice pick: \(best.name, privacy: .public) quality=\(best.quality.rawValue, privacy: .public) candidates=\(names, privacy: .public)")
             return Choice(
                 voice: best,
                 name: best.name,
@@ -24,6 +29,7 @@ enum VoicePicker {
             )
         }
         let fallback = AVSpeechSynthesisVoice(language: "zh-CN")
+        voiceLog.error("voice pick: 没有 zh-CN 音色，回落 \(fallback?.name ?? "nil", privacy: .public)")
         return Choice(voice: fallback, name: fallback?.name ?? "系统默认", isEnhanced: false)
     }
 }
@@ -76,6 +82,9 @@ final class SystemSpeechRenderer: NSObject, SpeechRendering {
         utterance.postUtteranceDelay = 0
         currentUtterance = utterance
         currentUtteranceID = ObjectIdentifier(utterance)
+        voiceLog.notice(
+            "speak prio=\(request.priority.rawValue, privacy: .public) chars=\(request.text.count, privacy: .public) text=\(request.text, privacy: .public)"
+        )
         synthesizer.speak(utterance)
     }
 
@@ -92,6 +101,7 @@ final class SystemSpeechRenderer: NSObject, SpeechRendering {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+        voiceLog.notice("cancel text=\(current.text, privacy: .public)")
         onEvent?(.cancelled(current.id, .stopped))
         releaseLease()
     }
@@ -144,6 +154,9 @@ extension SystemSpeechRenderer: AVSpeechSynthesizerDelegate {
             currentUtterance = nil
             currentUtteranceID = nil
             startedAt = nil
+            voiceLog.notice(
+                "done seconds=\(seconds, format: .fixed(precision: 2), privacy: .public) chars=\(current.text.count, privacy: .public) rate=\(Double(current.text.count) / max(seconds, 0.01), format: .fixed(precision: 2), privacy: .public) text=\(current.text, privacy: .public)"
+            )
             onEvent?(.finished(current.id, seconds: seconds))
             scheduleRelease()
         }
@@ -160,6 +173,7 @@ extension SystemSpeechRenderer: AVSpeechSynthesizerDelegate {
             currentUtterance = nil
             currentUtteranceID = nil
             startedAt = nil
+            voiceLog.notice("interrupted text=\(current.text, privacy: .public)")
             onEvent?(.cancelled(current.id, .interrupted))
             scheduleRelease()
         }
