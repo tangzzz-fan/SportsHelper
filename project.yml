@@ -37,19 +37,33 @@ targets:
         buildPhase: resources
     dependencies:
       - target: DongKeCore
+    # 启动屏的 UILaunchScreen 是嵌套字典，build setting（INFOPLIST_KEY_*）只能传字符串，
+    # 所以 target 改用真实 Info.plist。键与之前 GENERATE_INFOPLIST_FILE 的产物一一对应。
+    info:
+      path: DongKe/Info.plist
+      properties:
+        CFBundleDisplayName: 动刻
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchMark
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSMicrophoneUsageDescription: 用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。
+        NSSpeechRecognitionUsageDescription: 把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios
-        GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_CFBundleDisplayName: 动刻
-        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: 用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。
-        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。
+      configs:
+        # 顶层写死了 Apple Development，Archive 走 Release 会签不出来。
+        # 分发用单独的 Distribution 身份（本机已有 Apple Distribution: zhenzhi Tang）。
+        Release:
+          "CODE_SIGN_IDENTITY[sdk=iphoneos*]": Apple Distribution
   DongKeCoreTests:
     type: bundle.unit-test
     platform: iOS

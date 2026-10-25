@@ -530,6 +530,7 @@
 		D2AE3C350D95A89908EA8043 /* SetLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetLogStore.swift; sourceTree = "<group>"; };
 		D3A2CC2703A871BE8D0DCD05 /* ReminderHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderHealth.swift; sourceTree = "<group>"; };
 		D3CEB601AFA0FB8E22A2B0C8 /* Weekday.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Weekday.swift; sourceTree = "<group>"; };
+		D46B55227ABBE42A51E046B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D92531CE0BF491411AEF9B75 /* VoiceSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettingsStore.swift; sourceTree = "<group>"; };
 		D9784B1F95EBFA597F7DAC94 /* ExerciseLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibraryTests.swift; sourceTree = "<group>"; };
 		DA34B782D51D069CCB126C62 /* VoiceInputOnlineConsentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputOnlineConsentTests.swift; sourceTree = "<group>"; };
@@ -895,6 +896,7 @@
 			isa = PBXGroup;
 			children = (
 				1353FFC1AA42CC0828B2F4C6 /* Assets.xcassets */,
+				D46B55227ABBE42A51E046B1 /* Info.plist */,
 				310CFBA5BDEC46822C67998E /* PrivacyInfo.xcprivacy */,
 				E61FC66EB51376798B3F6105 /* App */,
 				7EE364F8BFC6C3858434B1B0 /* Data */,
@@ -1677,13 +1679,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_FILE = DongKe/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1700,14 +1696,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_FILE = DongKe/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
