@@ -6,6 +6,7 @@ public enum ProgressionAxis: Equatable, Sendable {
 
     public static let holdStep = 5
     public static let holdCeiling = 60
+    public static let holdFloor = 5
 
     public init?(_ target: SetTarget) {
         switch target.type {
@@ -31,6 +32,34 @@ public enum ProgressionAxis: Equatable, Sendable {
         case .holdSeconds:
             let next = value + Self.holdStep
             guard next <= Self.holdCeiling else { return nil }
+            return next
+        }
+    }
+
+    public func eased(_ value: Int) -> Int? {
+        switch self {
+        case .reps:
+            let next = max(DoseAdjustment.repFloor, value - DoseAdjustment.repStep)
+            guard next < value else { return nil }
+            return next
+        case .holdSeconds:
+            let next = max(Self.holdFloor, value - Self.holdStep)
+            guard next < value else { return nil }
+            return next
+        }
+    }
+
+    public func softened(_ value: Int, factor: Double) -> Int? {
+        switch self {
+        case .reps:
+            let next = max(DoseAdjustment.repFloor, Int((Double(value) * factor).rounded()))
+            guard next < value else { return nil }
+            return next
+        case .holdSeconds:
+            let raw = Int((Double(value) * factor).rounded())
+            let stepped = (raw / Self.holdStep) * Self.holdStep
+            let next = max(Self.holdFloor, stepped)
+            guard next < value else { return nil }
             return next
         }
     }

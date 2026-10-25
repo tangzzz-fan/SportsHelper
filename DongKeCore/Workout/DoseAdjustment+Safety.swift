@@ -38,16 +38,26 @@ extension DoseAdjustment {
                 toValue: target
             )
         }
-        if item.target.type == .reps {
-            let target = max(repFloor, Int((Double(item.target.value) * painFactor).rounded()))
-            guard target < item.target.value else { return nil }
-            return PlanProposal.Change(
-                itemId: item.itemId,
-                name: item.name,
-                field: .reps,
-                fromValue: Double(item.target.value),
-                toValue: Double(target)
-            )
+        if let axis = ProgressionAxis(item.target) {
+            if let target = axis.softened(item.target.value, factor: painFactor) {
+                return PlanProposal.Change(
+                    itemId: item.itemId,
+                    name: item.name,
+                    field: axis.field,
+                    fromValue: Double(item.target.value),
+                    toValue: Double(target)
+                )
+            }
+            if axis == .holdSeconds, item.sets > 1 {
+                return PlanProposal.Change(
+                    itemId: item.itemId,
+                    name: item.name,
+                    field: .sets,
+                    fromValue: Double(item.sets),
+                    toValue: Double(item.sets - 1)
+                )
+            }
+            return nil
         }
         guard item.sets > 1 else { return nil }
         return PlanProposal.Change(

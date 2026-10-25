@@ -11,6 +11,7 @@ private func holdLog(
     planned: Int,
     status: SetStatus = .done,
     rpe: Int? = nil,
+    skip: SkipReason? = nil,
     offsetDays: Int
 ) -> SetLog {
     SetLog(
@@ -19,7 +20,8 @@ private func holdLog(
         setIndex: setIndex,
         status: status,
         plannedValue: planned,
-        actualValue: planned,
+        actualValue: status == .skipped ? 0 : planned,
+        skipReason: skip,
         rpe: rpe,
         completedAt: holdDay.addingTimeInterval(Double(offsetDays) * 86_400 + Double(setIndex))
     )
@@ -83,6 +85,119 @@ struct HoldProgressionTests {
             now: holdDay
         ))
         #expect(proposal.changes[0].toValue == 60)
+    }
+
+    @Test("疼一次：静态动作先减保持时间，不减组")
+    func painEasesHold() throws {
+        let plan = holdPlan(value: 30, sets: 3)
+        let logs = [holdLog(
+            session: UUID(), item: "i1", setIndex: 0, planned: 30,
+            status: .skipped, skip: .pain, offsetDays: 1
+        )]
+        let proposal = try #require(DoseAdjustment.propose(
+            plan: plan,
+            logs: logs,
+            now: holdDay.addingTimeInterval(86_400 * 2)
+        ))
+        #expect(proposal.kind == .safety)
+        #expect(proposal.changes[0].field == .hold)
+        #expect(proposal.changes[0].toValue == 20)
+    }
+
+    @Test("疼到 5 秒地板时回落到减组，不沉默")
+    func painAtHoldFloorFallsBackToSets() throws {
+        let plan = holdPlan(value: 5, sets: 3)
+        let logs = [holdLog(
+            session: UUID(), item: "i1", setIndex: 0, planned: 5,
+            status: .skipped, skip: .pain, offsetDays: 1
+        )]
+        let proposal = try #require(DoseAdjustment.propose(
+            plan: plan,
+            logs: logs,
+            now: holdDay.addingTimeInterval(86_400 * 2)
+        ))
+        #expect(proposal.kind == .safety)
+        #expect(proposal.changes[0].field == .sets)
+        #expect(proposal.changes[0].toValue == 2)
+    }
+
+    @Test("太累两次：静态动作减一档保持时间")
+    func tooHardEasesHold() throws {
+        let plan = holdPlan(value: 30, sets: 3)
+        let ids = [UUID(), UUID()]
+        let logs = ids.enumerated().flatMap { offset, id in
+            (0..<3).map { index in
+                holdLog(
+                    session: id, item: "i1", setIndex: index, planned: 30,
+                    status: index == 0 ? .skipped : .done,
+                    skip: index == 0 ? .tooHard : nil,
+                    offsetDays: offset * 3 + index
+                )
+            }
+        }
+        let proposal = try #require(DoseAdjustment.propose(plan: plan, logs: logs, now: holdDay))
+        #expect(proposal.changes[0].field == .hold)
+        #expect(proposal.changes[0].toValue == 25)
+    }
+
+    @Test("太累到 5 秒地板时沉默，不转成减组")
+    func tooHardAtHoldFloorStaysSilent() {
+        let plan = holdPlan(value: 5, sets: 3)
+        let ids = [UUID(), UUID()]
+        let logs = ids.enumerated().flatMap { offset, id in
+            (0..<3).map { index in
+                holdLog(
+                    session: id, item: "i1", setIndex: index, planned: 5,
+                    status: index == 0 ? .skipped : .done,
+                    skip: index == 0 ? .tooHard : nil,
+                    offsetDays: offset * 3 + index
+                )
+            }
+        }
+        #expect(DoseAdjustment.propose(plan: plan, logs: logs, now: holdDay) == nil)
+    }
+
+    @Test("距离动作的疼仍按原口径减组")
+    func distancePainStillReducesSets() throws {
+        let plan = makePlan(days: [makeDay(index: 1, blocks: [makeBlock(items: [
+            makeItem(sets: 3, value: 1000, targetType: .distanceM)
+        ])])])
+        let logs = [holdLog(
+            session: UUID(), item: "i1", setIndex: 0, planned: 1000,
+            status: .skipped, skip: .pain, offsetDays: 1
+        )]
+        let proposal = try #require(DoseAdjustment.propose(
+            plan: plan,
+            logs: logs,
+            now: holdDay.addingTimeInterval(86_400 * 2)
+        ))
+        #expect(proposal.changes[0].field == .sets)
+        #expect(proposal.changes[0].toValue == 2)
+    }
+
+    @Test("连着加三次后，静态动作也降到六成")
+    func deloadStaticHold() throws {
+        let plan = holdPlan(value: 60)
+        let memory = ProposalMemory(doseStreak: 3)
+        let context = DoseContext(plan: plan, logs: [], memory: memory, now: holdDay)
+        let proposal = try #require(DoseAdjustment.propose(context))
+        #expect(proposal.isReduction)
+        #expect(proposal.changes[0].field == .hold)
+        #expect(proposal.changes[0].toValue == 35)
+    }
+
+    @Test("停练后静态动作也回到八成")
+    func restoreStaticHold() throws {
+        let original = holdPlan(value: 60)
+        var current = original
+        current.days[0].blocks[0].items[0].target.value = 35
+        let proposal = try #require(DoseAdjustment.restoreProposal(
+            from: original,
+            current: current,
+            now: holdDay
+        ))
+        #expect(proposal.changes[0].field == .hold)
+        #expect(proposal.changes[0].toValue == 45)
     }
 
     @Test("距离动作不参与余力进阶")

@@ -4,13 +4,12 @@ extension DoseAdjustment {
     static func deloadProposal(_ context: DoseContext) -> PlanProposal? {
         guard context.memory.doseStreak >= deloadEvery else { return nil }
         let changes = uniqueItems(of: context.plan).compactMap { item -> PlanProposal.Change? in
-            guard item.target.type == .reps else { return nil }
-            let target = max(repFloor, Int((Double(item.target.value) * deloadFactor).rounded()))
-            guard target < item.target.value else { return nil }
+            guard let axis = ProgressionAxis(item.target),
+                  let target = axis.softened(item.target.value, factor: deloadFactor) else { return nil }
             return PlanProposal.Change(
                 itemId: item.itemId,
                 name: item.name,
-                field: .reps,
+                field: axis.field,
                 fromValue: Double(item.target.value),
                 toValue: Double(target)
             )
@@ -19,7 +18,7 @@ extension DoseAdjustment {
         return PlanProposal(
             kind: .dose,
             changes: changes,
-            reason: "连着加了三次。这周缓一缓，次数降到六成，下周接着加。",
+            reason: "连着加了三次。这周缓一缓，次数或保持时间降到六成，下周接着加。",
             createdAt: context.now,
             isDeload: true
         )

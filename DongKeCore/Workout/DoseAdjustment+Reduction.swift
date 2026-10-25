@@ -72,13 +72,12 @@ extension DoseAdjustment {
                 toValue: target
             )
         }
-        guard item.target.type == .reps else { return nil }
-        let target = max(repFloor, item.target.value - repStep)
-        guard target < item.target.value else { return nil }
+        guard let axis = ProgressionAxis(item.target),
+              let target = axis.eased(item.target.value) else { return nil }
         return PlanProposal.Change(
             itemId: item.itemId,
             name: item.name,
-            field: .reps,
+            field: axis.field,
             fromValue: Double(item.target.value),
             toValue: Double(target)
         )

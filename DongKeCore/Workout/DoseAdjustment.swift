@@ -50,13 +50,14 @@ public enum DoseAdjustment {
         let originals = Dictionary(uniqueKeysWithValues: uniqueItems(of: baseline).map { ($0.itemId, $0) })
         var changes: [PlanProposal.Change] = []
         for item in uniqueItems(of: current) {
-            guard let original = originals[item.itemId], original.target.type == .reps else { continue }
-            let target = max(repFloor, Int((Double(original.target.value) * 0.8).rounded()))
-            guard target > item.target.value else { continue }
+            guard let original = originals[item.itemId],
+                  let axis = ProgressionAxis(original.target),
+                  let target = axis.softened(original.target.value, factor: 0.8),
+                  target > item.target.value else { continue }
             changes.append(PlanProposal.Change(
                 itemId: item.itemId,
                 name: item.name,
-                field: .reps,
+                field: axis.field,
                 fromValue: Double(item.target.value),
                 toValue: Double(target)
             ))
