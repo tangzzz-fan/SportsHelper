@@ -12,6 +12,18 @@ public final class WorkoutVoiceSession {
     private var pendingPrompts: [TimedPrompt] = []
     private var firedPrompts: Set<Int> = []
 
+    @MainActor
+    public var level: VoiceLevel = .standard {
+        didSet {
+            guard level != oldValue else { return }
+            if level == .quiet {
+                cues.stop()
+                return
+            }
+            if level.allowsRestCues == false { lastCountdown = nil }
+        }
+    }
+
     public init(plan: WorkoutPlan, dayIndex: Int, coordinator: SpeechCueCoordinator, steps: [FlowStep]? = nil) {
         self.plan = plan
         self.dayIndex = dayIndex
@@ -28,7 +40,7 @@ public final class WorkoutVoiceSession {
     }
 
     public func start() {
-        guard isActive == false else { return }
+        guard isActive == false, level.isEnabled else { return }
         isActive = true
         lastStepIndex = nil
         lastCountdown = nil
@@ -36,7 +48,7 @@ public final class WorkoutVoiceSession {
     }
 
     public func stepChanged(to index: Int, silent: Bool = false) {
-        guard isActive, index != lastStepIndex else { return }
+        guard isActive, level.isEnabled, index != lastStepIndex else { return }
         lastStepIndex = index
         guard silent == false, case .set? = builder.step(at: index) else { return }
         pendingPrompts = builder.prompts(at: index)
@@ -45,7 +57,7 @@ public final class WorkoutVoiceSession {
     }
 
     public func setElapsed(_ seconds: Int) {
-        guard isActive, pendingPrompts.isEmpty == false else { return }
+        guard isActive, level.allowsPrompts, pendingPrompts.isEmpty == false else { return }
         let due = pendingPrompts.filter {
             $0.atSecond <= seconds && firedPrompts.contains($0.atSecond) == false
         }
@@ -55,7 +67,7 @@ public final class WorkoutVoiceSession {
     }
 
     public func restStarted(seconds: Int, at stepIndex: Int? = nil) {
-        guard isActive else { return }
+        guard isActive, level.allowsRestCues else { return }
         lastCountdown = nil
         guard seconds > 0 else { return }
         if let stepIndex, let label = builder.nextActionLabel(afterBlockBreakAt: stepIndex) {
@@ -66,7 +78,7 @@ public final class WorkoutVoiceSession {
     }
 
     public func restTick(secondsLeft: Int) {
-        guard isActive else { return }
+        guard isActive, level.allowsRestCues else { return }
         guard (1...3).contains(secondsLeft) else { return }
         guard secondsLeft != lastCountdown else { return }
         lastCountdown = secondsLeft
@@ -74,13 +86,13 @@ public final class WorkoutVoiceSession {
     }
 
     public func restFinished(nextStepIndex: Int?) {
-        guard isActive else { return }
+        guard isActive, level.allowsRestCues else { return }
         lastCountdown = nil
         cues.announce(builder.restFinished(nextStepIndex: nextStepIndex))
     }
 
     public func finished(completedSets: Int, extraSets: Int = 0) {
-        guard isActive else { return }
+        guard isActive, level.isEnabled else { return }
         isActive = false
         cues.announce(builder.finished(completedSets: completedSets, extraSets: extraSets))
     }

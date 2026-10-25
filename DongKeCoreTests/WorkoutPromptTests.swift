@@ -10,6 +10,14 @@ struct WorkoutPromptTests {
         SetTarget(type: .reps, value: count, perSide: false)
     }
 
+    @Test("不是首组时不排中段要领，只留最后三秒")
+    func nonFirstSetSkipsFocus() {
+        let planned = WorkoutPromptPlanner.prompts(
+            target: hold(30), cue: "小腹收紧", includesFocus: false
+        )
+        #expect(planned == [TimedPrompt(atSecond: 27, prompt: .remaining(secondsLeft: 3))])
+    }
+
     @Test("静态动作排两条：中段要领、最后三秒")
     func staticTargetPlansFocusAndRemaining() {
         let planned = WorkoutPromptPlanner.prompts(target: hold(30), cue: "小腹收紧")

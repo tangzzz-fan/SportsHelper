@@ -78,12 +78,13 @@ public struct WorkoutAnnouncementBuilder: Sendable {
 
     public func prompts(at index: Int) -> [TimedPrompt] {
         guard steps.indices.contains(index),
-              case let .set(prescriptionId, _, target, _) = steps[index],
+              case let .set(prescriptionId, setIndex, target, _) = steps[index],
               let exercise = exercises[prescriptionId]
         else { return [] }
         return WorkoutPromptPlanner.prompts(
             target: target,
-            cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first
+            cue: ExerciseLibrary.entry(for: exercise.catalogId)?.cues.first,
+            includesFocus: setIndex == 1
         )
     }
 

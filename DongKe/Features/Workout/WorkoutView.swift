@@ -139,11 +139,15 @@ struct WorkoutView: View {
         .onChange(of: scenePhase) { _, _ in
             VoiceService.shared.refreshPolicy()
         }
-        .onChange(of: voiceSettings.isEnabled) { _, enabled in
-            if enabled {
+        .onChange(of: voiceSettings.level) { _, level in
+            VoiceService.shared.refreshPolicy()
+            guard let voice = session.voice else {
                 startVoiceIfNeeded()
-            } else {
-                VoiceService.shared.refreshPolicy()
+                return
+            }
+            voice.level = level
+            if level.isEnabled, session.showsSummary == false {
+                startVoiceIfNeeded()
             }
         }
     }
@@ -151,6 +155,7 @@ struct WorkoutView: View {
     private func startVoiceIfNeeded() {
         guard session.showsSummary == false, VoiceService.isEnabledByUser else { return }
         if session.voice != nil {
+            session.voice?.level = VoiceService.levelByUser
             VoiceService.shared.refreshPolicy()
             return
         }
@@ -161,6 +166,7 @@ struct WorkoutView: View {
             coordinator: coordinator,
             steps: session.script
         )
+        voice.level = VoiceService.levelByUser
         session.voice = voice
         voice.start()
         voice.stepChanged(to: session.stepIndex)

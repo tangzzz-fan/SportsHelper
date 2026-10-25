@@ -151,6 +151,7 @@
 		90C0EC3DE29C24B987F5F7FE /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392808FC1F4B0FBB1BBD1E4C /* KeychainService.swift */; };
 		90CAFC365D7E731872493020 /* DoseReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B43784FEA6139D875499793 /* DoseReport.swift */; };
 		90FA08A2FA556D28AC5B253A /* SpeechRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C983DE13561BB70960AEC7A1 /* SpeechRendering.swift */; };
+		91B582B21602A9F9EAC90156 /* VoiceLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E28001A3B4A2ADF1DBC1CAF /* VoiceLevel.swift */; };
 		92F737DDF08305B2C0AF23A1 /* DraftLineScanner+Aliases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF7A67536D7E5BD768D0CB9 /* DraftLineScanner+Aliases.swift */; };
 		93C17A438621BF23D97CFAD1 /* SessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A914C997A43E378CED2EDEE /* SessionSummary.swift */; };
 		953A354EA214B46DB0A97749 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F272B540CED7D51A8C54DB9 /* PlanView.swift */; };
@@ -393,6 +394,7 @@
 		5B88DD95580969415B666204 /* ExercisePurpose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePurpose.swift; sourceTree = "<group>"; };
 		5BF06BC639BB4568FD35A609 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
 		5DF17EB85759569F6245C502 /* ExerciseCatalogUpper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogUpper.swift; sourceTree = "<group>"; };
+		5E28001A3B4A2ADF1DBC1CAF /* VoiceLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceLevel.swift; sourceTree = "<group>"; };
 		611D9F1DB37E4C5043E0732E /* SetLogRPETests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetLogRPETests.swift; sourceTree = "<group>"; };
 		63534BDE9AD284C5DA36A07D /* ExerciseCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalog.swift; sourceTree = "<group>"; };
 		637D136C4A6DD2422686A32E /* WorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSession.swift; sourceTree = "<group>"; };
@@ -696,6 +698,7 @@
 				238F2A197411516434EDC1DE /* SetTimerDriver.swift */,
 				370A86363E7929C0A9F92503 /* SetTimerStateMachine.swift */,
 				3D2ED666E1F2886D06EC8035 /* SpeechCueCoordinator.swift */,
+				5E28001A3B4A2ADF1DBC1CAF /* VoiceLevel.swift */,
 				C530F68A3B848420FADD1268 /* WorkoutAnnouncement.swift */,
 				C45E70A9EF88F11A7A52AC1F /* WorkoutAnnouncementBuilder.swift */,
 				841D1C16419030DE9EA8A270 /* WorkoutCheckpoint.swift */,
@@ -1275,6 +1278,7 @@
 				7F980A67E6D2F59B85B4F0B6 /* VoiceInputLimit.swift in Sources */,
 				CB169D963412E581E5CC5D5B /* VoiceInputMachine.swift in Sources */,
 				6A1EBA6691EDB20F4EC7C080 /* VoiceInputPhase.swift in Sources */,
+				91B582B21602A9F9EAC90156 /* VoiceLevel.swift in Sources */,
 				9E51F2662155A4526C1FA167 /* Weekday.swift in Sources */,
 				67C778DCD627C1CDDA97014A /* WeeklyScheduleGenerator.swift in Sources */,
 				8046F35D90A991C5FF6F90E1 /* WorkoutAnnouncement.swift in Sources */,

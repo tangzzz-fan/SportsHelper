@@ -234,21 +234,24 @@ struct SettingsSheet: View {
 
     private var voiceCard: some View {
         VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 12) {
                     Text("语音提示")
                         .font(Typography.rowTitle)
-                    Text("训练时念动作、组数与休息；静音键打开时不发声")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Toggle("", isOn: $voice.isEnabled)
-                    .labelsHidden()
-                    .tint(Theme.accent(for: colorScheme))
+                    Spacer(minLength: 8)
+                    Picker("语音提示", selection: $voice.level) {
+                        ForEach(VoiceLevel.allCases, id: \.self) { level in
+                            Text(level.label).tag(level)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 186)
                     .accessibilityIdentifier(A11y.Settings.voiceToggle)
-                    .accessibilityLabel("语音提示")
+                }
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(16)
 
@@ -282,6 +285,10 @@ struct SettingsSheet: View {
             .padding(16)
         }
         .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var caption: String {
+        voice.level.isEnabled ? "\(voice.level.detail)；静音键打开时不发声" : voice.level.detail
     }
 
     private var statusCard: some View {

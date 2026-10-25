@@ -39,6 +39,42 @@ struct WorkoutVoiceSessionTests {
         #expect(speaker.spoken.last == "深蹲，第 1 组，共 1 组，12 次")
     }
 
+    @Test("静音档一句都不念")
+    func quietSpeaksNothing() {
+        let (voice, speaker) = makeVoice()
+        voice.level = .quiet
+        voice.start()
+        voice.stepChanged(to: 0)
+        voice.restStarted(seconds: 30)
+        voice.restTick(secondsLeft: 1)
+        voice.finished(completedSets: 2)
+        #expect(speaker.spoken.isEmpty)
+    }
+
+    @Test("精简档只报组开始，休息与倒数沉默")
+    func minimalKeepsOnlyInstructions() {
+        let (voice, speaker) = makeVoice()
+        voice.level = .minimal
+        voice.start()
+        voice.stepChanged(to: 0)
+        voice.restStarted(seconds: 30)
+        for second in [3, 2, 1] { voice.restTick(secondsLeft: second) }
+        voice.restFinished(nextStepIndex: 1)
+
+        #expect(speaker.spoken == [
+            "开始训练，训练，共 2 组",
+            "深蹲，第 1 组，共 1 组，12 次"
+        ])
+    }
+
+    @Test("训练中把档位调到静音，正在念的立刻停")
+    func switchingToQuietStopsCurrent() {
+        let (voice, speaker) = makeVoice()
+        voice.start()
+        voice.level = .quiet
+        #expect(speaker.cancelled == 1)
+    }
+
     @Test("同一个步骤重复渲染不重播")
     func repeatedStepDoesNotRepeat() {
         let (voice, speaker) = makeVoice()
@@ -296,6 +332,7 @@ struct WorkoutVoiceSessionTests {
 @MainActor
 private final class FakeSpeaker: SpeechRendering {
     private(set) var spoken: [String] = []
+    private(set) var cancelled = 0
 
     var availability: SpeechAvailability { .ready }
 
@@ -311,5 +348,7 @@ private final class FakeSpeaker: SpeechRendering {
         event(.finished(request.id, seconds: 0))
     }
 
-    func cancel() {}
+    func cancel() {
+        cancelled += 1
+    }
 }

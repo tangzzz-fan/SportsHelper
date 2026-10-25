@@ -100,13 +100,17 @@ final class VoiceService {
         releaseSession()
     }
 
-    static var isEnabledByUser: Bool {
+    static var levelByUser: VoiceLevel {
         #if DEBUG
         if ProcessInfo.processInfo.environment["DK_VOICE_ENABLED"] == "1" {
-            return true
+            return .standard
         }
         #endif
-        return VoiceSettingsStore.shared.isEnabled
+        return VoiceSettingsStore.shared.level
+    }
+
+    static var isEnabledByUser: Bool {
+        levelByUser.isEnabled
     }
 
     private static func makeRenderer() -> SpeechRendering {
