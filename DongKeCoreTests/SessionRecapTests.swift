@@ -8,27 +8,42 @@ struct SessionRecapTests {
     private let sessionId = UUID()
     private let start = Date(timeIntervalSince1970: 1_800_000_000)
 
-    private func log(_ status: SetStatus, offset: TimeInterval = 0) -> SetLog {
+    private func log(
+        _ status: SetStatus,
+        setIndex: Int,
+        offset: TimeInterval = 0,
+        origin: SetOrigin = .prescribed
+    ) -> SetLog {
         SetLog(
             sessionId: sessionId,
             prescriptionId: "i1",
-            setIndex: 1,
+            setIndex: setIndex,
             status: status,
             plannedValue: 12,
             actualValue: status == .downgraded ? 6 : 12,
             skipReason: status == .skipped ? .tooHard : nil,
-            completedAt: start.addingTimeInterval(offset)
+            completedAt: start.addingTimeInterval(offset),
+            origin: origin
         )
+    }
+
+    private func logs(_ statuses: [SetStatus]) -> [SetLog] {
+        statuses.enumerated().map { index, status in
+            log(status, setIndex: index + 1, offset: Double(index))
+        }
     }
 
     @Test("混合状态分别计入三个比率")
     func mixedStatuses() {
-        var logs: [SetLog] = []
-        logs.append(contentsOf: Array(repeating: log(.done), count: 9))
-        logs.append(contentsOf: Array(repeating: log(.downgraded), count: 2))
-        logs.append(log(.skipped))
-
-        let recap = SessionRecap(logs: logs, plannedSets: 12, startedAt: start, finishedAt: start.addingTimeInterval(18 * 60))
+        let statuses = Array(repeating: SetStatus.done, count: 9)
+            + Array(repeating: SetStatus.downgraded, count: 2)
+            + [.skipped]
+        let recap = SessionRecap(
+            logs: logs(statuses),
+            plannedSets: 12,
+            startedAt: start,
+            finishedAt: start.addingTimeInterval(18 * 60)
+        )
         #expect(recap.doneSets == 9)
         #expect(recap.downgradedSets == 2)
         #expect(recap.skippedSets == 1)
@@ -41,11 +56,33 @@ struct SessionRecapTests {
 
     @Test("全部干净完成时没有任何降阶或跳过")
     func cleanSession() {
-        let logs = Array(repeating: log(.done), count: 8)
-        let recap = SessionRecap(logs: logs, plannedSets: 8, startedAt: start, finishedAt: start.addingTimeInterval(600))
+        let recap = SessionRecap(
+            logs: logs(Array(repeating: .done, count: 8)),
+            plannedSets: 8,
+            startedAt: start,
+            finishedAt: start.addingTimeInterval(600)
+        )
         #expect(recap.completionRate == 1)
         #expect(recap.downgradeRate == 0)
         #expect(recap.skipRate == 0)
+        #expect(recap.isClean)
+    }
+
+    @Test("额外组单独计数，不进完成率")
+    func extrasStayOutOfCompletion() {
+        var sessionLogs = logs(Array(repeating: .done, count: 8))
+        sessionLogs.append(log(.done, setIndex: 9, offset: 9, origin: .extra))
+        sessionLogs.append(log(.done, setIndex: 10, offset: 10, origin: .extra))
+
+        let recap = SessionRecap(
+            logs: sessionLogs,
+            plannedSets: 8,
+            startedAt: start,
+            finishedAt: start.addingTimeInterval(600)
+        )
+        #expect(recap.completedSets == 8)
+        #expect(recap.extraSets == 2)
+        #expect(recap.completionRate == 1)
         #expect(recap.isClean)
     }
 
@@ -69,7 +106,7 @@ struct SessionRecapTests {
     @Test("时长文案按秒 / 分 / 小时三档")
     func durationFormatting() {
         func text(_ seconds: TimeInterval) -> String {
-            SessionRecap(plannedSets: 1, doneSets: 1, downgradedSets: 0, skippedSets: 0, duration: seconds).durationText
+            SessionRecap(ledger: SessionLedger(prescribedSets: 1, logs: []), duration: seconds).durationText
         }
         #expect(text(45) == "45 秒")
         #expect(text(60) == "1 分钟")
@@ -80,7 +117,12 @@ struct SessionRecapTests {
 
     @Test("百分比四舍五入到整数")
     func percentText() {
-        let recap = SessionRecap(plannedSets: 3, doneSets: 2, downgradedSets: 0, skippedSets: 1, duration: 60)
+        let recap = SessionRecap(
+            logs: logs([.done, .done, .skipped]),
+            plannedSets: 3,
+            startedAt: start,
+            finishedAt: start.addingTimeInterval(60)
+        )
         #expect(recap.percentText(recap.completionRate) == "67%")
         #expect(recap.percentText(recap.skipRate) == "33%")
         #expect(recap.percentText(2.0) == "100%")

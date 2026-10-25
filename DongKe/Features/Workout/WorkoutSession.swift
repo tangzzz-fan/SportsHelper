@@ -91,8 +91,12 @@ final class WorkoutSession: Identifiable {
         return flow.isLastSet(of: prescriptionId, at: stepIndex)
     }
 
+    var ledger: SessionLedger {
+        SessionLedger(prescribedSets: plannedSets, logs: logs)
+    }
+
     var completedSets: Int {
-        logs.filter { $0.status != .skipped }.count
+        ledger.completedSets
     }
 
     var plannedSets: Int {
@@ -100,8 +104,7 @@ final class WorkoutSession: Identifiable {
     }
 
     var progress: Double {
-        guard plannedSets > 0 else { return 0 }
-        return min(1, Double(completedSets) / Double(plannedSets))
+        ledger.completionRate ?? 0
     }
 
     var isResting: Bool {
@@ -120,10 +123,8 @@ final class WorkoutSession: Identifiable {
 
     var recap: SessionRecap {
         SessionRecap(
-            logs: logs,
-            plannedSets: plannedSets,
-            startedAt: startedAt,
-            finishedAt: finishedAt ?? Date()
+            ledger: ledger,
+            duration: (finishedAt ?? Date()).timeIntervalSince(startedAt)
         )
     }
 

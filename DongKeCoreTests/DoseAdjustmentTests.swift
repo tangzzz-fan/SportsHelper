@@ -111,8 +111,8 @@ func stopsAtCeiling() {
     #expect(DoseAdjustment.propose(plan: atLimit, logs: twoSessions(planned: 13), now: day)?.changes[0].toValue == 15)
 }
 
-@Test("时间型目标不参与加次数")
-func ignoresTimedTargets() {
+@Test("时间型目标不做「每组多做」的强证据，只走余力")
+func timedTargetsIgnoreStrongEvidence() {
     let timed = plan(value: 40, type: .durationSec)
     #expect(DoseAdjustment.propose(plan: timed, logs: twoSessions(planned: 40), now: day) == nil)
 }

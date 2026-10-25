@@ -51,8 +51,8 @@ extension DoseAdjustment {
                 cleared.append((item, lever))
                 continue
             }
-            guard item.target.value + repStep <= repCeiling else { continue }
-            guard recent.allSatisfy({ leftRepsInReserve(of: item, in: $0.logs) }) else { continue }
+            guard let axis = ProgressionAxis(item.target), axis.raised(item.target.value) != nil else { continue }
+            guard recent.allSatisfy({ leftReserve(of: item, in: $0.logs) }) else { continue }
             reserved.append(item)
         }
 
@@ -77,23 +77,45 @@ extension DoseAdjustment {
     }
 
     static func reserveProposal(_ context: DoseContext, reserved: [ExercisePrescription]) -> PlanProposal? {
-        let changes = reserved.compactMap { change(for: $0, lever: .reps, amplitude: context.memory.loadAmplitude) }
+        let dynamic = reserved.filter { ProgressionAxis($0.target) == .reps }
+        let holds = reserved.filter { ProgressionAxis($0.target) == .holdSeconds }
+        let axis: ProgressionAxis
+        let chosen: [ExercisePrescription]
+        if dynamic.isEmpty == false {
+            axis = .reps
+            chosen = dynamic
+        } else if holds.isEmpty == false {
+            axis = .holdSeconds
+            chosen = holds
+        } else {
+            return nil
+        }
+        let changes = chosen.compactMap { item in
+            axis == .reps
+                ? change(for: item, lever: .reps, amplitude: context.memory.loadAmplitude)
+                : holdChange(for: item)
+        }
         guard changes.isEmpty == false else { return nil }
         return PlanProposal(
             kind: .dose,
             changes: changes,
-            reason: reserveReason(names: changes.map(\.name).joined(separator: "、")),
+            reason: reserveReason(names: changes.map(\.name).joined(separator: "、"), axis: axis),
             createdAt: context.now
         )
     }
 
-    static func reserveReason(names: String) -> String {
-        "最近两次，\(names) 的最后一组你都觉得还能做三次以上。次数加两个，负重先不动。"
+    static func reserveReason(names: String, axis: ProgressionAxis) -> String {
+        switch axis {
+        case .reps:
+            return "最近两次，\(names) 的最后一组你都觉得还能做三次以上。次数加两个，负重先不动。"
+        case .holdSeconds:
+            return "最近两次，\(names) 的最后一组你都觉得还能撑。保持时间加 \(ProgressionAxis.holdStep) 秒，最长到 \(ProgressionAxis.holdCeiling) 秒。"
+        }
     }
 
-    static func leftRepsInReserve(of item: ExercisePrescription, in logs: [SetLog]) -> Bool {
-        guard item.target.type == .reps else { return false }
-        let mine = logs.filter { $0.prescriptionId == item.itemId }
+    static func leftReserve(of item: ExercisePrescription, in logs: [SetLog]) -> Bool {
+        guard ProgressionAxis(item.target) != nil else { return false }
+        let mine = logs.filter { $0.prescriptionId == item.itemId && $0.origin == .prescribed }
         guard let last = mine.max(by: { $0.setIndex < $1.setIndex }) else { return false }
         guard last.status == .done, last.plannedValue == item.target.value else { return false }
         guard let rpe = last.rpe else { return false }
@@ -106,6 +128,18 @@ extension DoseAdjustment {
         if item.load.type != .bodyweight, item.load.value > 0 { return .load }
         if item.sets < setCeiling { return .sets }
         return nil
+    }
+
+    static func holdChange(for item: ExercisePrescription) -> PlanProposal.Change? {
+        guard let axis = ProgressionAxis(item.target),
+              let next = axis.raised(item.target.value) else { return nil }
+        return PlanProposal.Change(
+            itemId: item.itemId,
+            name: item.name,
+            field: .hold,
+            fromValue: Double(item.target.value),
+            toValue: Double(next)
+        )
     }
 
     static func change(for item: ExercisePrescription, lever: Lever, amplitude: Double) -> PlanProposal.Change? {
@@ -153,7 +187,7 @@ extension DoseAdjustment {
     }
 
     static func clearedEverySet(of item: ExercisePrescription, in logs: [SetLog]) -> Bool {
-        let mine = logs.filter { $0.prescriptionId == item.itemId }
+        let mine = logs.filter { $0.prescriptionId == item.itemId && $0.origin == .prescribed }
         guard mine.count >= item.sets else { return false }
         return mine.allSatisfy { log in
             log.status == .done

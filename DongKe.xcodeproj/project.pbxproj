@@ -60,6 +60,7 @@
 		3C7BDB6F63310011E1FFCA47 /* WorkoutAnnouncementBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45E70A9EF88F11A7A52AC1F /* WorkoutAnnouncementBuilder.swift */; };
 		3C8BB5A982AB2152B994C9C9 /* DoseProposalCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4083AF4A9491EC57B421DD29 /* DoseProposalCard.swift */; };
 		3C9AE06D983603B4718734C8 /* ParseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9302C2D156CA902E7273C836 /* ParseModels.swift */; };
+		3CE902F80E455324587878D9 /* HoldProgressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9205585200CEFBF1D6917965 /* HoldProgressionTests.swift */; };
 		3FD743903A37B49B4ECC7ECF /* PlanEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9C88000C639C3A8F311D6D /* PlanEntity.swift */; };
 		401F4C9C0F21000857005FF0 /* SetTimerDriverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4943C0541E755A46DAFCFF97 /* SetTimerDriverTests.swift */; };
 		40A0E4B5A3DDAE8FB8B8E722 /* DraftLineScanner+Text.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF95C008A8E4B440012D702 /* DraftLineScanner+Text.swift */; };
@@ -108,6 +109,8 @@
 		60F14B17142DB8C186FFF5DC /* PlanSafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E434F78C161678114B97A881 /* PlanSafetyTests.swift */; };
 		61E05B690C32A51FB01ABF8A /* WorkoutResumeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43FE4F1FFA81BCDCB73707E8 /* WorkoutResumeTests.swift */; };
 		64677ABAB2C7127310574F8B /* AIContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0C1CF5217A1B2A6AF2F245 /* AIContractTests.swift */; };
+		65025A0597219C4A50D8909D /* ProgressionAxis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0522D63756FB13F06FA46F /* ProgressionAxis.swift */; };
+		66D0AA97E04E8971FFB76630 /* SessionLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948CFD0F19BF0154FBA4E369 /* SessionLedgerTests.swift */; };
 		67C778DCD627C1CDDA97014A /* WeeklyScheduleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E803E2ABEF355F54707C821 /* WeeklyScheduleGenerator.swift */; };
 		6A1EBA6691EDB20F4EC7C080 /* VoiceInputPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8198F6F535418F2EAEA684EF /* VoiceInputPhase.swift */; };
 		6A3E39839E419DC9E4EC252B /* ExerciseAliasResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5EABB2150760A258EAD5C5 /* ExerciseAliasResolver.swift */; };
@@ -116,6 +119,7 @@
 		6DA4E5928C28831DD9B1C7DB /* DoseAdjustment+Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEEC54348FCE3A15FBF42DB /* DoseAdjustment+Safety.swift */; };
 		6DA7B6FEFEBBDE472F9FF9CB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78924005EB823B3946C2AB57 /* HistoryView.swift */; };
 		718A04257FD48EBF52B5806D /* AITransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF788ADBAC45107B831FFD6 /* AITransport.swift */; };
+		71AA839481D8F298640A94BD /* SessionLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D396E65C8A5A2B13C78963 /* SessionLedger.swift */; };
 		71CE0FA9214CE7DA4126AD28 /* UserExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0036F18982FE6ABB6F67477 /* UserExerciseDetailView.swift */; };
 		7211E3919A78320D7C21A74B /* SetTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8213885D14997ACB22BF53E0 /* SetTarget.swift */; };
 		72C79F497D63B8481F6705D3 /* TimeOfDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57CFEC8D6EC9CB4D0AA3D84 /* TimeOfDay.swift */; };
@@ -372,6 +376,7 @@
 		4A1B8615DEDA086F36B4B136 /* AliasMemoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasMemoStore.swift; sourceTree = "<group>"; };
 		4A20645487ADDC9C7D048E27 /* PlanSafetyChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanSafetyChecker.swift; sourceTree = "<group>"; };
 		4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BriefConfirmView.swift; sourceTree = "<group>"; };
+		4C0522D63756FB13F06FA46F /* ProgressionAxis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionAxis.swift; sourceTree = "<group>"; };
 		4CC1DD2A03906061DF678382 /* WorkoutSession+State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WorkoutSession+State.swift"; sourceTree = "<group>"; };
 		4CF95C008A8E4B440012D702 /* DraftLineScanner+Text.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DraftLineScanner+Text.swift"; sourceTree = "<group>"; };
 		4E47A64F111345BCC01DC050 /* UnknownExerciseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnknownExerciseTests.swift; sourceTree = "<group>"; };
@@ -431,9 +436,11 @@
 		8F501E3694D2DEA6102D3A99 /* RestTimerStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerStateMachine.swift; sourceTree = "<group>"; };
 		904DF836831AE69987D87364 /* AIPlanGenerating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlanGenerating.swift; sourceTree = "<group>"; };
 		90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DongKeCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9205585200CEFBF1D6917965 /* HoldProgressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldProgressionTests.swift; sourceTree = "<group>"; };
 		9302C2D156CA902E7273C836 /* ParseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseModels.swift; sourceTree = "<group>"; };
 		930FFA9FD566FF041238DE01 /* DoseReserveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReserveTests.swift; sourceTree = "<group>"; };
 		942E3F6B487D7BC3DCCACC68 /* AIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConfiguration.swift; sourceTree = "<group>"; };
+		948CFD0F19BF0154FBA4E369 /* SessionLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLedgerTests.swift; sourceTree = "<group>"; };
 		94C4B19BCDDE7265796B7BF3 /* WorkoutSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSummaryView.swift; sourceTree = "<group>"; };
 		94E557F93442D77AA1593C8B /* DoseReportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReportTests.swift; sourceTree = "<group>"; };
 		95F2EC7CE530776A90723C5E /* DraftLineScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftLineScanner.swift; sourceTree = "<group>"; };
@@ -452,6 +459,7 @@
 		A13DF6068B0809CC07BD531A /* DraftLineScanner+Dose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DraftLineScanner+Dose.swift"; sourceTree = "<group>"; };
 		A23CAC5B5CBEA60A8CC68572 /* ExerciseLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseLibraryView.swift; sourceTree = "<group>"; };
 		A29EB0C06E192682252AB2B3 /* VoiceInputMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputMachine.swift; sourceTree = "<group>"; };
+		A2D396E65C8A5A2B13C78963 /* SessionLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLedger.swift; sourceTree = "<group>"; };
 		A3B253461DB483C3FC9B4856 /* CorrectionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionStore.swift; sourceTree = "<group>"; };
 		A4CC0B22EA0BD15B95368DF5 /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
 		A72F2690C3E52FBA1CE12668 /* ProposalMemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProposalMemo.swift; sourceTree = "<group>"; };
@@ -672,8 +680,10 @@
 				8BEEC54348FCE3A15FBF42DB /* DoseAdjustment+Safety.swift */,
 				07EFACD7A20E5D2454374AB8 /* DoseContext.swift */,
 				96756A522ECB326E955CA1AF /* PlanProposal.swift */,
+				4C0522D63756FB13F06FA46F /* ProgressionAxis.swift */,
 				D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */,
 				8F501E3694D2DEA6102D3A99 /* RestTimerStateMachine.swift */,
+				A2D396E65C8A5A2B13C78963 /* SessionLedger.swift */,
 				C53891C1FFE0EE91BE9ADA57 /* SessionRecap.swift */,
 				238F2A197411516434EDC1DE /* SetTimerDriver.swift */,
 				370A86363E7929C0A9F92503 /* SetTimerStateMachine.swift */,
@@ -986,6 +996,7 @@
 				4E4D30EE47BD565CC140A5FC /* FreeTextPlanParserTests.swift */,
 				38159CD313B1775E12D7F9F2 /* HeterogeneousImportTests.swift */,
 				08858064C4587155DEFFB92D /* HistoryStatsTests.swift */,
+				9205585200CEFBF1D6917965 /* HoldProgressionTests.swift */,
 				48CBCF5D84E8B294BC8F7D5B /* ImportStubs.swift */,
 				474A2F21D23A8E46FEE8418E /* IncompleteImportTests.swift */,
 				0E768556C34D46182E21898D /* JSONPayloadEdgeCaseTests.swift */,
@@ -1011,6 +1022,7 @@
 				102F550CF1AA854CF2A097D6 /* ReminderHealthTests.swift */,
 				821E0A91BCE94A72DB17773E /* ReminderTriggerTests.swift */,
 				1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */,
+				948CFD0F19BF0154FBA4E369 /* SessionLedgerTests.swift */,
 				A0687D412EFFC6AD281FEDB6 /* SessionRecapTests.swift */,
 				611D9F1DB37E4C5043E0732E /* SetLogRPETests.swift */,
 				4943C0541E755A46DAFCFF97 /* SetTimerDriverTests.swift */,
@@ -1228,11 +1240,13 @@
 				FF662691F24AB80298C81510 /* PlanSchemaJSON.swift in Sources */,
 				0BF68397448AA01C7529030A /* PlanValidator.swift in Sources */,
 				A145922B969FA0DD34ED248A /* ProfileModels.swift in Sources */,
+				65025A0597219C4A50D8909D /* ProgressionAxis.swift in Sources */,
 				075965F5BDB12590FCA1BFFA /* ProposalMemory.swift in Sources */,
 				2DCB33210364CBCB32A15E1F /* ReminderHealth.swift in Sources */,
 				D8A69C1D25DA37A6DC575B1E /* ReminderTrigger.swift in Sources */,
 				977C82EB49CDE10F874BC667 /* RestTimerStateMachine.swift in Sources */,
 				830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */,
+				71AA839481D8F298640A94BD /* SessionLedger.swift in Sources */,
 				A13E1F5C2A38031A677C05A4 /* SessionModels.swift in Sources */,
 				532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */,
 				7211E3919A78320D7C21A74B /* SetTarget.swift in Sources */,
@@ -1282,6 +1296,7 @@
 				4DA64951D52979FB83BCE65F /* FreeTextPlanParserTests.swift in Sources */,
 				480E30E1019CE4A6C328A724 /* HeterogeneousImportTests.swift in Sources */,
 				6D56107CAFD19405568CB248 /* HistoryStatsTests.swift in Sources */,
+				3CE902F80E455324587878D9 /* HoldProgressionTests.swift in Sources */,
 				7DE556C6D827DD9F438AB58D /* ImportStubs.swift in Sources */,
 				5D435FB2A6EA44EA11CF6477 /* IncompleteImportTests.swift in Sources */,
 				1D3BDD0DD2F49F5D68CBA568 /* JSONPayloadEdgeCaseTests.swift in Sources */,
@@ -1307,6 +1322,7 @@
 				31234E55FA971E4396F49A1A /* ReminderHealthTests.swift in Sources */,
 				4185758B7014D2F8F74A9828 /* ReminderTriggerTests.swift in Sources */,
 				468DBB22E7F0F320E2D20A62 /* RestTimerStateMachineTests.swift in Sources */,
+				66D0AA97E04E8971FFB76630 /* SessionLedgerTests.swift in Sources */,
 				47F796030AAE671920DB2BDC /* SessionRecapTests.swift in Sources */,
 				A8F38AB80A503D83B490366E /* SetLogRPETests.swift in Sources */,
 				401F4C9C0F21000857005FF0 /* SetTimerDriverTests.swift in Sources */,

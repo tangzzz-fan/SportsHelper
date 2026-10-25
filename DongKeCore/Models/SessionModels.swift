@@ -1,49 +1,14 @@
 import Foundation
 
-public enum SessionStatus: String, Codable, Sendable {
-    case active
-    case completed
-    case abandoned
-}
-
-public struct WorkoutSession: Codable, Equatable, Identifiable, Sendable {
-    public var id: UUID
-    public var planId: UUID
-    public var planDayId: Int
-    public var startedAt: Date
-    public var finishedAt: Date?
-    public var status: SessionStatus
-    public var plannedSets: Int
-    public var completedSets: Int
-    public var totalRestSeconds: Int
-
-    public init(
-        id: UUID = UUID(),
-        planId: UUID,
-        planDayId: Int,
-        startedAt: Date,
-        finishedAt: Date? = nil,
-        status: SessionStatus = .active,
-        plannedSets: Int,
-        completedSets: Int = 0,
-        totalRestSeconds: Int = 0
-    ) {
-        self.id = id
-        self.planId = planId
-        self.planDayId = planDayId
-        self.startedAt = startedAt
-        self.finishedAt = finishedAt
-        self.status = status
-        self.plannedSets = plannedSets
-        self.completedSets = completedSets
-        self.totalRestSeconds = totalRestSeconds
-    }
-}
-
 public enum SetStatus: String, Codable, Sendable {
     case done
     case downgraded
     case skipped
+}
+
+public enum SetOrigin: String, Codable, Sendable {
+    case prescribed
+    case extra
 }
 
 public enum SkipReason: String, Codable, Sendable, CaseIterable {
@@ -76,6 +41,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var skipReason: SkipReason?
     public var rpe: Int?
     public var completedAt: Date
+    public var origin: SetOrigin
 
     public init(
         id: UUID = UUID(),
@@ -88,7 +54,8 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         actualValue: Int,
         skipReason: SkipReason? = nil,
         rpe: Int? = nil,
-        completedAt: Date
+        completedAt: Date,
+        origin: SetOrigin = .prescribed
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -101,6 +68,39 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.skipReason = skipReason
         self.rpe = rpe
         self.completedAt = completedAt
+        self.origin = origin
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case sessionId
+        case prescriptionId
+        case catalogId
+        case setIndex
+        case status
+        case plannedValue
+        case actualValue
+        case skipReason
+        case rpe
+        case completedAt
+        case origin
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        sessionId = try container.decode(UUID.self, forKey: .sessionId)
+        prescriptionId = try container.decode(String.self, forKey: .prescriptionId)
+        catalogId = try container.decodeIfPresent(String.self, forKey: .catalogId)
+        setIndex = try container.decode(Int.self, forKey: .setIndex)
+        status = try container.decode(SetStatus.self, forKey: .status)
+        plannedValue = try container.decode(Int.self, forKey: .plannedValue)
+        actualValue = try container.decode(Int.self, forKey: .actualValue)
+        skipReason = try container.decodeIfPresent(SkipReason.self, forKey: .skipReason)
+        rpe = try container.decodeIfPresent(Int.self, forKey: .rpe)
+        completedAt = try container.decode(Date.self, forKey: .completedAt)
+        origin = try container.decodeIfPresent(String.self, forKey: .origin)
+            .flatMap(SetOrigin.init(rawValue:)) ?? .prescribed
     }
 }
 

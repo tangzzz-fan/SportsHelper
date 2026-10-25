@@ -2,14 +2,6 @@ import Foundation
 import SwiftData
 import DongKeCore
 
-struct SetLogTally: Equatable, Sendable {
-    var done = 0
-    var downgraded = 0
-    var skipped = 0
-
-    var logged: Int { done + downgraded + skipped }
-}
-
 @MainActor
 @Observable
 final class SetLogStore {
@@ -31,7 +23,8 @@ final class SetLogStore {
             actualValue: log.actualValue,
             skipReasonRaw: log.skipReason?.rawValue,
             completedAt: log.completedAt,
-            rpe: log.rpe
+            rpe: log.rpe,
+            originRaw: log.origin.rawValue
         )
         context.insert(entity)
         try? context.save()
@@ -66,18 +59,9 @@ final class SetLogStore {
             actualValue: entity.actualValue,
             skipReason: entity.skipReasonRaw.flatMap(SkipReason.init(rawValue:)),
             rpe: entity.rpe,
-            completedAt: entity.completedAt
+            completedAt: entity.completedAt,
+            origin: entity.originRaw.flatMap(SetOrigin.init(rawValue:)) ?? .prescribed
         )
-    }
-
-    func tally(for sessionId: UUID) -> SetLogTally {
-        logs(for: sessionId).reduce(into: SetLogTally()) { tally, log in
-            switch log.status {
-            case .done: tally.done += 1
-            case .downgraded: tally.downgraded += 1
-            case .skipped: tally.skipped += 1
-            }
-        }
     }
 
     func deleteAll() {

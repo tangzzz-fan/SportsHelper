@@ -32,6 +32,7 @@ public struct DoseReport: Equatable, Sendable {
     public var effectiveSets: Int
     public var completedSets: Int
     public var skippedSets: Int
+    public var extraSets: Int
     public var skips: [SkipSlice]
     public var weeklySets: [Int]
 
@@ -40,6 +41,7 @@ public struct DoseReport: Equatable, Sendable {
         effectiveSets: Int = 0,
         completedSets: Int = 0,
         skippedSets: Int = 0,
+        extraSets: Int = 0,
         skips: [SkipSlice] = [],
         weeklySets: [Int] = []
     ) {
@@ -47,6 +49,7 @@ public struct DoseReport: Equatable, Sendable {
         self.effectiveSets = effectiveSets
         self.completedSets = completedSets
         self.skippedSets = skippedSets
+        self.extraSets = extraSets
         self.skips = skips
         self.weeklySets = weeklySets
     }
@@ -61,10 +64,6 @@ public struct DoseReport: Equatable, Sendable {
 public enum DoseReportBuilder {
     public static let defaultWeeks = 4
 
-    public static func isEffective(_ log: SetLog) -> Bool {
-        log.status == .done && (log.rpe ?? 5) >= 2
-    }
-
     public static func build(
         logs: [SetLog],
         now: Date = Date(),
@@ -75,10 +74,11 @@ public enum DoseReportBuilder {
         let currentEnd = calendar.date(byAdding: .day, value: 7, to: start) ?? start
         let previousStart = calendar.date(byAdding: .day, value: -7, to: start) ?? start
 
-        let thisWeek = logs.filter { $0.completedAt >= start && $0.completedAt < currentEnd }
-        let lastWeek = logs.filter { $0.completedAt >= previousStart && $0.completedAt < start }
+        let unique = SessionLedger.distinct(logs)
+        let thisWeek = unique.filter { $0.completedAt >= start && $0.completedAt < currentEnd }
+        let lastWeek = unique.filter { $0.completedAt >= previousStart && $0.completedAt < start }
 
-        let effective = thisWeek.filter(isEffective)
+        let effective = thisWeek.filter(SessionLedger.isEffective)
 
         var sets: [Muscle: Int] = [:]
         var previous: [Muscle: Int] = [:]
@@ -87,7 +87,7 @@ public enum DoseReportBuilder {
                 sets[muscle, default: 0] += 1
             }
         }
-        for log in lastWeek where isEffective(log) {
+        for log in lastWeek where SessionLedger.isEffective(log) {
             for muscle in muscles(for: log) {
                 previous[muscle, default: 0] += 1
             }
@@ -107,7 +107,7 @@ public enum DoseReportBuilder {
         }
 
         let skips = SkipReason.allCases.compactMap { reason -> DoseReport.SkipSlice? in
-            let count = thisWeek.filter { $0.skipReason == reason }.count
+            let count = thisWeek.filter { $0.origin == .prescribed && $0.skipReason == reason }.count
             return count > 0 ? DoseReport.SkipSlice(reason: reason, count: count) : nil
         }
         .sorted { $0.count == $1.count ? $0.reason.rawValue < $1.reason.rawValue : $0.count > $1.count }
@@ -116,16 +116,17 @@ public enum DoseReportBuilder {
         for offset in stride(from: weeks - 1, through: 0, by: -1) {
             guard let bucketStart = calendar.date(byAdding: .day, value: -7 * offset, to: start),
                   let bucketEnd = calendar.date(byAdding: .day, value: 7, to: bucketStart) else { continue }
-            weeklySets.append(logs.filter {
-                $0.completedAt >= bucketStart && $0.completedAt < bucketEnd && isEffective($0)
+            weeklySets.append(unique.filter {
+                $0.completedAt >= bucketStart && $0.completedAt < bucketEnd && SessionLedger.isEffective($0)
             }.count)
         }
 
         return DoseReport(
             muscles: muscles,
             effectiveSets: effective.count,
-            completedSets: thisWeek.filter { $0.status != .skipped }.count,
-            skippedSets: thisWeek.filter { $0.status == .skipped }.count,
+            completedSets: thisWeek.filter { $0.origin == .prescribed && $0.status != .skipped }.count,
+            skippedSets: thisWeek.filter { $0.origin == .prescribed && $0.status == .skipped }.count,
+            extraSets: thisWeek.filter { $0.origin == .extra && $0.status != .skipped }.count,
             skips: skips,
             weeklySets: weeklySets
         )

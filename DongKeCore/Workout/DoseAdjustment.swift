@@ -92,6 +92,10 @@ public enum DoseAdjustment {
                         switch change.field {
                         case .reps:
                             item.target.value = Int(change.toValue.rounded())
+                        case .hold:
+                            if item.target.type == .durationSec {
+                                item.target.value = Int(change.toValue.rounded())
+                            }
                         case .sets:
                             item.sets = Int(change.toValue.rounded())
                         case .load:

@@ -21,6 +21,7 @@ public struct PlanProposal: Equatable, Sendable {
         public enum Field: String, Codable, Sendable {
             case sets
             case reps
+            case hold
             case load
             case exercise
         }
@@ -54,6 +55,7 @@ public struct PlanProposal: Equatable, Sendable {
         public var unit: String {
             switch field {
             case .reps: "次"
+            case .hold: "秒"
             case .sets: "组"
             case .load: "kg"
             case .exercise: ""

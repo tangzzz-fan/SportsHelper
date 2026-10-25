@@ -40,12 +40,33 @@ private func log(
 
 @Test("有效组：做了、且不是「很轻松」")
 func effectiveDefinition() {
-    #expect(DoseReportBuilder.isEffective(log("squat")))
-    #expect(DoseReportBuilder.isEffective(log("squat", rpe: 2)))
-    #expect(DoseReportBuilder.isEffective(log("squat", rpe: 5)))
-    #expect(DoseReportBuilder.isEffective(log("squat", rpe: 1)) == false)
-    #expect(DoseReportBuilder.isEffective(log("squat", status: .downgraded)) == false)
-    #expect(DoseReportBuilder.isEffective(log("squat", status: .skipped)) == false)
+    #expect(SessionLedger.isEffective(log("squat")))
+    #expect(SessionLedger.isEffective(log("squat", rpe: 2)))
+    #expect(SessionLedger.isEffective(log("squat", rpe: 5)))
+    #expect(SessionLedger.isEffective(log("squat", rpe: 1)) == false)
+    #expect(SessionLedger.isEffective(log("squat", status: .downgraded)) == false)
+    #expect(SessionLedger.isEffective(log("squat", status: .skipped)) == false)
+}
+
+@Test("额外加练进有效组，同时单独计数")
+func extraSetsCountAsDose() {
+    var extra = log("squat")
+    extra.origin = .extra
+    let report = DoseReportBuilder.build(logs: [log("squat"), extra], now: now, calendar: calendar)
+    #expect(report.effectiveSets == 2)
+    #expect(report.completedSets == 1)
+    #expect(report.extraSets == 1)
+    #expect(report.muscles.first { $0.muscle == .quads }?.sets == 2)
+}
+
+@Test("额外组是跳过时，不进额外完成数，也不进跳过原因")
+func skippedExtraIsNotCounted() {
+    var extra = log("squat", status: .skipped, skip: .noTime)
+    extra.origin = .extra
+    let report = DoseReportBuilder.build(logs: [log("squat"), extra], now: now, calendar: calendar)
+    #expect(report.extraSets == 0)
+    #expect(report.skippedSets == 0)
+    #expect(report.skips.isEmpty)
 }
 
 @Test("一组深蹲同时记到股四头与臀")

@@ -17,7 +17,8 @@ private func log(
     actual: Int? = nil,
     status: SetStatus = .done,
     rpe: Int? = nil,
-    offsetDays: Int = 0
+    offsetDays: Int = 0,
+    origin: SetOrigin = .prescribed
 ) -> SetLog {
     SetLog(
         sessionId: session,
@@ -27,7 +28,8 @@ private func log(
         plannedValue: planned,
         actualValue: actual ?? planned,
         rpe: rpe,
-        completedAt: reserveDay.addingTimeInterval(Double(offsetDays) * 86_400 + Double(setIndex))
+        completedAt: reserveDay.addingTimeInterval(Double(offsetDays) * 86_400 + Double(setIndex)),
+        origin: origin
     )
 }
 
@@ -58,6 +60,15 @@ private func session(
 
 private func twoBy(_ build: (UUID, Int) -> [SetLog]) -> [SetLog] {
     build(UUID(), 0) + build(UUID(), 3)
+}
+
+private func sessionWithExtraReserve(offsetDays: Int) -> [SetLog] {
+    let id = UUID()
+    var logs = (0..<3).map { index in
+        log(session: id, setIndex: index, rpe: nil, offsetDays: offsetDays + index)
+    }
+    logs.append(log(session: id, setIndex: 3, rpe: 2, offsetDays: offsetDays + 3, origin: .extra))
+    return logs
 }
 
 @Suite("余力提案")
@@ -130,15 +141,49 @@ struct ReserveProposalTests {
         #expect(DoseAdjustment.propose(plan: plan, logs: logs, now: reserveDay) == nil)
     }
 
-    @Test("静态动作（按秒）不走余力加次数")
-    func durationTargetsAreSilent() {
+    @Test("静态动作（按秒）的余力加保持时间，不加次数")
+    func durationTargetsGainHoldSeconds() throws {
         let plan = makePlan(days: [makeDay(index: 1, blocks: [makeBlock(items: [
             makeItem(sets: 3, value: 10, targetType: .durationSec)
         ])])])
         let logs = twoBy { _, offset in
             session(lastRpe: 2, planned: 10, offsetDays: offset)
         }
+        let proposal = try #require(DoseAdjustment.propose(plan: plan, logs: logs, now: reserveDay))
+        #expect(proposal.changes[0].field == .hold)
+        #expect(proposal.changes[0].toValue == 15)
+        #expect(proposal.changes[0].unit == "秒")
+        #expect(proposal.reason.contains("保持时间"))
+    }
+
+    @Test("保持时间到 60 秒后沉默，不转成加组")
+    func holdCeilingStaysSilent() {
+        let plan = makePlan(days: [makeDay(index: 1, blocks: [makeBlock(items: [
+            makeItem(sets: 3, value: 60, targetType: .durationSec)
+        ])])])
+        let logs = twoBy { _, offset in
+            session(lastRpe: 2, planned: 60, offsetDays: offset)
+        }
         #expect(DoseAdjustment.propose(plan: plan, logs: logs, now: reserveDay) == nil)
+    }
+
+    @Test("额外组上的余力不算计划证据")
+    func extraSetReserveIsIgnored() {
+        let logs = sessionWithExtraReserve(offsetDays: 0) + sessionWithExtraReserve(offsetDays: 3)
+        #expect(DoseAdjustment.propose(plan: reservePlan(), logs: logs, now: reserveDay) == nil)
+    }
+
+    @Test("额外组上的多做也不算计划证据")
+    func extraSetClearanceIsIgnored() {
+        func build(offsetDays: Int) -> [SetLog] {
+            let id = UUID()
+            var logs = (0..<3).map { index in
+                log(session: id, setIndex: index, offsetDays: offsetDays + index)
+            }
+            logs.append(log(session: id, setIndex: 3, actual: 15, offsetDays: offsetDays + 3, origin: .extra))
+            return logs
+        }
+        #expect(DoseAdjustment.propose(plan: reservePlan(), logs: build(offsetDays: 0) + build(offsetDays: 3), now: reserveDay) == nil)
     }
 
     @Test("真的多做了优先于只是觉得轻松——一次只讲一种证据")

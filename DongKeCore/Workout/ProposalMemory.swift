@@ -111,7 +111,9 @@ public struct ProposalMemory: Equatable, Sendable, Codable {
     public func settling(logs: [SetLog], now: Date = Date()) -> ProposalMemory {
         guard let since = pendingSetbackSince else { return self }
         let sessions = Dictionary(grouping: logs.filter {
-            $0.completedAt > since && pendingItemIds.contains($0.prescriptionId)
+            $0.origin == .prescribed
+                && $0.completedAt > since
+                && pendingItemIds.contains($0.prescriptionId)
         }, by: \.sessionId)
         let ordered = sessions.values.sorted {
             ($0.map(\.completedAt).min() ?? now) < ($1.map(\.completedAt).min() ?? now)

@@ -14,6 +14,7 @@ final class SetLogEntity {
     var skipReasonRaw: String?
     var completedAt: Date
     var rpe: Int?
+    var originRaw: String?
 
     init(
         id: UUID,
@@ -26,7 +27,8 @@ final class SetLogEntity {
         actualValue: Int,
         skipReasonRaw: String?,
         completedAt: Date,
-        rpe: Int? = nil
+        rpe: Int? = nil,
+        originRaw: String? = nil
     ) {
         self.id = id
         self.sessionId = sessionId
@@ -39,5 +41,6 @@ final class SetLogEntity {
         self.skipReasonRaw = skipReasonRaw
         self.completedAt = completedAt
         self.rpe = rpe
+        self.originRaw = originRaw
     }
 }

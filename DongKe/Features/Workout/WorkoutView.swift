@@ -258,7 +258,7 @@ struct WorkoutView: View {
 
     private var effortRow: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("这组还剩几次力气？不选也行")
+            Text(effortTitle)
                 .font(Typography.capsLabel)
                 .foregroundStyle(.secondary)
             HStack(spacing: 6) {
@@ -273,13 +273,30 @@ struct WorkoutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var isHoldTarget: Bool {
+        session.currentTarget?.type == .durationSec
+    }
+
+    private var effortTitle: String {
+        isHoldTarget ? "这组还能撑几秒？不选也行" : "这组还剩几次力气？不选也行"
+    }
+
     private func effortLabel(_ level: Int) -> String {
+        if isHoldTarget {
+            switch level {
+            case 1: return "很轻松"
+            case 2: return "还能 10 秒"
+            case 3: return "还能 5 秒"
+            case 4: return "还能 2 秒"
+            default: return "已经力竭"
+            }
+        }
         switch level {
-        case 1: "很轻松"
-        case 2: "还能 3 次"
-        case 3: "还能 2 次"
-        case 4: "还能 1 次"
-        default: "已经力竭"
+        case 1: return "很轻松"
+        case 2: return "还能 3 次"
+        case 3: return "还能 2 次"
+        case 4: return "还能 1 次"
+        default: return "已经力竭"
         }
     }
 
