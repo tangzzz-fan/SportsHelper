@@ -759,6 +759,20 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 
 设置里那张卡放在「大字模式」后面，不放「关于」里——放底部等于没人看得到。
 
+## 6.30 会话账本与保持时间进阶（2026-10-25）
+
+**完成率与剂量分账。** 会话里可以加组之后，同一个训练日有两种组：计划内与额外。完成率的分母锁计划组数，额外组不进分母、也不让 `HistoryStats.isCompleted` 成立；额外组只进剂量（本周有效组与肌群分布），带 `SetOrigin.extra`。跳过一组再加两组，仍是 11/12。口径依据见 ADR-0006。
+
+**会话计数只有一个出处。** `SessionLedger` 按 `origin` 分账、按 `(sessionId, prescriptionId, setIndex, origin)` 去重；`SessionRecap` 是它的投影，`WorkoutSession.completedSets/progress/recap` 全部从它取数，`DoseReport` 的 `completedSets` / `skips` 只数计划内。UI 不再自己数 logs。以后改分母先改账本，别在各视图里加 `filter`。
+
+**旧数据兼容有两处，缺一条就会静默丢数据**：`SetLog.init(from:)` 对缺失或未知的 `origin` 都回落 `.prescribed`；`SetLogEntity.originRaw` 是可选列，旧库读出来也是计划内。`WorkoutCheckpointStore.load()` 用 `try?`，解码一抛错整条断点就没了——所以 `origin` 用 `decodeIfPresent(String)` 再 `init(rawValue:)`，不要直接 `decode(SetOrigin.self)`。
+
+**静态动作走保持时间轴。** `ProgressionAxis` 只抽两根：`reps` 与 `holdSeconds`，`distanceM` 没有轴。余力连续两次 ≤ 2 → 保持时间 +5 秒，上限 60 秒；到顶沉默，不转成加组。余力档位对静态映射为 10 / 5 / 2 秒，让「还能撑 10 秒」加 5 秒后仍留半档。强证据仍只覆盖 reps——UI 不记录「多撑了几秒」，`clearedEverySet` 对静态没有可用数据。
+
+**没做的两件**：静态动作的减量轴（疼痛仍减组，BACKLOG §1 文末）、加组的入口与断点续练（`.scratch/session-ledger/issues/01`）。后者是下一步：`WorkoutFlowModel` 不要改成可变，`WorkoutSession` 另持 `script`，checkpoint 要存额外组的插入位置。
+
+本轮单测 715 条全绿。
+
 ## 7. 换机后容易踩的坑
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。
 2. **把历史红当环境问题**：先看 `docs/GATE-2-TEST-REPORT.md` 的红转绿顺序（该报告是 2026-10-22 的历史快照，当前已全绿）。

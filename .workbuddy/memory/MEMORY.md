@@ -103,11 +103,21 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 | 结构与契约 | `docs/ARCHITECTURE.md` §4–§11 | — |
 | 动作图示规格 | `docs/FIGURE-STYLE.md` | ARCHITECTURE §12 只留两条约束 |
 | 动作库字段口径 | ARCHITECTURE §5.6 | — |
+| 完成率 / 剂量口径 | ARCHITECTURE §11 + ADR-0006 | 别在视图里另算 |
 | 术语 | `GLOSSARY.md` | — |
 
 **ARCHITECTURE 会撒谎，别以为它记得住现状。** 2026-10-25 对齐过一次（v1.3 → v1.4，767 行改动）：里面有整章讲着没实现的方案（自绘骨架 / 埋点 / `AppLog` / `BackupService`）、9 个不存在的类型名、18 条动作库（实际 43）、`DongKe/Domain` 目录（实际是 `DongKeCore` framework）。
 
 校验办法（改完文档跑一次）：把文档里所有 `` `CamelCase` `` 抓出来，对代码里 `struct|enum|class|protocol` 的名字表，差集就是可疑项。**纯人工读发现不了**。
+
+## 完成率与剂量分账（2026-10-25）
+
+**完成率分母锁计划组数，额外组不进分母、也不让「这一节练过没有」成立；额外组只进剂量。** 跳过一组再加两组，仍是 11/12。口径在 ADR-0006，实现只有一个出处：`SessionLedger`（按 `SetLog.origin` 分账、按逻辑键去重）。`SessionRecap` 是它的投影；**改分母先改账本，不要在视图或 `DoseReport` 里加 `filter`**。
+
+- `SetLog.origin` 缺字段或未知值都回落 `.prescribed`；`SetLogEntity.originRaw` 可选列。`WorkoutCheckpointStore.load()` 用 `try?`，解码一抛错整条断点静默丢失——别直接 `decode(SetOrigin.self)`。
+- 静态动作走保持时间轴：余力连续两次 ≤ 2 → +5 秒，上限 60 秒；到顶沉默，不转加组。余力档位对静态是 10 / 5 / 2 秒。`distanceM` 没有轴。
+- 静态动作的**减量**没有统一：疼仍减组、太累不处理。要改先定「疼的时候减时间还是停做」。
+- 加组的入口/断点续练还没做，票在 `.scratch/session-ledger/issues/01`。`WorkoutFlowModel` 保持不可变，`WorkoutSession` 另持 `script`。
 
 ## 环境
 

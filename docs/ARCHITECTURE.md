@@ -1,7 +1,7 @@
 # 动刻 iOS 架构设计
 
-版本：v1.4
-状态：已交付并持续维护（v1.4 对齐当前实现，见下方修订记录）
+版本：v1.5
+状态：已交付并持续维护（v1.5 补会话账本与保持时间进阶，见下方修订记录）
 适用范围：居家减脂运动提醒助手 iOS MVP（iPhone）
 配套契约：`docs/plan-schema.json`（计划数据唯一契约）
 生效顺序：`docs/FROZEN-BASELINE.md` + `docs/SPEC.md` > 本文 > `docs/PRD.md` / `docs/UIUX.md` / `docs/design-tokens.json`。冲突时以 FROZEN-BASELINE 与 SPEC 为准。
@@ -14,6 +14,7 @@
 - v1.2 定稿收敛：动作库锁定 18 个 catalogId（与 `plan-schema.json` 白名单一致）；素材入包 18 动作 × 3 帧 = 54 张，新增 §12.5 文件映射表与导入流程（v1.3 已撤销）；久坐提醒移出 MVP 列 P1（§9.6），通知常驻量回到 ≤7 条、预算按此重算（§9.3）；主色裁决为深青绿 `#0E7C66`（§14.3、§14.6）；取消打包字体，改系统等宽（§14.4）；最低版本 iOS 18.0 与直连 AI 进 MVP 均确认
 - v1.3 按 `FROZEN-BASELINE.md` 回同步：动作图示恢复为**自绘参数化骨架 12 关节**（决策 6，撤销 D-20 的第三方素材）、主色确认**深青绿 `#0E7C66` / `#34B39A`**（决策 11）、**跳过并顺延移出 MVP 列 P1**（§2）、**字体改零打包**（撤销 B612 Mono Bold 打包，系统等宽 + `.monospacedDigit()`）、久坐额度不再提 48 小时滚动窗口（决策 8）；§12 全章重写，§5.4 退化为 weekday 匹配
 - v1.4 对齐当前实现（2026-10-25）：§4.1 / §4.2 按实际的 **framework 拆分**重写（纯逻辑在 `DongKeCore` target，不是早期草案里的 `DongKe/Domain` 目录）；§5.4 排期解析从 `ScheduleResolver` 换成 `PlanCalendar`（回答「这一次兑现的是哪一天」）；§5 / §6.1 补 `planDate` 与 `catalogId`；§10 新增余力采集（§10.5）与剂量回路（§10.6）；§11 统计口径改为按计划日归属；§15.1 必测清单补 `PlanGenerator` / `PlanCalendar` / `DoseAdjustment` / `DoseReport`
+- v1.5 会话账本（2026-10-25）：§5.2 / §10.4 明确加组不改完成率分母；§11 新增 `SessionLedger` 作为会话计数唯一出处，完成率与剂量分账（ADR-0006）；§10.6 静态动作走保持时间轴（+5 秒，上限 60 秒），证据只看计划内日志
 
 ---
 
@@ -230,7 +231,9 @@ DongKeCore/                            # framework：纯 Foundation，可脱离�
 │   ├── DoseAdjustment+Progression.swift # 三周加一降、加量（强证据 + 余力）
 │   ├── DoseContext.swift / PlanProposal.swift / ProposalMemory.swift
 │   ├── WorkoutCheckpoint.swift        # 断点 + 30 分钟窗口
-│   ├── SessionRecap.swift
+│   ├── SessionLedger.swift            # 会话分账：计划内 / 额外、完成率与有效组口径
+│   ├── SessionRecap.swift             # 账本投影 + 时长文案
+│   ├── ProgressionAxis.swift          # 进阶轴：次数 / 保持时间，距离无轴
 │   └── WorkoutAnnouncement*.swift / SpeechCueCoordinator.swift / WorkoutVoiceSession.swift / WorkoutPrompt.swift
 ├── AI/                                # BYOK 客户端、提示词、响应映射
 ├── VoiceInput/                        # 语音输入状态机与文案
@@ -373,7 +376,7 @@ FlowStep
 └── .finished
 ```
 
-循环块展开规则：`rounds` 轮，每轮依次走 `items`，轮内动作间用 `restBetweenItemsSec`，每轮结束插一条 `.roundBreak(restBetweenRoundsSec)`（最后一轮不插）。超级组同理（`restBetweenItemsSec = 0`）。`plannedSets` 等于展开后 `.set` 的数量，写进 `WorkoutSession` 作为分母，完成率分母从此固定，改计划不影响历史。
+循环块展开规则：`rounds` 轮，每轮依次走 `items`，轮内动作间用 `restBetweenItemsSec`，每轮结束插一条 `.roundBreak(restBetweenRoundsSec)`（最后一轮不插）。超级组同理（`restBetweenItemsSec = 0`）。`plannedSets` 等于展开后 `.set` 的数量，写进 `WorkoutSession` 作为分母，完成率分母从此固定：改计划不影响历史，**会话中加组也不改它**（额外组另记来源，见 §11.1）。
 
 这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。
 
@@ -907,13 +910,14 @@ ActivityKit 实况通知（锁屏显示倒计时且不需要 App 运行）能显
 - **落盘时连归属一起写**：`SessionEntity.planDate` = 这一节兑现的那一天（`PlanCalendar` 算出），不是「点开始按钮的那天」。周日提前练下周一的课，`planDate` 是下周一。
 - `undoLastSet` 只在会话未结束时允许，删除最后一条日志并回退计数。对已结束的会话调用必须抛错——这是「改今天的一组不得改昨天历史」的物理保证。
 - `abandon` 保留已写入的日志，完成率照算。练了一半也是练了。
-- 训练开始时把 `plannedSets` 写死。中途改计划不影响这次的分母。
+- 训练开始时把 `plannedSets` 写死。中途改计划不影响这次的分母；会话中「今天再加一组」也不改它，额外组以 `origin = .extra` 落一条独立日志，完成率与「练过没有」都只看计划内。
+- 每条日志带 `origin`：`prescribed`（计划内）/ `extra`（当场加练）。旧 checkpoint 与旧库没有这个字段时按 `prescribed` 解码，不丢断点。
 - 每次落盘后给一次轻量触感（`.light`），`reduceMotion` 或系统关闭触感时跳过。触感是「已记录」的唯一即时反馈。
 - 落盘失败必须冒泡到 UI 显示「这一组没有保存成功」，不吞掉。
 
 ### 10.5 余力：每个动作的最后一组问一次
 
-训练页在**每个动作收尾时**问一次「这组还剩几次力气」（1–5，不选也行），不是全天只问一次。
+训练页在**每个动作收尾时**问一次「这组还剩几次力气」（1–5，不选也行），不是全天只问一次。静态动作问的是「还能撑几秒」，同一 1–5 刻度映射为 10 / 5 / 2 秒，阈值与次数共用（≤ 2 算有余力）。
 
 | 决策 | 值 | 理由 |
 |---|---|---|
@@ -941,7 +945,7 @@ public static func apply(_ proposal: PlanProposal, to plan: WorkoutPlan, now: Da
 | 证据 | 门槛 | 动作 |
 |---|---|---|
 | 每组都 ≥ 目标 + 1 | 连续 2 次会话 | 加量，三级取最低：次数 +2 → 负重 ×耐受幅度 → 组数 +1 |
-| 最后一组 `rpe ≤ 2`（还能做三次以上） | 连续 2 次会话 | 加量，**只加次数 +2** |
+| 最后一组 `rpe ≤ 2`（还能做三次以上；静态还能撑 10 秒） | 连续 2 次会话 | 加量，**只动当前轴**：次数 +2，静态保持时间 +5 秒（上限 60 秒） |
 | 同一动作标「太累」 | 连续 2 次会话 | 负重 ×0.9 或次数 −2，组数不动 |
 | 同一动作标「没时间」，且那天动作 > 5 | 最近 3 次会话 | 砍掉那个动作 |
 | 标「疼」 | 7 天内任意一次 | 该动作减 20%（负重 → 次数 → 组数） |
@@ -950,12 +954,12 @@ public static func apply(_ proposal: PlanProposal, to plan: WorkoutPlan, now: Da
 
 八条硬约束：
 
-1. **证据必须对着当前目标**：`log.plannedValue == item.target.value`，否则采纳后旧记录会立刻再判一次，来回摇
+1. **证据必须对着当前目标**：`log.plannedValue == item.target.value`，且只看 `origin == .prescribed` 的日志（额外组不构成计划证据），否则采纳后旧记录会立刻再判一次，来回摇
 2. **一次提案只有一种 `field`**：加量取候选里最低那一档，不混着改
 3. **强证据压过弱证据**：只要有任何动作拿到「每组都多做」，弱证据这一轮不出面——文案不能同时说两件事，且可核验的行为不该被感觉稀释
 4. **拒绝被记住**：同指纹不再提、连拒三次整体安静、只有采纳清零（`ProposalMemo`，落 UserDefaults）
 5. **降量绕过拒绝记忆**：疼和崩这件事，宁可重复一次
-6. **七种沉默**：只说过一次 / 余力没选 / 余力记在中间组 / 最后一组是跳过 / 目标改过 / 次数到顶（15）/ 静态动作按秒
+6. **七种沉默**：只说过一次 / 余力没选 / 余力记在中间组 / 最后一组是跳过 / 目标改过 / 次数或保持时间到顶 / 额外组上的余力
 7. **覆盖度闸门**：某肌群可用动作 < 2 时不提案——换了也没得换
 8. **重建不动 `revision`**：它不是新版本，是一次让步。其余三类采纳后 `revision + 1`
 
@@ -965,7 +969,9 @@ public static func apply(_ proposal: PlanProposal, to plan: WorkoutPlan, now: Da
 
 ## 11. 完成率与统计
 
-两个纯函数：`HistoryStats`（账本口径）与 `DoseReport`（记录页读数）。**UI 不得自己算。**
+三个纯类型：`SessionLedger`（会话内分账）、`HistoryStats`（周与连续的账本口径）与 `DoseReport`（记录页读数）。**UI 不得自己算。**
+
+会话内的完成 / 降阶 / 跳过 / 额外先由 `SessionLedger` 收口：它按 `SetLog.origin` 分账、按 `(sessionId, prescriptionId, setIndex, origin)` 去重，`SessionRecap`、`WorkoutSession`、持久化都从它取数。`HistoryStats` 与 `DoseReport` 只做跨会话聚合，不再各自数一遍日志。口径依据见 ADR-0006。
 
 ### 11.1 `HistoryStats`：周、连续、练过没有
 
@@ -976,13 +982,15 @@ public static func apply(_ proposal: PlanProposal, to plan: WorkoutPlan, now: Da
 | 周进度 | 本周内 `planDate` 不同、且 `completedSets >= plannedSets` 的会话数 | 分母为 0 显示「—」，不显示 0%；按**计划日**归属，不按日历天 |
 | 这一节练过没有 | 存在 `planDate` 与它同日、且全部组完成的会话 | 只做了一部分**不算**练过 |
 | 连续天数 | 从今天往前，有全部组完成会话的日历天数连续计数 | 今天没练不算断链，从昨天起算 |
-| 完成率 | `completedSets / plannedSets`，clamp 0…1 | `plannedSets == 0` 返回 `nil`，UI 显示「—」——休息日与失败日不能长得一样 |
+| 完成率 | 计划内完成组 / 计划组数，clamp 0…1 | 分子只数 `origin == .prescribed` 的 done + downgraded；`plannedSets == 0` 返回 `nil`，UI 显示「—」——休息日与失败日不能长得一样 |
 
 后三条口径**故意不是同一件事**：
 
 - **周进度按 `planDate`**：周日提前练下周一的课，记在下周一那一周，本周仍 0/3
 - **连续天数按 `date`**（会话发生日）：周日练了就是练了，连续天数 +1
 - **「练过」要求全部组完成**：与完成率的分子一致，否则一个 0/9 组的会话会让卡片写「已经练过」，而同屏周进度是 0/3
+
+**额外组不进以上任何一条。** 跳过一个计划组、再当场加做两组，完成率仍是 11/12，`isCompleted` 仍是 false。额外组只进剂量（§11.2），因为它回答的是「练了多少」，不是「计划做完没有」。
 
 `planDate` 为 nil 的旧数据回落到 `date` 的日历日——旧记录的表现与加这个字段之前完全一致。
 
@@ -996,11 +1004,12 @@ DoseReportBuilder.build(logs:now:weeks:calendar:) -> DoseReport
 
 | 字段 | 含义 | 口径 |
 |---|---|---|
-| `effectiveSets` | 本周有效组 | `isEffective`：`status == .done && (rpe ?? 5) >= 2`。**没有自评按有效算**——记账要宽松，不能让忘点的人白练 |
-| `muscles` | 九个肌群的组数与上周差值 | 按**主导肌群**记一次，不重复计（深蹲只算股四头，不算臀） |
+| `effectiveSets` | 本周有效组 | `isEffective`：`status == .done && (rpe ?? 5) >= 2`。**没有自评按有效算**——记账要宽松，不能让忘点的人白练。**额外组也算**：它是真实做掉的刺激 |
+| `muscles` | 九个肌群的组数与上周差值 | 按**主导肌群**记一次，不重复计（深蹲只算股四头，不算臀）；额外组同样计入 |
 | `weeklySets` | 最近四周的有效组序列 | 趋势用 |
-| `skips` | 五个 `SkipReason` 的降序切片 | 回答「为什么没做」，不回答「哪里弱」 |
-| `completedSets` / `skippedSets` | 本周完成 / 跳过的组数 | 与 `effectiveSets` 分开 |
+| `skips` | 五个 `SkipReason` 的降序切片 | 只数计划内；回答「为什么没做」，不回答「哪里弱」 |
+| `completedSets` / `skippedSets` | 本周计划内完成 / 跳过的组数 | 与 `effectiveSets` 分开；额外组不进这两个数 |
+| `extraSets` | 本周额外完成组数 | 只数 `origin == .extra` 且未跳过；单独显示，不混进完成率 |
 
 **`effectiveSets` 与 `completedSets` 不是一个数**：前者回答「这周练够没有」，后者回答「这周做完多少」。合成一个数字会让「每组都力竭」和「每组都轻松」看起来一样。
 
@@ -1171,8 +1180,9 @@ PRD §9.4 要求过埋点，实现时没有落地。**没有服务端时，本�
 | 模块 | 必测用例 |
 |---|---|
 | `PlanGenerator` | 单次动作数 ≤5、同主导肌群 ≤2、按星期轮转（同 focus 的两天不排同一批）、专项日不足 3 个本组动作就降级全身、全身日两组各 ≥2 且截断后不丢整条上肢、组数吸收预算、伤患与器械约束 |
-| `DoseAdjustment` | 加量三级取最低、强证据要两次且**每组**都多做、余力只加次数、太累降 10%、没时间砍动作（动作数 >5 才砍）、疼减 20%、换动作需有替代、重建不动 `revision`、七种沉默、拒绝记忆与连拒三次静默、降量绕过拒绝 |
-| `DoseReport` | 有效组口径（`rpe ≥ 2` 或无自评）、主导肌群只记一次不重复计、跳过原因降序、四周序列、空数据不崩 |
+| `DoseAdjustment` | 加量三级取最低、强证据要两次且**每组**都多做、余力只动当前轴（次数 +2 / 静态保持时间 +5 秒）、太累降 10%、没时间砍动作（动作数 >5 才砍）、疼减 20%、换动作需有替代、重建不动 `revision`、七种沉默、拒绝记忆与连拒三次静默、降量绕过拒绝 |
+| `SessionLedger` | 额外组不进完成率分母；跳过一组 + 加做两组仍是 9/10；额外组不满足 `isCompleted`；重复日志按 `(sessionId, prescriptionId, setIndex, origin)` 去重；旧 checkpoint 缺 `origin` 或未知值都回落计划内 |
+| `DoseReport` | 有效组口径（`rpe ≥ 2` 或无自评）、额外组算有效组但 `completedSets` 只数计划内、主导肌群只记一次不重复计、跳过原因降序、四周序列、空数据不崩 |
 | `PlanJSONExtractor` | 代码围栏、前后说明文字、字符串内大括号、尾随逗号、全角引号、外层数组、空输入、超长输入（>64KB 直接拒绝） |
 | `PlanDecoder` | 合法样本；缺字段；类型漂移（字符串 "3" 解成 Int）；未知枚举值；多余字段；`schemaVersion` 不认识 |
 | `PlanValidator` | sets 越界（0、21）、restSec 越界（-1、601）、`scheduledTime` 格式错（"25:00"、"7:5"）、`days.count != 7`、`dayIndex` 重复、`daysPerWeek` 与实际训练日数不一致、`weekday` 与 `dayIndex` 不匹配 |

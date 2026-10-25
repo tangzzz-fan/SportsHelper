@@ -6,7 +6,7 @@
 
 ## 1. 动作库的「加法」：康复向动作 + 主动推荐
 
-状态：**第一批已落地（2026-10-25）**，ticket 见 `.scratch/exercise-expansion/issues/02-肩颈康复动作与反向推荐.md`。剩「剂量按保持时间进阶」未做
+状态：**两批都已落地（2026-10-25）**，ticket 见 `.scratch/exercise-expansion/issues/02-肩颈康复动作与反向推荐.md` 与 `.scratch/reserve-evidence/issues/01-余力进规则.md`。剩「静态动作的减量轴」未做（见文末）
 关联代码：`DongKeCore/Parsing/PlanSafetyChecker.swift`、`DongKeCore/Models/BodyPart.swift`、`DongKeCore/Models/ExerciseCatalog.swift`
 
 ### 问题
@@ -74,6 +74,15 @@
 但这只是文案。系统层面没有强制：康复动作不进生成器（`purposes` 不含 `.strength`），所以本地路径根本不给它们配剂量；AI 路径由模型自己写秒数；导入路径保留原文写的次数。**真要强制，得在导入链路上做「非力量动作的 reps 改 durationSec」**，那会影响用户粘进来的原文，属于产品口径问题，留给下一批。
 
 **第二处落点**：校对页之外，计划详情页（用户实际训练前看的那一页）也接上了推荐块。两处共用一个 `PlanReliefCard`，不再各写一遍文案。
+
+### 2026-10-25 保持时间进阶落地
+
+`ProgressionAxis` 把「进阶轴」从 reps 里抽出来：`reps` 与 `holdSeconds` 两根，`distanceM` 没有轴。静态动作的余力不再沉默：连续两次最后一组 `rpe ≤ 2`，保持时间 +5 秒，上限 60 秒；到顶后沉默，不转成加组。`PlanProposal.Change.Field` 增加 `hold`，文案单位「秒」。余力档位对静态动作映射为 10 / 5 / 2 秒，使「还能撑 10 秒」加 5 秒后仍留有半档余力。
+
+**没有做的两件**：
+
+- **静态动作的减量轴**。疼痛仍走 `soften` 的「减组数」分支，太累仍不处理静态动作。统一成减保持时间需要单独定「疼的时候是减时间还是停做」，这轮不越权。
+- **静态动作的强证据**。`clearedEverySet` 要求实际值超过目标，当前 UI 不记录「多撑了几秒」，所以静态只走余力（弱证据）。等训练页支持记录超时秒数再开。
 
 ---
 
