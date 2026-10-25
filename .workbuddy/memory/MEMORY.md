@@ -95,8 +95,23 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - 生成器 `.scratch/figure-and-glass/tools/gen_figures.py`（手动跑，不进构建）；`svgcmd.py` 已支持 `A` 弧线 flag 连写。
 - 参数化自绘（`Tools/FigureDraw/`）三代都收敛到「木偶」，已判死，别再试。
 
+## 文档分工：每个主题只有一个维护点（2026-10-25）
+
+| 主题 | 唯一维护点 | 别处只许指过来 |
+|---|---|---|
+| 流程图 | `docs/FLOW.md` | 不重复画 |
+| 结构与契约 | `docs/ARCHITECTURE.md` §4–§11 | — |
+| 动作图示规格 | `docs/FIGURE-STYLE.md` | ARCHITECTURE §12 只留两条约束 |
+| 动作库字段口径 | ARCHITECTURE §5.6 | — |
+| 术语 | `GLOSSARY.md` | — |
+
+**ARCHITECTURE 会撒谎，别以为它记得住现状。** 2026-10-25 对齐过一次（v1.3 → v1.4，767 行改动）：里面有整章讲着没实现的方案（自绘骨架 / 埋点 / `AppLog` / `BackupService`）、9 个不存在的类型名、18 条动作库（实际 43）、`DongKe/Domain` 目录（实际是 `DongKeCore` framework）。
+
+校验办法（改完文档跑一次）：把文档里所有 `` `CamelCase` `` 抓出来，对代码里 `struct|enum|class|protocol` 的名字表，差集就是可疑项。**纯人工读发现不了**。
+
 ## 环境
 
+- **grep 会静默漏匹配**：macOS BSD grep 不支持 `\|` 交替（当字面量处理），于是 `grep -n "^## \|^### "` 返回空且不报错。用 `rg` 或 `grep -E`；看到空结果先怀疑模式，别当事实。
 - 模拟器 UDID：`D16A8318-973E-45CE-936B-94F5FFE3E0EC`（iPhone 18 Pro），`content_size` 保持 `large`，不要设 AX3
 - 推 origin 需代理：`git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`
 
