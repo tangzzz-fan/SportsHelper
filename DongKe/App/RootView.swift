@@ -1,5 +1,6 @@
 import SwiftUI
 import DongKeCore
+import os
 
 struct RootView: View {
     @Environment(ProfileStore.self) private var profiles
@@ -19,6 +20,13 @@ struct RootView: View {
             }
         }
         .largeTextFloor(largeText)
+        .onAppear {
+            #if DEBUG
+            let elapsed = ProcessInfo.processInfo.systemUptime - dkInitTick
+            Logger(subsystem: "app.dongke.ios", category: "launch")
+                .notice("first-frame \(elapsed, format: .fixed(precision: 3))s")
+            #endif
+        }
     }
 
     private var showsOnboarding: Bool {

@@ -35,9 +35,11 @@ struct AppShell: View {
             let active = WorkoutSession(
                 plan: SampleData.plan,
                 dayIndex: dayIndex,
-                startedAt: Date().addingTimeInterval(-22 * 60)
+                startedAt: Date().addingTimeInterval(-28 * 60)
             )
-            for _ in 0..<4 {
+            // 11/12 组：完成率 92%，其中有 1 组是降阶。
+            // 只做 5 组的话总结页是 42%，商店截图里像练砸了。
+            for _ in 0..<10 {
                 active.completeSet()
                 active.skipRest()
             }
@@ -106,14 +108,27 @@ struct AppShell: View {
             #endif
             #if DEBUG
             if ProcessInfo.processInfo.environment["DK_SEED_SESSION"] == "1", store.sessions.isEmpty {
-                store.upsert(
-                    id: UUID(),
-                    title: SampleData.plan.days.first(where: { !$0.isRestDay })?.title ?? "训练",
-                    plannedSets: 13,
-                    completedSets: 13,
-                    startedAt: Date(),
-                    finishedAt: Date()
-                )
+                // 记录页要有多条才有说服力：一周三次、完成率各不相同。
+                let seed: [(String, Int, Int)] = [
+                    ("下肢力量", 12, 12),
+                    ("上肢与核心", 11, 11),
+                    ("下肢力量", 12, 10),
+                    ("上肢与核心", 11, 11),
+                    ("下肢力量", 12, 12),
+                ]
+                for (index, item) in seed.enumerated() {
+                    let day = Calendar.current.startOfDay(for: Date())
+                        .addingTimeInterval(-Double(index * 2 + 1) * 86_400)
+                        .addingTimeInterval(20 * 3600 + 30 * 60)
+                    store.upsert(
+                        id: UUID(),
+                        title: item.0,
+                        plannedSets: item.1,
+                        completedSets: item.2,
+                        startedAt: day,
+                        finishedAt: day.addingTimeInterval(28 * 60)
+                    )
+                }
             }
             #endif
         }
