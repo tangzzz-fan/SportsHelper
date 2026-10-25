@@ -88,6 +88,15 @@ public enum PlanGenerator {
         return picked
     }
 
+    static func leadSets(of day: PlanDay) -> [Muscle: Int] {
+        var out: [Muscle: Int] = [:]
+        for item in day.blocks.filter({ $0.kind != .warmup }).flatMap(\.items) {
+            guard let lead = leadMuscle(of: item.catalogId) else { continue }
+            out[lead, default: 0] += item.sets
+        }
+        return out
+    }
+
     static func leadMuscle(of catalogId: String) -> Muscle? {
         let muscles = PrimaryMuscleMap.muscles(for: catalogId)
         return Muscle.allCases.first(where: muscles.contains)
