@@ -178,3 +178,9 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - **`observeInterruptions(of: self)` 必须传 owner**：闭包弱引用注册者，owner 释放自动剪枝。不要再用无 owner 的 `[() -> Void]` 列表——只增不减，转写器每建一次就多一条。
 - **`addObserver` 的 token 必须留住**：block 版注册不因 token 释放而注销，丢了就永远无法取消。
 - **借了必须还，早退也要还**：`borrow(.record)` 之后任何 `throw` 都要先 release（否则会话常驻 `.record`，橙点不灭、播报静默）；音条渲染器要先确认引擎起得来再借播放租约。
+
+### 离线 TTS：我们要的是渲染，不是 SDK（2026-10-25）
+
+- **Qwen 没有端侧 SDK**：Qwen3-TTS（0.6B/1.7B）与 CosyVoice3（0.5B）是 Apache-2.0 开源模型，分发只有 PyPI / DashScope / vLLM / demo。调研在 `.scratch/offline-tts/README.md`。
+- **端侧 SDK 不适用**：火山（按包名/装机量，需商务）、阿里（永久按设备）、讯飞（¥4/台起，2000 台起卖）——授权随用户数增长，而我们只需构建机渲染一次。拿 SDK 在构建机上批量渲染再打包，属绕开装机量计费的条款灰区。
+- 换音色的正解是自托管模型渲染 496 条，不是买 SDK。
