@@ -68,16 +68,6 @@ struct WorkoutView: View {
         ZStack {
             Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
-            if let prescription {
-                ExerciseFigureView(catalogId: prescription.catalogId,
-                                       figureSize: CGSize(width: 430, height: 500),
-                                       showsHalo: false)
-                    .opacity(0.06)
-                    .offset(x: 140, y: -170)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
-
             VStack(spacing: 0) {
                 navBar
 
@@ -86,7 +76,11 @@ struct WorkoutView: View {
                         Group {
                             if let prescription {
                                 VStack(spacing: typeSize.isAccessibilitySize ? 10 : 18) {
-                                    ExerciseFigureView(catalogId: prescription.catalogId, figureSize: figureSize)
+                                    ExerciseFigureView(
+                                        catalogId: prescription.catalogId,
+                                        figureSize: figureSize,
+                                        autoPlays: true
+                                    )
 
                                     VStack(spacing: 2) {
                                         Text(prescription.name)
@@ -99,8 +93,8 @@ struct WorkoutView: View {
                                             VStack(spacing: 3) {
                                                 ForEach(cueLines, id: \.self) { cue in
                                                     Text(cue)
-                                                        .font(Typography.meta)
-                                                        .foregroundStyle(.tertiary)
+                                                        .font(Typography.secondary.weight(.medium))
+                                                        .foregroundStyle(.secondary)
                                                         .multilineTextAlignment(.center)
                                                         .fixedSize(horizontal: false, vertical: true)
                                                 }
@@ -135,6 +129,26 @@ struct WorkoutView: View {
                 }
                 .transition(.opacity)
             }
+        }
+        .background {
+            // 装饰用的放大动作图：只画，不参与布局。
+            // 它有 430pt 宽，直接放进 ZStack 会把整页撑得比屏幕宽——
+            // 后果是休息面板的 20pt 边距只剩 6pt、顶部 X 贴到屏幕边缘。
+            // 裁剪只做在这一层：给整个 ZStack 加 .clipped() 会连带把
+            // 休息面板裁进安全区，面板就永远贴不到屏幕底边。
+            GeometryReader { _ in
+                if let prescription {
+                    ExerciseFigureView(
+                        catalogId: prescription.catalogId,
+                        figureSize: CGSize(width: 430, height: 500),
+                        showsHalo: false
+                    )
+                    .opacity(0.06)
+                    .offset(x: 140, y: -170)
+                    .allowsHitTesting(false)
+                }
+            }
+            .clipped()
         }
         .animation(.easeOut(duration: 0.22), value: restSheetHeight)
         .onReceive(Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()) { _ in
@@ -213,45 +227,46 @@ struct WorkoutView: View {
         onClose()
     }
 
+    /// 顶部栏走系统的内联样式：左取消、中间标题、右结束，不加玻璃胶囊。
+    /// 原来三样东西装在一个 40pt 圆角的胶囊里、左右还各留 8pt，看起来像浮在页面上的工具条。
     private var navBar: some View {
-        HStack {
-            Button(action: close) {
-                Image(systemName: Icons.close)
-                    .font(Typography.buttonLabel)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-                    .fixedSize()
-            }
-            .foregroundStyle(Theme.accent(for: colorScheme))
-            .accessibilityIdentifier(A11y.Workout.close)
-
-            Spacer(minLength: 8)
-
+        ZStack {
             Text(session.sessionTitle)
-                .font(Typography.buttonLabel)
+                .font(.headline)
                 .lineLimit(1)
-                .minimumScaleFactor(0.55)
-                .layoutPriority(0)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, 76)
+                .accessibilityAddTraits(.isHeader)
 
-            Spacer(minLength: 8)
+            HStack(spacing: 0) {
+                Button(action: close) {
+                    Image(systemName: Icons.close)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(A11y.Workout.close)
+                .accessibilityLabel("关闭")
 
-            Button {
-                session.endWorkout()
-            } label: {
-                Text("结束")
-                    .font(Typography.buttonLabel)
-                    .foregroundStyle(Theme.accent(for: colorScheme))
-                    .frame(minWidth: 52, minHeight: 44)
-                    .contentShape(Rectangle())
+                Spacer(minLength: 0)
+
+                Button {
+                    session.endWorkout()
+                } label: {
+                    Text("结束")
+                        .font(Typography.buttonLabel)
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(A11y.Workout.end)
             }
-            .buttonStyle(.plain)
-            .fixedSize()
-            .accessibilityIdentifier(A11y.Workout.end)
         }
-        .padding(.horizontal, 8)
-        .glassSurface(radius: Theme.Radius.glassIsland)
-        .padding(.horizontal, 8)
-        .padding(.top, 4)
+        .frame(height: 48)
+        .padding(.horizontal, 4)
     }
 
     private var finishedPlaceholder: some View {

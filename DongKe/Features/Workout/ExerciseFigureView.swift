@@ -13,17 +13,26 @@ struct ExerciseFigureView: View {
     let catalogId: String
     var figureSize: CGSize
     var showsHalo = true
+    /// 训练页自动循环播放。动作库列表里仍然是点一下才播——几十个动作同时动没有意义。
+    var autoPlays = false
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var playback: FigurePlayback
     private let store = FigurePlaybackStore.shared
 
     private let frameInterval: TimeInterval = 0.8
 
-    init(catalogId: String, figureSize: CGSize = CGSize(width: 220, height: 260), showsHalo: Bool = true) {
+    init(
+        catalogId: String,
+        figureSize: CGSize = CGSize(width: 220, height: 260),
+        showsHalo: Bool = true,
+        autoPlays: Bool = false
+    ) {
         self.catalogId = catalogId
         self.figureSize = figureSize
         self.showsHalo = showsHalo
+        self.autoPlays = autoPlays
         let figure = FigureLibrary.bundled.figure(for: catalogId)
         _playback = State(initialValue: FigurePlayback(motion: figure.motion, frameCount: figure.frames.count))
     }
@@ -90,6 +99,12 @@ struct ExerciseFigureView: View {
         .frame(width: figureSize.width, height: figureSize.height)
         .contentShape(Rectangle())
         .onTapGesture { togglePlayback() }
+        .onAppear(perform: autoPlayIfNeeded)
+        .onChange(of: catalogId) { _, _ in
+            // @State 不会随 catalogId 重建，换动作时要重新读这一张图的帧数。
+            playback = FigurePlayback(motion: figure.motion, frameCount: figure.frames.count)
+            autoPlayIfNeeded()
+        }
         .onReceive(Timer.publish(every: frameInterval, on: .main, in: .common).autoconnect()) { _ in
             if isPlaying { playback.advance() }
         }
@@ -98,6 +113,7 @@ struct ExerciseFigureView: View {
         }
         .accessibilityLabel(Text("动作图示"))
         .accessibilityAddTraits(playback.canPlay ? .isButton : [])
+        .accessibilityHint(playback.canPlay ? Text(isPlaying ? "暂停动作演示" : "播放动作演示") : Text(""))
     }
 
     private func togglePlayback() {
@@ -107,8 +123,14 @@ struct ExerciseFigureView: View {
             store.playingFigureID = nil
         } else {
             store.playingFigureID = catalogId
-            playback.toggle()
+            playback.play()
         }
+    }
+
+    private func autoPlayIfNeeded() {
+        guard autoPlays, reduceMotion == false, playback.canPlay else { return }
+        store.playingFigureID = catalogId
+        playback.play()
     }
 }
 

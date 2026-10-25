@@ -23,6 +23,12 @@ public struct FigurePlayback: Equatable, Sendable {
         return min(index, frameCount - 1)
     }
 
+    /// 直接开播。自动播放用这个，避免和 `toggle()` 的取反语义打架。
+    public mutating func play() {
+        guard canPlay, isPlaying == false else { return }
+        isPlaying = true
+    }
+
     public mutating func toggle() {
         guard canPlay else { return }
         isPlaying.toggle()

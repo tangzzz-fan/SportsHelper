@@ -55,16 +55,30 @@ struct RestSheetView: View {
         static let buttonSpacing: CGFloat = 10
     }
 
+    /// home indicator 高度。
+    ///
+    /// `GeometryProxy.safeAreaInsets` 在已经消费掉安全区的层级里恒为 0，
+    /// 拿不到就只能问窗口——面板要铺到屏幕底边，内容必须自己让出这一条。
+    private static var windowSafeBottom: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }?
+            .safeAreaInsets.bottom ?? 0
+    }
+
     var body: some View {
-        GeometryReader { proxy in
+        // GeometryReader 是「贪心」容器，忽略安全区后才会真的铺满整屏；
+        // 直接给 ZStack 加 ignoresSafeArea 不会把它撑开。
+        GeometryReader { _ in
             ZStack(alignment: .bottom) {
                 Color.black.opacity(0.38)
-                    .ignoresSafeArea()
                     .onTapGesture { }
 
-                card(bottomInset: proxy.safeAreaInsets.bottom)
+                card(bottomInset: Self.windowSafeBottom)
             }
         }
+        .ignoresSafeArea()
         .onReceive(Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()) { _ in
             now = Date()
         }
@@ -108,8 +122,7 @@ struct RestSheetView: View {
         }
         .padding(.horizontal, Metrics.horizontal)
         .frame(maxWidth: .infinity)
-        .ignoresSafeArea(edges: .bottom)
-        .glassSurface(radius: Theme.Radius.glassSheet)
+        .glassSurface(radius: Theme.Radius.glassSheet, bottomRounded: false)
         .onGeometryChange(
             for: CGFloat.self,
             of: { $0.size.height },

@@ -155,3 +155,10 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - **全 App 一个渲染器**。每个协调器新建一个 `AVSpeechSynthesizer` 会各自排队，依次念完 = 听感「两个音频」。
 - `AVSpeechSynthesizer.cancel` **不要用 `isSpeaking` 当开关**（`speak()` 返回瞬间恒 false）；`stopSpeaking` 无条件调用。
 - `.inactive` 算前台：转场/来电横幅/控制中心都会短暂 inactive。
+
+## 休息面板的布局约束（2026-10-25）
+
+- **不要写死面板高度**。`RestSheetView` 用自然高度 + `Metrics` 四档间距（8/12/16/20）。改内容时高度会自己变，外层 `WorkoutView.restingInset` 靠 `onCardHeightChange` 拿到实际高度，把滚动内容上让——否则动作图会被面板从胸口切断。
+- 卡片要 `.ignoresSafeArea(edges: .bottom)` + 内容让出 safeInset，不然 home indicator 那条会露灰底。
+- `hasQueuedExtra` 只认「组序超出计划组数」的那一段（`WorkoutFlowModel.hasQueuedExtraSet`）。**别用「下一步还是同一动作的组」判断加组**——那是普通组间休息，会让每次休息都显示「已加一组」，而撤销会删掉正常的那一组。
+- `Typography.timer` 是 rounded（不是 monospaced）：monospaced 的 0 是斜线零。

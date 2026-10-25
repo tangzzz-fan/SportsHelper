@@ -5,6 +5,21 @@ import Foundation
 @Suite("FigurePlayback")
 struct FigurePlaybackTests {
 
+    @Test("play 只开一次，重复调用不会把状态翻回去")
+    func playIsIdempotent() {
+        var playback = FigurePlayback(motion: .loop, frameCount: 3)
+        playback.play()
+        playback.play()
+        #expect(playback.isPlaying)
+    }
+
+    @Test("hold 动作不能自动播放")
+    func holdCannotPlay() {
+        var playback = FigurePlayback(motion: .hold, frameCount: 3)
+        playback.play()
+        #expect(playback.isPlaying == false)
+    }
+
     @Test("a looping figure starts paused on the first frame")
     func startsPaused() {
         let playback = FigurePlayback(motion: .loop, frameCount: 3)

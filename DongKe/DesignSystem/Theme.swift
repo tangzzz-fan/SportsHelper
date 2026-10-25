@@ -53,7 +53,7 @@ enum Theme {
     enum Radius {
         static let control: CGFloat = 10
         static let card: CGFloat = 20
-        static let glassSheet: CGFloat = 28
+        static let glassSheet: CGFloat = 36
         static let glassCard: CGFloat = 36
         static let glassIsland: CGFloat = 40
     }

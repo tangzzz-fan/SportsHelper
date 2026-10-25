@@ -3,6 +3,9 @@ import SwiftUI
 struct GlassSurface: ViewModifier {
     var radius: CGFloat
     var tinted = false
+    /// 贴住屏幕底边的面板只圆上沿。四角都圆会让人以为它是浮在半空的卡片，
+    /// 系统 sheet 在底部是齐边的。
+    var bottomRounded = true
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -13,21 +16,36 @@ struct GlassSurface: ViewModifier {
             }
     }
 
+    private var shape: AnyShape {
+        if bottomRounded {
+            AnyShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        } else {
+            AnyShape(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: radius,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: radius,
+                    style: .continuous
+                )
+            )
+        }
+    }
+
     @ViewBuilder
     private var background: some View {
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         if #available(iOS 26.0, *), !DebugFlags.forcesLegacyGlass {
             shape
                 .fill(.clear)
                 .glassEffect(
                     tinted ? .regular.tint(Theme.accent(for: colorScheme).opacity(0.55)) : .regular,
-                    in: .rect(cornerRadius: radius, style: .continuous)
+                    in: shape
                 )
         } else {
             shape
                 .fill(.ultraThinMaterial)
                 .overlay {
-                    GlassEdges(radius: radius, scheme: colorScheme)
+                    GlassEdges(shape: shape, scheme: colorScheme)
                         .allowsHitTesting(false)
                 }
         }
@@ -35,11 +53,10 @@ struct GlassSurface: ViewModifier {
 }
 
 private struct GlassEdges: View {
-    let radius: CGFloat
+    let shape: AnyShape
     let scheme: ColorScheme
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         shape
             .fill(Theme.Glass.fill(scheme))
             .overlay {
@@ -58,11 +75,11 @@ private struct GlassEdges: View {
             }
             .overlay {
                 shape
-                    .strokeBorder(Theme.Glass.stroke(scheme), lineWidth: 0.5)
+                    .stroke(Theme.Glass.stroke(scheme), lineWidth: 0.5)
             }
             .overlay {
                 shape
-                    .strokeBorder(
+                    .stroke(
                         LinearGradient(
                             colors: [
                                 Theme.Glass.topEdge(scheme),
@@ -80,8 +97,12 @@ private struct GlassEdges: View {
 }
 
 extension View {
-    func glassSurface(radius: CGFloat = Theme.Radius.glassCard, tinted: Bool = false) -> some View {
-        modifier(GlassSurface(radius: radius, tinted: tinted))
+    func glassSurface(
+        radius: CGFloat = Theme.Radius.glassCard,
+        tinted: Bool = false,
+        bottomRounded: Bool = true
+    ) -> some View {
+        modifier(GlassSurface(radius: radius, tinted: tinted, bottomRounded: bottomRounded))
     }
 }
 
