@@ -184,6 +184,14 @@ struct PlanGeneratorTests {
         }
     }
 
+    @Test("周目标随跳过次数下降，最低留一个——三处展示共用这一处算法")
+    func weeklyTargetTracksSkips() {
+        let plan = PlanGenerator.makePlan(profile: profile())
+        #expect(plan.meta.weeklyTarget(skipped: 0) == plan.meta.daysPerWeek)
+        #expect(plan.meta.weeklyTarget(skipped: 1) == plan.meta.daysPerWeek - 1)
+        #expect(plan.meta.weeklyTarget(skipped: 99) == 1)
+    }
+
     @Test("a heavily restricted profile still yields a valid plan")
     func restrictedProfileStillValid() {
         let plan = PlanGenerator.makePlan(profile: profile(

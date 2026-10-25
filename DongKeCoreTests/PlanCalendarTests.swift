@@ -81,6 +81,21 @@ struct PlanCalendarTests {
         #expect(nextMonday.map { HistoryStats.isDone($0, in: records, calendar: calendar) } == true)
     }
 
+    @Test("只做了一部分不算练过——否则会出现「已练过」但「本周 0/3」")
+    func partialSessionIsNotDone() {
+        let wednesday = PlanCalendar.occurrence(on: date(21), in: plan, calendar: calendar)
+        let partial = [
+            SessionRecordSummary(date: date(21), plannedSets: 9, completedSets: 5, planDate: date(21))
+        ]
+        #expect(wednesday.map { HistoryStats.isDone($0, in: partial, calendar: calendar) } == false)
+        #expect(HistoryStats.completedDaysThisWeek(partial, now: date(21), calendar: calendar) == 0)
+
+        let opened = [
+            SessionRecordSummary(date: date(21), plannedSets: 9, completedSets: 0, planDate: date(21))
+        ]
+        #expect(wednesday.map { HistoryStats.isDone($0, in: opened, calendar: calendar) } == false)
+    }
+
     @Test("上周一的记录不会把下周一算成已练")
     func lastWeeksSessionDoesNotCountForNextWeek() {
         let records = [

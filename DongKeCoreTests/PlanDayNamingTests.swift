@@ -23,15 +23,19 @@ private func labelledPlans() -> [(String, WorkoutPlan)] {
         ("纯自重", [.bodyweight]),
         ("自重+哑铃+卧凳", [.bodyweight, .dumbbell, .bench])
     ]
+    let levels: [(String, TrainingLevel)] = [("入门", .beginner), ("进阶", .advanced)]
     return equipmentSets.flatMap { label, equipment in
-        [15, 30, 60].flatMap { minutes in
-            [2, 3, 5].map { days in
-                let profile = UserProfile(
-                    availableWeekdays: Array(Weekday.allCases.prefix(days)),
-                    sessionMinutes: minutes,
-                    equipment: equipment
-                )
-                return ("\(label) \(minutes) 分钟 / \(days) 天", PlanGenerator.makePlan(profile: profile))
+        levels.flatMap { levelLabel, level in
+            [15, 20, 30, 60].flatMap { minutes in
+                [2, 3, 5].map { days in
+                    let profile = UserProfile(
+                        level: level,
+                        availableWeekdays: Array(Weekday.allCases.prefix(days)),
+                        sessionMinutes: minutes,
+                        equipment: equipment
+                    )
+                    return ("\(label)/\(levelLabel) \(minutes) 分钟 / \(days) 天", PlanGenerator.makePlan(profile: profile))
+                }
             }
         }
     }
@@ -103,15 +107,16 @@ struct PlanDayNamingTests {
         #expect(plan.days.contains { $0.title == "上肢与核心" && $0.isRestDay == false })
     }
 
-    @Test("全身日两组都有活，不是「四个下肢加一个俯卧撑」")
+    @Test("全身日两组都有活，名额被预算砍掉时也要各留一个")
     func fullBodyDayCoversBothGroups() {
         for (label, plan) in labelledPlans() {
             for day in plan.days where day.isRestDay == false && day.title == "全身循环" {
                 let items = mainItems(day)
                 let lower = items.filter { group(of: $0) == .lower }.count
                 let upper = items.filter { group(of: $0) == .upper }.count
-                #expect(lower >= 1, "\(label) 的\(day.weekday.chineseName)全身日没有下肢动作")
-                #expect(upper >= 1, "\(label) 的\(day.weekday.chineseName)全身日没有上肢动作")
+                let floor = min(items.count / 2, PlanGenerator.minSlotsPerGroup)
+                #expect(lower >= floor, "\(label) 的\(day.weekday.chineseName)全身日只有 \(lower) 个下肢")
+                #expect(upper >= floor, "\(label) 的\(day.weekday.chineseName)全身日只有 \(upper) 个上肢")
             }
         }
     }

@@ -137,9 +137,14 @@ public enum PlanGenerator {
     }
 
     private static func groupSeeds(in pool: [CatalogItem], shift: Int) -> [CatalogItem] {
-        [PlanCatalog.Item.Joint.lower, .upper].flatMap { joint in
-            spread(rotated(pool.filter { $0.joint == joint }, by: shift), limit: minSlotsPerGroup)
+        let lower = spread(rotated(pool.filter { $0.joint == .lower }, by: shift), limit: minSlotsPerGroup)
+        let upper = spread(rotated(pool.filter { $0.joint == .upper }, by: shift), limit: minSlotsPerGroup)
+        var seeds: [CatalogItem] = []
+        for index in 0..<max(lower.count, upper.count) {
+            if index < lower.count { seeds.append(lower[index]) }
+            if index < upper.count { seeds.append(upper[index]) }
         }
+        return seeds
     }
 
     private static func resolvedFocus(_ focus: Focus, candidates: [CatalogItem]) -> Focus {
@@ -216,8 +221,8 @@ public enum PlanGenerator {
         let shift = variation + weekday.rawValue
         let coreCandidates = rotated(pool.filter { $0.joint == .core }, by: shift)
 
-        let focus = resolvedFocus(focus, candidates: mainCandidates)
-        let mainPool = rotated(mainCandidates.filter { focus.claims($0) }, by: shift)
+        let dayFocus = resolvedFocus(focus, candidates: mainCandidates)
+        let mainPool = rotated(mainCandidates.filter { dayFocus.claims($0) }, by: shift)
 
         let targetSeconds = profile.sessionMinutes * 60
         let workPerSet = dose.estimatedWorkSeconds
@@ -230,7 +235,7 @@ public enum PlanGenerator {
         let usable = Int(Double(budget) * 0.85)
         let perSet = max(1, workPerSet + rest)
 
-        let seeds = focus.needsEveryGroup ? groupSeeds(in: mainPool, shift: shift) : []
+        let seeds = dayFocus.needsEveryGroup ? groupSeeds(in: mainPool, shift: shift) : []
         let picked = spread(mainPool, limit: maxMainItems, seeded: seeds)
         var mainCount = max(1, picked.count)
         var mainSets = max(1, sets)
@@ -271,7 +276,7 @@ public enum PlanGenerator {
         blocks.append(ExerciseBlock(
             blockId: "\(weekday.rawValue)-main",
             kind: .main,
-            title: title(for: focus),
+            title: title(for: dayFocus),
             rounds: 1,
             restBetweenItemsSec: rest,
             restBetweenRoundsSec: 0,
@@ -321,7 +326,7 @@ public enum PlanGenerator {
             dayIndex: weekday.rawValue,
             weekday: weekday,
             isRestDay: false,
-            title: title(for: focus),
+            title: title(for: dayFocus),
             scheduledTime: TimeOfDay(
                 hour: profile.reminderTime.hour,
                 minute: profile.reminderTime.minute

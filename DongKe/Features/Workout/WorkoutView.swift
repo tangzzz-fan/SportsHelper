@@ -230,7 +230,7 @@ struct WorkoutView: View {
 
     private var weeklyDone: String? {
         guard let store = session.store else { return nil }
-        let target = max(1, session.plan.meta.daysPerWeek - DaySkipStore.shared.skippedThisWeek())
+        let target = session.plan.meta.weeklyTarget(skipped: DaySkipStore.shared.skippedThisWeek())
         return "本周 \(min(store.completedDaysThisWeek, target)) / \(target)"
     }
 

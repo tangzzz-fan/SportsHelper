@@ -131,7 +131,7 @@ struct AppShell: View {
     }
 
     private var weeklyTarget: Int {
-        max(1, activePlan.meta.daysPerWeek - DaySkipStore.shared.skippedThisWeek())
+        activePlan.meta.weeklyTarget(skipped: DaySkipStore.shared.skippedThisWeek())
     }
 
     private func openWorkout(_ link: WorkoutDeepLink) {
@@ -139,7 +139,7 @@ struct AppShell: View {
         let dayIndex: Int?
         switch link {
         case let .dayIndex(index):
-            dayIndex = plan.days.first(where: { $0.dayIndex == index })?.dayIndex
+            dayIndex = plan.days.first(where: { $0.dayIndex == index && !$0.isRestDay })?.dayIndex
         case let .weekday(weekday):
             dayIndex = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay })?.dayIndex
         }

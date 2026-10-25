@@ -51,7 +51,8 @@ public enum HistoryStats {
         calendar: Calendar = Calendar(identifier: .gregorian)
     ) -> Bool {
         records.contains { record in
-            calendar.isDate(planDay(of: record, calendar: calendar), inSameDayAs: occurrence.date)
+            record.isCompleted
+                && calendar.isDate(planDay(of: record, calendar: calendar), inSameDayAs: occurrence.date)
         }
     }
 

@@ -207,6 +207,10 @@ public struct PlanMeta: Codable, Equatable, Sendable {
         self.sessionMinutes = sessionMinutes
         self.notes = notes
     }
+
+    public func weeklyTarget(skipped: Int) -> Int {
+        max(1, daysPerWeek - skipped)
+    }
 }
 
 public enum PlanSource: String, Codable, Sendable, CaseIterable {

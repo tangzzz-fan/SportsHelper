@@ -65,7 +65,7 @@ extension TodayView {
         let resting = isRestToday
         let skipped = daySkip.isSkipped()
         let done = todayIsDone
-        let weeklyTarget = max(1, plan.meta.daysPerWeek - daySkip.skippedThisWeek())
+        let weeklyTarget = plan.meta.weeklyTarget(skipped: daySkip.skippedThisWeek())
         return VStack(alignment: .leading, spacing: 12) {
             Text(resting ? "今天休息" : day.title)
                 .font(Typography.detailTitle)
@@ -79,7 +79,7 @@ extension TodayView {
             }
 
             if done {
-                Text("这一节已经练过。再练就是加量，不算新的一天。")
+                Text("这一节已经练过，本周算过了。再练一次不再重复计。")
                     .font(Typography.meta)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
