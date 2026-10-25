@@ -4,11 +4,12 @@ import os
 
 private let clipLog = Logger(subsystem: "app.dongke.ios", category: "voice-clips")
 
-/// 阶段 0 的原型：把预录好的短语拼起来播，替代实时 TTS。
+/// 把预录好的短语拼起来播，替代实时 TTS。
 ///
-/// 只做一件事——**验证拼接感能不能接受**。音条目前由 macOS `say` 渲染，
-/// 只能内部试听、不能随包上架（Apple 语音仅授权个人使用）。正式音条要换
-/// CosyVoice2 重渲染，见 `.scratch/coach-voice/README.md`。
+/// 音条由 Qwen3-TTS（1.7B-Base，Apache-2.0）渲染，可以随包分发：先用 VoiceDesign
+/// 按文字描述设计出教练音色，再把它固化成 clone prompt 逐条生成，这样 496 条
+/// 的音色才一致（`generate_custom_voice` 每次随机抽音高，实测同句六次跨 185 Hz）。
+/// 渲染流程与验收数据见 `.scratch/offline-tts/README.md`。
 ///
 /// 拼接不上（自由文本、超范围数字、AI 生成的主题名）就整句交回系统 TTS，
 /// 不允许静默。
