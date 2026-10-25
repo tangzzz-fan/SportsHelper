@@ -80,6 +80,21 @@ public struct WorkoutFlowModel: Equatable, Sendable {
         } == false
     }
 
+    /// 下一步是不是「加出来的」那一组：同动作、且组序超出计划组数。
+    ///
+    /// 不能只看「下一步还是同一个动作的组」——那是最普通的组间休息，
+    /// 结果是每次休息都显示「已加一组」，而「撤销」会把正常的那一组删掉。
+    public func hasQueuedExtraSet(at index: Int, in steps: [FlowStep]) -> Bool {
+        guard steps.indices.contains(index),
+              case let .set(id, setIndex, _, _) = steps[index],
+              steps.indices.contains(index + 1),
+              case let .set(nextId, nextSetIndex, _, _) = steps[index + 1],
+              nextId == id
+        else { return false }
+        let planned = setCounts[id] ?? 0
+        return nextSetIndex > planned && nextSetIndex > setIndex
+    }
+
     public static func insertingExtraSet(
         in steps: [FlowStep],
         after index: Int,

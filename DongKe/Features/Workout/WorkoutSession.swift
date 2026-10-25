@@ -124,10 +124,7 @@ final class WorkoutSession: Identifiable {
     }
 
     var hasQueuedExtra: Bool {
-        guard case let .set(id, setIndex, _, _)? = currentStep,
-              stepIndex + 1 < script.count,
-              case let .set(nextId, nextSetIndex, _, _) = script[stepIndex + 1] else { return false }
-        return nextId == id && nextSetIndex > setIndex
+        flow.hasQueuedExtraSet(at: stepIndex, in: script)
     }
 
     var ledger: SessionLedger {

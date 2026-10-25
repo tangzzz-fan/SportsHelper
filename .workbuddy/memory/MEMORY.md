@@ -147,3 +147,11 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - **会话**：`AudioSessionArbiter` + `AudioSessionLease` 引用计数；播报整段持有，播完 2 秒才释放（否则倒数 3/2/1 会断三次）。播报与收音都不许直接 `setActive`。
 - **音色**：只传 `language: "zh-CN"` 会拿到 compact Tingting；按 `quality` 取最高档（本机有 premium「声音2」）。
 - **引擎**：`matcha-icefall-zh-baker` 语料非商用、Kokoro 中文 RTF>1 且 G2P 是 eSpeak GPL——都不能闭源上架。只剩 MeloTTS（MIT / 44.1kHz / 163MB）。
+
+### 出声权归课程，不归视图（2026-10-25，e9a9499）
+
+- `VoiceService.voice(for: sessionId:…)` 按 sessionId 缓存；`WorkoutVoiceSession.start(atStep:)` 每实例只生效一次。**不要在 `onDisappear` 里置空会话**——fullScreenCover 转场会成对抖动，实测 onAppear 触发 3 次，每次都会重念开场。
+- **第一拍是组时不念开场**：同一 tick 两句必然截断（真机只听到「开始训练，下…」）。`index > 0` 的恢复训练也不念。
+- **全 App 一个渲染器**。每个协调器新建一个 `AVSpeechSynthesizer` 会各自排队，依次念完 = 听感「两个音频」。
+- `AVSpeechSynthesizer.cancel` **不要用 `isSpeaking` 当开关**（`speak()` 返回瞬间恒 false）；`stopSpeaking` 无条件调用。
+- `.inactive` 算前台：转场/来电横幅/控制中心都会短暂 inactive。

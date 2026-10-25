@@ -17,6 +17,37 @@ private func extraTarget() -> SetTarget {
 @Suite("加组脚本")
 struct ExtraSetFlowTests {
 
+    @Test("普通组间休息不算「已加一组」")
+    func normalRestIsNotAnExtraSet() {
+        let flow = WorkoutFlowModel(plan: extraPlan(), dayIndex: 1)
+        // 计划 3 组：第 1 组之后是第 2 组，属于正常排程。
+        #expect(flow.hasQueuedExtraSet(at: 0, in: flow.steps) == false)
+        #expect(flow.hasQueuedExtraSet(at: 1, in: flow.steps) == false)
+    }
+
+    @Test("插进去的那一组才算，且只认紧跟着的那一步")
+    func insertedSetCountsAsExtra() {
+        let flow = WorkoutFlowModel(plan: extraPlan(), dayIndex: 1)
+        let script = WorkoutFlowModel.insertingExtraSet(
+            in: flow.steps,
+            after: 2,
+            prescriptionId: "i1",
+            setIndex: 4,
+            target: extraTarget(),
+            restAfterSec: 90
+        )
+        #expect(flow.hasQueuedExtraSet(at: 2, in: script))
+        // 额外组之后是收尾步，不再算。
+        #expect(flow.hasQueuedExtraSet(at: 3, in: script) == false)
+    }
+
+    @Test("越界与收尾步都返回 false")
+    func outOfBoundsIsFalse() {
+        let flow = WorkoutFlowModel(plan: extraPlan(), dayIndex: 1)
+        #expect(flow.hasQueuedExtraSet(at: 99, in: flow.steps) == false)
+        #expect(flow.hasQueuedExtraSet(at: flow.steps.count - 1, in: flow.steps) == false)
+    }
+
     @Test("在某一组之后插入额外组，位置紧挨着它")
     func insertsAfterSet() {
         let flow = WorkoutFlowModel(plan: extraPlan(), dayIndex: 1)

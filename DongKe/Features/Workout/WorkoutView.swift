@@ -13,9 +13,15 @@ struct WorkoutView: View {
     @State private var bonusReps = 0
     @State private var effort: Int?
     @State private var voiceStopTask: Task<Void, Never>?
+    /// 休息面板的实际高度。休息时动作图要在面板以上居中，否则会被从腰上切断。
+    @State private var restSheetHeight: CGFloat = 0
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
+
+    private var restingInset: CGFloat {
+        session.isResting ? restSheetHeight : 0
+    }
 
     private var doseText: String {
         guard let prescription else { return "" }
@@ -25,7 +31,11 @@ struct WorkoutView: View {
     }
 
     private var figureSize: CGSize {
-        typeSize.isAccessibilitySize ? CGSize(width: 132, height: 156) : CGSize(width: 220, height: 260)
+        // 休息时面板吃掉将近半屏，图要缩一档，否则注解那两行会被面板压住。
+        if session.isResting {
+            return typeSize.isAccessibilitySize ? CGSize(width: 118, height: 138) : CGSize(width: 186, height: 220)
+        }
+        return typeSize.isAccessibilitySize ? CGSize(width: 132, height: 156) : CGSize(width: 220, height: 260)
     }
 
     private var cueLines: [String] {
@@ -101,7 +111,7 @@ struct WorkoutView: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
-                                .frame(minHeight: proxy.size.height, alignment: .center)
+                                .frame(minHeight: max(0, proxy.size.height - restingInset), alignment: .center)
                             } else {
                                 finishedPlaceholder
                                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
@@ -117,10 +127,16 @@ struct WorkoutView: View {
             }
 
             if session.isResting {
-                RestSheetView(session: session)
-                    .transition(.opacity)
+                RestSheetView(session: session) { height in
+                    // 动画期间会报几次不同的高度，差 1pt 以内不写回，避免自激。
+                    if abs(height - restSheetHeight) > 1 {
+                        restSheetHeight = height
+                    }
+                }
+                .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.22), value: restSheetHeight)
         .onReceive(Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()) { _ in
             session.refresh()
         }
