@@ -162,3 +162,6 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - 卡片要 `.ignoresSafeArea(edges: .bottom)` + 内容让出 safeInset，不然 home indicator 那条会露灰底。
 - `hasQueuedExtra` 只认「组序超出计划组数」的那一段（`WorkoutFlowModel.hasQueuedExtraSet`）。**别用「下一步还是同一动作的组」判断加组**——那是普通组间休息，会让每次休息都显示「已加一组」，而撤销会删掉正常的那一组。
 - `Typography.timer` 是 rounded（不是 monospaced）：monospaced 的 0 是斜线零。
+- **别把超宽视图放进 ZStack**：背景装饰图 430pt 会把整页撑到比屏幕宽，面板边距、按钮宽度、顶部栏边距全跟着错。用 `.background` + `GeometryReader` 让它不参与布局。
+- **`clipped()` 会连带裁掉覆盖层**：贴底的面板会被裁进安全区，底部永久露一条白/灰条。裁剪只做在背景层。
+- `GeometryProxy.safeAreaInsets` 在已被消费安全区的层级里恒为 0，读不到 home indicator；要真值就问 key window。
