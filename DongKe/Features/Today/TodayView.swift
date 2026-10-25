@@ -38,11 +38,12 @@ struct TodayView: View {
     @Environment(SessionStore.self) var store
 
     var today: PlanDay? {
-        let weekday = SampleData.weekday(for: Date())
-        if let day = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay }) {
-            return day
-        }
-        return nextTrainingDay
+        guard let occurrence = todayOccurrence else { return nil }
+        return plan.days.first(where: { $0.dayIndex == occurrence.dayIndex })
+    }
+
+    var todayOccurrence: PlanOccurrence? {
+        PlanCalendar.occurrence(on: Date(), in: plan)
     }
 
     private var dateLine: String {

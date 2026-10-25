@@ -15,7 +15,12 @@ final class SessionStore {
 
     var summaries: [SessionRecordSummary] {
         sessions.map {
-            SessionRecordSummary(date: $0.date, plannedSets: $0.plannedSets, completedSets: $0.completedSets)
+            SessionRecordSummary(
+                date: $0.date,
+                plannedSets: $0.plannedSets,
+                completedSets: $0.completedSets,
+                planDate: $0.planDate
+            )
         }
     }
 
@@ -38,7 +43,8 @@ final class SessionStore {
                 date: $0.startedAt,
                 title: $0.title,
                 completedSets: $0.completedSets,
-                plannedSets: $0.plannedSets
+                plannedSets: $0.plannedSets,
+                planDate: $0.planDate
             )
         }
     }
@@ -49,13 +55,17 @@ final class SessionStore {
         plannedSets: Int,
         completedSets: Int,
         startedAt: Date,
-        finishedAt: Date? = nil
+        finishedAt: Date? = nil,
+        planDate: Date? = nil
     ) {
         if let existing = entity(with: id) {
             existing.completedSets = completedSets
             existing.plannedSets = plannedSets
             if let finishedAt {
                 existing.finishedAt = finishedAt
+            }
+            if let planDate {
+                existing.planDate = planDate
             }
         } else {
             context.insert(SessionEntity(
@@ -64,7 +74,8 @@ final class SessionStore {
                 finishedAt: finishedAt,
                 title: title,
                 plannedSets: plannedSets,
-                completedSets: completedSets
+                completedSets: completedSets,
+                planDate: planDate
             ))
         }
         try? context.save()

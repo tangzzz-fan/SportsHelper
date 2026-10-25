@@ -4,11 +4,13 @@ public struct SessionRecordSummary: Equatable, Sendable {
     public var date: Date
     public var plannedSets: Int
     public var completedSets: Int
+    public var planDate: Date?
 
-    public init(date: Date, plannedSets: Int, completedSets: Int) {
+    public init(date: Date, plannedSets: Int, completedSets: Int, planDate: Date? = nil) {
         self.date = date
         self.plannedSets = plannedSets
         self.completedSets = completedSets
+        self.planDate = planDate
     }
 
     public var isCompleted: Bool {
@@ -37,9 +39,24 @@ public enum HistoryStats {
         let start = weekStart(for: now, calendar: calendar)
         let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start
         let days = records
-            .filter { $0.isCompleted && $0.date >= start && $0.date < end }
-            .map { calendar.startOfDay(for: $0.date) }
+            .filter(\.isCompleted)
+            .map { planDay(of: $0, calendar: calendar) }
+            .filter { $0 >= start && $0 < end }
         return Set(days).count
+    }
+
+    public static func isDone(
+        _ occurrence: PlanOccurrence,
+        in records: [SessionRecordSummary],
+        calendar: Calendar = Calendar(identifier: .gregorian)
+    ) -> Bool {
+        records.contains { record in
+            calendar.isDate(planDay(of: record, calendar: calendar), inSameDayAs: occurrence.date)
+        }
+    }
+
+    static func planDay(of record: SessionRecordSummary, calendar: Calendar) -> Date {
+        calendar.startOfDay(for: record.planDate ?? record.date)
     }
 
     public static func streak(

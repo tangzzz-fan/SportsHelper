@@ -14,6 +14,7 @@ enum A11y {
         static let reminderBanner = "today.reminderBanner"
         static let skipToday = "today.skipToday"
         static let undoSkipToday = "today.undoSkipToday"
+        static let alreadyDone = "today.alreadyDone"
     }
 
     enum Workout {
@@ -21,6 +22,7 @@ enum A11y {
         static let completeSet = "workout.completeSet"
         static let skipSet = "workout.skipSet"
         static let end = "workout.end"
+        static let weeklyProgress = "workout.weeklyProgress"
         static let cues = "workout.cues"
         static let setCountdown = "workout.setCountdown"
         static let downgrade = "workout.downgrade"

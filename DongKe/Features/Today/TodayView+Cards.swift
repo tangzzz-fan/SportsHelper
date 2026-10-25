@@ -25,9 +25,13 @@ extension TodayView {
     }
 
     var isRestToday: Bool {
-        let weekday = SampleData.weekday(for: Date())
-        guard let day = plan.days.first(where: { $0.weekday == weekday }) else { return true }
-        return day.isRestDay
+        guard let occurrence = todayOccurrence else { return true }
+        return Calendar.current.isDateInToday(occurrence.date) == false
+    }
+
+    var todayIsDone: Bool {
+        guard let occurrence = todayOccurrence, isRestToday == false else { return false }
+        return HistoryStats.isDone(occurrence, in: store.summaries)
     }
 
     func resumeCard(_ hint: String) -> some View {
@@ -60,6 +64,7 @@ extension TodayView {
         let items = day.blocks.flatMap(\.items)
         let resting = isRestToday
         let skipped = daySkip.isSkipped()
+        let done = todayIsDone
         let weeklyTarget = max(1, plan.meta.daysPerWeek - daySkip.skippedThisWeek())
         return VStack(alignment: .leading, spacing: 12) {
             Text(resting ? "今天休息" : day.title)
@@ -71,6 +76,14 @@ extension TodayView {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier(A11y.Today.skipToday)
+            }
+
+            if done {
+                Text("这一节已经练过。再练就是加量，不算新的一天。")
+                    .font(Typography.meta)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(A11y.Today.alreadyDone)
             }
 
             Text(resting
@@ -94,7 +107,7 @@ extension TodayView {
             .padding(.top, 12)
 
             Button(action: onStart) {
-                Text(buttonTitle(resting: resting, skipped: skipped))
+                Text(buttonTitle(resting: resting, skipped: skipped, done: done))
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -119,28 +132,30 @@ extension TodayView {
             .accessibilityIdentifier(A11y.Today.start)
             .padding(.top, 12)
 
-            if skipped {
-                Button {
-                    daySkip.undo()
-                } label: {
-                    Text("撤销，今天还是练")
-                        .font(Typography.secondary)
-                        .foregroundStyle(Theme.accent(for: colorScheme))
-                        .frame(maxWidth: .infinity, minHeight: 44)
+            if done == false {
+                if skipped {
+                    Button {
+                        daySkip.undo()
+                    } label: {
+                        Text("撤销，今天还是练")
+                            .font(Typography.secondary)
+                            .foregroundStyle(Theme.accent(for: colorScheme))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(PressableGlassStyle())
+                    .accessibilityIdentifier(A11y.Today.undoSkipToday)
+                } else {
+                    Button {
+                        showSkipConfirm = true
+                    } label: {
+                        Text("今天不练")
+                            .font(Typography.secondary)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(PressableGlassStyle())
+                    .accessibilityIdentifier(A11y.Today.skipToday)
                 }
-                .buttonStyle(PressableGlassStyle())
-                .accessibilityIdentifier(A11y.Today.undoSkipToday)
-            } else {
-                Button {
-                    showSkipConfirm = true
-                } label: {
-                    Text("今天不练")
-                        .font(Typography.secondary)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(PressableGlassStyle())
-                .accessibilityIdentifier(A11y.Today.skipToday)
             }
         }
         .padding(18)
@@ -148,7 +163,8 @@ extension TodayView {
         .glassSurface(radius: Theme.Radius.glassCard)
     }
 
-    private func buttonTitle(resting: Bool, skipped: Bool) -> String {
+    private func buttonTitle(resting: Bool, skipped: Bool, done: Bool) -> String {
+        if done { return "再练一次" }
         if skipped { return "还是练一次" }
         return resting ? "提前练一次" : "开始训练"
     }

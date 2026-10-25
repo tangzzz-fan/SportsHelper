@@ -7,6 +7,7 @@ final class WorkoutSession: Identifiable {
     let id: UUID
     let plan: WorkoutPlan
     let dayIndex: Int
+    let planDate: Date?
     let flow: WorkoutFlowModel
     let startedAt: Date
     var store: SessionStore?
@@ -26,6 +27,7 @@ final class WorkoutSession: Identifiable {
     init(
         plan: WorkoutPlan,
         dayIndex: Int,
+        planDate: Date? = nil,
         store: SessionStore? = nil,
         startedAt: Date = Date(),
         id: UUID = UUID(),
@@ -35,6 +37,7 @@ final class WorkoutSession: Identifiable {
         self.id = id
         self.plan = plan
         self.dayIndex = dayIndex
+        self.planDate = planDate
         self.store = store
         self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)

@@ -9,6 +9,7 @@ final class SessionEntity {
     var title: String
     var plannedSets: Int
     var completedSets: Int
+    var planDate: Date?
 
     init(
         id: UUID,
@@ -16,7 +17,8 @@ final class SessionEntity {
         finishedAt: Date? = nil,
         title: String,
         plannedSets: Int,
-        completedSets: Int
+        completedSets: Int,
+        planDate: Date? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -24,5 +26,6 @@ final class SessionEntity {
         self.title = title
         self.plannedSets = plannedSets
         self.completedSets = completedSets
+        self.planDate = planDate
     }
 }

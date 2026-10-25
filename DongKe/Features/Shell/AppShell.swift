@@ -145,21 +145,18 @@ struct AppShell: View {
         }
         guard let dayIndex else { return }
         tab = .today
-        let active = WorkoutSession(plan: plan, dayIndex: dayIndex)
-        active.store = store
-        active.setLogStore = setLogs
-        active.checkpointStore = checkpoints
-        active.restNotifications = NotificationService.shared
-        session = active
+        let occurrence = PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)
+        start(dayIndex: dayIndex, on: occurrence?.date, in: plan)
     }
 
     private func startWorkout() {
         let plan = activePlan
-        let weekday = SampleData.weekday(for: Date())
-        let dayIndex = plan.days.first(where: { $0.weekday == weekday && !$0.isRestDay })?.dayIndex
-            ?? plan.days.first(where: { !$0.isRestDay })?.dayIndex
-            ?? 1
-        let active = WorkoutSession(plan: plan, dayIndex: dayIndex)
+        guard let occurrence = PlanCalendar.occurrence(on: Date(), in: plan) else { return }
+        start(dayIndex: occurrence.dayIndex, on: occurrence.date, in: plan)
+    }
+
+    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan) {
+        let active = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: planDate)
         active.store = store
         active.setLogStore = setLogs
         active.checkpointStore = checkpoints
@@ -169,9 +166,16 @@ struct AppShell: View {
 
     private func resumeWorkout() {
         guard let checkpoint = resumeCandidate else { return }
+        let plan = activePlan
+        let occurrence = PlanCalendar.occurrence(
+            of: checkpoint.dayIndex,
+            anchoredAt: checkpoint.startedAt,
+            in: plan
+        )
         let active = WorkoutSession(
-            plan: activePlan,
+            plan: plan,
             dayIndex: checkpoint.dayIndex,
+            planDate: occurrence?.date,
             store: store,
             startedAt: checkpoint.startedAt,
             id: checkpoint.sessionId,

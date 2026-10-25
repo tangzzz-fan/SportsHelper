@@ -219,7 +219,19 @@ struct WorkoutView: View {
             Text("已完成 \(session.completedSets) / \(session.plannedSets) 组")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            if let done = weeklyDone {
+                Text(done)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier(A11y.Workout.weeklyProgress)
+            }
         }
+    }
+
+    private var weeklyDone: String? {
+        guard let store = session.store else { return nil }
+        let target = max(1, session.plan.meta.daysPerWeek - DaySkipStore.shared.skippedThisWeek())
+        return "本周 \(min(store.completedDaysThisWeek, target)) / \(target)"
     }
 
     private var completeButtonTitle: String {

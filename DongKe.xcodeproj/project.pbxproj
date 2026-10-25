@@ -38,6 +38,7 @@
 		1E7DFD9223C03DB8790CD53E /* PlanTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */; };
 		1EAA0E5CA1CFE50A0A96F2A8 /* PlanSafetyChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A20645487ADDC9C7D048E27 /* PlanSafetyChecker.swift */; };
 		1F911F22EC54069F86DCF773 /* AIPromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48CC4559934C56DB9672ED36 /* AIPromptTests.swift */; };
+		2163CF996E317E9980E218F3 /* PlanCalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CD0ABA788794879DA1FB21B /* PlanCalendarTests.swift */; };
 		24A238F00806CE3DF6EA0087 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018448243800E9386D12DF7D /* RootView.swift */; };
 		2542507649CC3BE537B9F908 /* DoseAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0319F624ACE677C4A53E75D /* DoseAdjustment.swift */; };
 		27AD5959F261D8EF59D189BC /* BriefConfirmView+Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E5BEAC6D96BC18F760EEC1 /* BriefConfirmView+Sections.swift */; };
@@ -79,6 +80,7 @@
 		476C60FE0C26A8C5195196BE /* QuickAIPlanSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7639FAB5F2D2B1FD70D1BFF2 /* QuickAIPlanSheet.swift */; };
 		47F796030AAE671920DB2BDC /* SessionRecapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0687D412EFFC6AD281FEDB6 /* SessionRecapTests.swift */; };
 		480E30E1019CE4A6C328A724 /* HeterogeneousImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38159CD313B1775E12D7F9F2 /* HeterogeneousImportTests.swift */; };
+		4A4588E0DD294A34C60E495D /* PlanCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BB78085A5DF2DD2F9CA725A /* PlanCalendar.swift */; };
 		4A98A9F971D5AA63706090CC /* DoseRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 361A74D9C66BE56BD904E0E0 /* DoseRulesTests.swift */; };
 		4DA64951D52979FB83BCE65F /* FreeTextPlanParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4D30EE47BD565CC140A5FC /* FreeTextPlanParserTests.swift */; };
 		4DDEA2C96FC0CF8B80A992A3 /* PlanImportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44258EF3F495884B4A898CD /* PlanImportServiceTests.swift */; };
@@ -316,6 +318,7 @@
 		19FEEE966363741C21A914C4 /* VoiceInputCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputCards.swift; sourceTree = "<group>"; };
 		1A47005292FC71C12907C981 /* SystemSpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemSpeechTranscriber.swift; sourceTree = "<group>"; };
 		1B43784FEA6139D875499793 /* DoseReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReport.swift; sourceTree = "<group>"; };
+		1CD0ABA788794879DA1FB21B /* PlanCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanCalendarTests.swift; sourceTree = "<group>"; };
 		1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerStateMachineTests.swift; sourceTree = "<group>"; };
 		1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTitleTests.swift; sourceTree = "<group>"; };
 		203F71D1C53C93AEE33B6D4F /* A11yIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11yIdentifiers.swift; sourceTree = "<group>"; };
@@ -342,6 +345,7 @@
 		38159CD313B1775E12D7F9F2 /* HeterogeneousImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeterogeneousImportTests.swift; sourceTree = "<group>"; };
 		392808FC1F4B0FBB1BBD1E4C /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		3A5EABB2150760A258EAD5C5 /* ExerciseAliasResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseAliasResolver.swift; sourceTree = "<group>"; };
+		3BB78085A5DF2DD2F9CA725A /* PlanCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanCalendar.swift; sourceTree = "<group>"; };
 		3D2ED666E1F2886D06EC8035 /* SpeechCueCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechCueCoordinator.swift; sourceTree = "<group>"; };
 		3E75A2E5D6046D39A8412663 /* PlanRevisionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanRevisionTests.swift; sourceTree = "<group>"; };
 		3E803E2ABEF355F54707C821 /* WeeklyScheduleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyScheduleGenerator.swift; sourceTree = "<group>"; };
@@ -551,6 +555,7 @@
 				1B43784FEA6139D875499793 /* DoseReport.swift */,
 				B03783459075D331D86595EE /* HistoryStats.swift */,
 				6D1D8A9644DD53AE2EACB484 /* NotificationPlan.swift */,
+				3BB78085A5DF2DD2F9CA725A /* PlanCalendar.swift */,
 				992373A4ED862E6EFA6A3C49 /* PlanCatalog.swift */,
 				168C6D3E33852EFB889A046D /* PlanGenerator.swift */,
 				D3A2CC2703A871BE8D0DCD05 /* ReminderHealth.swift */,
@@ -979,6 +984,7 @@
 				A4CC0B22EA0BD15B95368DF5 /* OnboardingTests.swift */,
 				CB087357ABC1EAEAC3D0301E /* OversizedImportTests.swift */,
 				ED52CF4CC8350CA8DE9A1F60 /* PlanBriefParserTests.swift */,
+				1CD0ABA788794879DA1FB21B /* PlanCalendarTests.swift */,
 				57E436FBB014D91A4C2ACF94 /* PlanDayNamingTests.swift */,
 				BA1B15B9B3D7F04E0207EB15 /* PlanDecoderTests.swift */,
 				AB6AB296368355A6973FB533 /* PlanGeneratorTests.swift */,
@@ -1191,6 +1197,7 @@
 				3C9AE06D983603B4718734C8 /* ParseModels.swift in Sources */,
 				AD06013D051FFC5BBD560182 /* PlanBrief.swift in Sources */,
 				D5DD766F377D1462B7361973 /* PlanBriefParser.swift in Sources */,
+				4A4588E0DD294A34C60E495D /* PlanCalendar.swift in Sources */,
 				3A19D92166D0BF71246F192F /* PlanCatalog.swift in Sources */,
 				7E0FF6970C2C74F36407013D /* PlanDecoder.swift in Sources */,
 				8A761B270DE386006FA8C786 /* PlanDraft.swift in Sources */,
@@ -1269,6 +1276,7 @@
 				F0762D3743FC7CFED0DBF2A3 /* OnboardingTests.swift in Sources */,
 				5FB22E12E8EFDD26502506A1 /* OversizedImportTests.swift in Sources */,
 				340AA3438006F72FE6628009 /* PlanBriefParserTests.swift in Sources */,
+				2163CF996E317E9980E218F3 /* PlanCalendarTests.swift in Sources */,
 				FCC22537D503CB426B230A31 /* PlanDayNamingTests.swift in Sources */,
 				DB059C118017B393FB1DFA3A /* PlanDecoderTests.swift in Sources */,
 				C07F77A0D71AADD159003EDD /* PlanGeneratorTests.swift in Sources */,
