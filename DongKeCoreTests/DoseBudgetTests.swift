@@ -30,19 +30,14 @@ private func plans() -> [(String, WorkoutPlan)] {
     }
 }
 
-@Test(
-    "单次主训练不超过 5 个动作",
-    .disabled("""
-    2026-10-25 实测：30 分钟单次 10 个主训练动作，60 分钟 13 个。Henry 的依从性拐点是 4 个，\
-    依从性上限优先于训练学下限（spec「依从性上限」一节的判据是 >5 就砍动作）。\
-    现在这个数会让减量分支对每一份计划都成立——回路第一次出手永远是把东西拿走。\
-    修完 §13 再打开这条。
-    """)
-)
+@Test("单次主训练不超过 5 个动作")
 func mainItemsPerSession() {
     for (label, plan) in plans() {
         for day in plan.days where day.isRestDay == false {
-            #expect(mainItems(day).count <= 5, "\(label) \(day.weekday.chineseName) 有 \(mainItems(day).count) 个")
+            #expect(
+                mainItems(day).count <= PlanGenerator.maxMainItems,
+                "\(label) \(day.weekday.chineseName) 有 \(mainItems(day).count) 个"
+            )
         }
     }
 }
@@ -50,10 +45,11 @@ func mainItemsPerSession() {
 @Test(
     "单周单肌群组数落在 4–25 的宽松区间",
     .disabled("""
-    2026-10-25 实测（30 分钟 / 每周 3 天）：臀 46、股四头 18、小腿 4、腘绳 4、胸 2、背 2，\
-    肩 / 臂 / 核心 0。臀接近常见 MRV 的两倍，胸背低于 MEV。\
-    根因不在映射表：下肢力量动作 11 个里 6 个只压臀，而每个下肢日把整池都排进来。\
-    上下界只是「明显不可能」的粗筛，不是最优区间。修完 §13 再打开这条。
+    2026-10-25 实测（30 分钟 / 每周 3 天）：臀 24、股四头 9、小腿 9、腘绳 6、胸 9、背 3。\
+    默认档已经落在区间内，但**每周 5 天时臀仍是 65–78**——本轮的上限是「每次课」的，\
+    不是「每周」的。肩 / 臂在纯自重组里没有任何力量动作（shoulder_press / lateral_raise /\
+    biceps_curl 都要哑铃），是动作库缺口，不是排程问题；核心只出现在收尾块，本指标不计。\
+    差的是 §13 的 B：按肌群累计周组数。修完再打开这条。
     """)
 )
 func weeklySetsPerMuscle() {
@@ -73,4 +69,28 @@ func displayedCountIncludesWarmupAndCore() {
     let main = mainItems(day).count
     #expect(all > main)
     #expect(all - main == 2, "热身 1 个 + 核心收尾 1 个")
+}
+
+@Test("同一节课里，同一个主导肌群最多两个动作——五个名额不能拿来说同一句话")
+func leadMusclesAreSpread() {
+    for (label, plan) in plans() {
+        for day in plan.days where day.isRestDay == false {
+            let leads = mainItems(day).compactMap { PlanGenerator.leadMuscle(of: $0.catalogId) }
+            for muscle in Set(leads) {
+                let count = leads.filter { $0 == muscle }.count
+                #expect(
+                    count <= PlanGenerator.maxItemsPerLeadMuscle,
+                    "\(label) \(day.weekday.chineseName) 的 \(muscle.chineseName) 排了 \(count) 个"
+                )
+            }
+        }
+    }
+}
+
+@Test("下肢日不会排成一整节只有股四头与臀")
+func lowerDayCoversMoreThanTwoMuscles() {
+    let plan = PlanGenerator.makePlan(profile: UserProfile())
+    let lower = plan.days.first { !$0.isRestDay }!
+    let leads = Set(mainItems(lower).compactMap { PlanGenerator.leadMuscle(of: $0.catalogId) })
+    #expect(leads.count >= 3, "只覆盖了 \(leads.map(\.chineseName))")
 }

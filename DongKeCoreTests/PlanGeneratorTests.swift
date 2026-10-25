@@ -105,13 +105,16 @@ struct PlanGeneratorTests {
         #expect(used.contains("shoulder_press") == false)
     }
 
-    @Test("a longer session yields more main exercises")
+    @Test("a longer session yields more main work, not more exercises")
     func sessionLengthChangesVolume() {
         let short = PlanGenerator.makePlan(profile: profile(weekdays: [.monday], minutes: 20))
         let long = PlanGenerator.makePlan(profile: profile(weekdays: [.monday], minutes: 60))
-        let shortMain = short.days.flatMap(\.blocks).first(where: { $0.kind == .main })?.items.count ?? 0
-        let longMain = long.days.flatMap(\.blocks).first(where: { $0.kind == .main })?.items.count ?? 0
-        #expect(longMain > shortMain)
+        let shortMain = short.days.flatMap(\.blocks).first(where: { $0.kind == .main })
+        let longMain = long.days.flatMap(\.blocks).first(where: { $0.kind == .main })
+        let shortWork = (shortMain?.items.count ?? 0) * (shortMain?.items.first?.sets ?? 0)
+        let longWork = (longMain?.items.count ?? 0) * (longMain?.items.first?.sets ?? 0)
+        #expect(longWork > shortWork)
+        #expect((longMain?.items.count ?? 0) <= PlanGenerator.maxMainItems)
     }
 
     @Test("level changes the number of sets")

@@ -65,6 +65,34 @@ public enum PlanGenerator {
         )
     }
 
+    static let maxMainItems = 5
+    static let maxMainSets = 6
+    static let maxItemsPerLeadMuscle = 2
+
+    private static func spread(_ candidates: [CatalogItem], limit: Int) -> [CatalogItem] {
+        var counts: [Muscle: Int] = [:]
+        var picked: [CatalogItem] = []
+        for pass in 1...maxItemsPerLeadMuscle {
+            for item in candidates {
+                guard picked.count < limit else { return picked }
+                guard picked.contains(where: { $0.id == item.id }) == false else { continue }
+                guard let lead = leadMuscle(of: item.id) else {
+                    if pass == 1 { picked.append(item) }
+                    continue
+                }
+                guard (counts[lead] ?? 0) < pass else { continue }
+                counts[lead, default: 0] += 1
+                picked.append(item)
+            }
+        }
+        return picked
+    }
+
+    static func leadMuscle(of catalogId: String) -> Muscle? {
+        let muscles = PrimaryMuscleMap.muscles(for: catalogId)
+        return Muscle.allCases.first(where: muscles.contains)
+    }
+
     private enum Focus {
         case lower, upper, full
     }
@@ -136,17 +164,21 @@ public enum PlanGenerator {
         let mainCandidates = pool.filter { $0.joint != .core && !$0.isDynamic }
         let coreCandidates = pool.filter { $0.joint == .core }
 
-        var main: [CatalogItem] = []
+        var primary: [CatalogItem] = []
         switch focus {
         case .lower:
-            main = mainCandidates.filter { $0.joint == .lower }
+            primary = mainCandidates.filter { $0.joint == .lower }
         case .upper:
-            main = mainCandidates.filter { $0.joint == .upper }
+            primary = mainCandidates.filter { $0.joint == .upper }
         case .full:
-            main = mainCandidates
+            primary = mainCandidates
         }
-        main += mainCandidates.filter { item in !main.contains(where: { $0.id == item.id }) }
-        main = rotated(main, by: variation)
+        primary = rotated(primary, by: variation)
+        let filler = rotated(
+            mainCandidates.filter { item in !primary.contains(where: { $0.id == item.id }) },
+            by: variation
+        )
+        var main = primary + filler
 
         let targetSeconds = profile.sessionMinutes * 60
         let workPerSet = dose.estimatedWorkSeconds
@@ -156,18 +188,20 @@ public enum PlanGenerator {
         let coreCost = coreItem == nil ? 0 : coreSets * (staticSeconds(for: profile.level) + 30)
         let budget = max(0, targetSeconds - warmupCost - coreCost)
 
-        var mainSets = sets
-        var mainCount = 1
-        while mainSets < 6 {
-            let perItem = mainSets * (workPerSet + rest)
-            let fits = max(1, budget / max(1, perItem))
-            mainCount = min(main.count, fits)
-            let estimated = mainCount * perItem
-            if estimated >= Int(Double(budget) * 0.85) { break }
+        let usable = Int(Double(budget) * 0.85)
+        let perSet = max(1, workPerSet + rest)
+
+        let picked = spread(main, limit: maxMainItems)
+        var mainCount = max(1, picked.count)
+        var mainSets = max(1, sets)
+        let floor = min(2, picked.count)
+        while mainCount > floor && mainCount * mainSets * perSet > usable {
+            mainCount -= 1
+        }
+        while mainSets < maxMainSets && (mainSets + 1) * mainCount * perSet <= usable {
             mainSets += 1
         }
-        mainCount = max(1, min(main.count, mainCount))
-        main = Array(main.prefix(mainCount))
+        main = Array(picked.prefix(mainCount))
 
         var blocks: [ExerciseBlock] = []
 
