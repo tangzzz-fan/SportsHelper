@@ -23,9 +23,9 @@
 
 - **Qwen3-TTS**：0.6B / 1.7B 两档，12Hz tokenizer，10 种语言（含粤语/四川话等方言音色），3 秒参考音克隆，官方称流式端到端延迟 **97ms**。
 - **仓库 `github.com/QwenLM/Qwen3-TTS` 的 LICENSE 已核实为 Apache-2.0**（curl 原文，非二手转述）。
-- 分发形态只有四种：PyPI `qwen-tts`、**DashScope 云端 API**、vLLM-Omni 离线推理、Gradio demo。**没有 iOS / Android SDK**。
-- 输出采样率：仓库页未写；第三方 Rust 运行时（candle-tts）记为 **24 kHz mono**，待官方模型卡确认。
-- 权重许可：仓库代码 Apache-2.0 ≠ 权重许可，需以模型卡为准（Qwen 系列通常同为 Apache-2.0）。**本机访问 HF 被代理白名单挡住（502），这一条尚未核实**，见 §6。
+- 分发形态只有四种：PyPI `qwen-tts`、**DashScope 云端 API**、vLLM-Omni 离线推理、Gradio demo。**没有 iOS / Android SDK**（但已有 LiteRT / GGUF / MLX 端侧格式，见 §6c）。
+- 输出采样率：**24 kHz**（`speech_tokenizer/config.json` 的 `output_sample_rate`，已核实）。
+- 权重许可：**Apache-2.0，已核实**（模型卡 front-matter），见 §6.1。
 
 **CosyVoice3**（同一团队，`github.com/QwenAudio/CosyVoice`）：
 - 推荐 `Fun-CosyVoice3-0.5B-2512`，0.5B，Apache-2.0（LICENSE 已核实），Bi-Streaming 双向流式，延迟约 150ms。
@@ -69,30 +69,165 @@
 
 同理，**用云端 API 批量合成再固化成离线资源也有灰区**：大厂普遍把「离线资源」单独授权（火山按包名/装机量、阿里按设备），在线接口卖的是「每次调用」。做 A/B 试听没问题，真要作为产品音源，先让法务看一眼 ToS。
 
-## 6. 待核实（一天内能做完）
+## 6. 三条待核实的实测结果（2026-10-25）
 
-| # | 事项 | 方法 |
+### 6.1 权重许可：**全部 Apache-2.0，已核实**
+
+不是看 tag，是读模型卡 front-matter 原文：
+
+| 仓库 | 许可 | 来源 |
 |---|---|---|
-| 1 | Qwen3-TTS / CosyVoice3 **权重**许可 | 在能直连 HF/ModelScope 的机器上读模型卡 `license` 字段。本机 `huggingface.co` 走代理返回 502，`127.0.0.1:7890` 也不通 |
-| 2 | Qwen3-TTS 输出采样率、中文 RTF（Mac M 系列 CPU/GPU） | 本地跑 `qwen-tts`，合成现有 496 条里的 20 条取样计时 |
-| 3 | 火山 V4 离线资源包体积（每个音色） | 控制台/商务；文档只说「V4 模型较大」，未给 MB |
+| `Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice` | apache-2.0 | README front-matter 第 2 行 |
+| `Qwen/Qwen3-TTS-12Hz-0.6B-Base` | apache-2.0 | HF API tag |
+| `Qwen/Qwen3-TTS-12Hz-1.7B-{Base,CustomVoice,VoiceDesign}` | apache-2.0 | HF API tag |
+| `Qwen/Qwen3-TTS-Tokenizer-12Hz` | apache-2.0 | HF API tag |
+| `FunAudioLLM/Fun-CosyVoice3-0.5B-2512` | apache-2.0 | HF API tag |
+| PyPI `qwen-tts` 0.1.1 | Apache-2.0 | PyPI metadata |
+
+**结论：代码与权重同许可，商用无额外条件。** 上一版担心的「代码 Apache ≠ 权重 Apache」不存在。
+
+### 6.2 采样率 **24 kHz**，RTF **3.28**
+
+采样率不是猜的，是 `speech_tokenizer/config.json` 原文：
+
+```json
+"input_sample_rate": 24000,
+"output_sample_rate": 24000,
+"decode_upsample_rate": 1920
+```
+
+这也解释了 candle-tts 记的 24 kHz 为什么对。
+
+RTF 实测（`bench.py`，20 条真实音条，覆盖动作名/要点/数字/固定词）：
+
+| 项 | 值 |
+|---|---|
+| 机器 | Apple M2（8 核）/ 16 GB / macOS 27 |
+| 后端 | MPS，fp32，0.6B CustomVoice |
+| 模型加载 | 7.0 s |
+| RTF 均值 / 中位 / 最差 | **3.28 / 3.19 / 4.16** |
+| 20 条音频总长 | 51.5 s |
+| 20 条生成总耗时 | 165.4 s |
+
+**推算全量 496 条：音频约 21 分钟，渲染约 70 分钟**（单进程，一次性构建任务）。
+
+RTF 3.28 意味着「跑一晚」而不是「跑一分钟」，但**它不构成选型门槛**：
+这是构建机上的一次性任务，不是运行时能力。之前把「RTF > 1 就退 CosyVoice3」
+写进判据是错的——那条判据混淆了「离线渲染」和「实时合成」。
+
+### 6.3 火山 V4 资源包体积：**公开渠道无数据**
+
+翻遍 SDK 概览、模型下发接口（V4）、音色列表、移动端离线授权四份文档，
+只有一句定性描述：
+
+> V4 的模型较大，不能再将所有音色打包进同一个文件中一次性下载。
+
+能确认的是形态变化：V2 = 多音色整包（MultipleVoice），**V4 = 单音色资源（SingleVoice）**，
+按「语种 + 音色 + 引擎类型」逐个 `fetchModel` 下发。
+
+具体 MB 数要么找商务，要么装 SDK 实测 `fetchModel` 落盘体积。**不编数字。**
+
+## 6b. 拼接实测：音色比模型更决定成败
+
+单条音条好听不算数——一节课听到的是「俯卧撑 / 第 2 组 / 共 3 组 / 10 次」拼起来那一句。
+按 `ClipSpeechRenderer` 的 70 ms 间隔拼了四组，与现有 `say` 版对照（`concat_bench.py`）：
+
+| 句 | say | Serena | Uncle_Fu |
+|---|---|---|---|
+| A 动作播报（4 段） | 3.35 s | 3.45 s（**+3%**） | 6.08 s（+82%） |
+| B 开场（3 段） | 3.01 s | 3.08 s（**+2%**） | 4.58 s（+52%） |
+| C 过渡（2 段） | 1.80 s | 1.66 s（**−8%**） | 2.64 s（+46%） |
+| D 要点（动作名 + 长要点） | 5.91 s | 5.66 s（**−4%**） | 13.58 s（**+130%**） |
+
+两条硬发现：
+
+1. **必须裁首尾静音**。Qwen 每条输出固定带 **0.2 s 首 + 0.3 s 尾**静音。不裁的话
+   「休息」从 0.70 s 变成 1.52 s（+117%），每段之间凭空多 0.55 s，一节 30 组的课
+   会拖长近半分钟。裁掉之后 Serena 的偏差收敛到 ±8% 以内。
+2. **Serena 可用，Uncle_Fu 不可用**。男声语速慢 50–130%，D 要点 13.58 s——
+   播报预算（`WorkoutAnnouncement.setBudget`）是 20 字/4 秒，这条直接翻三倍。
+   换男声必须先做**语速对齐**（`instruct` 指定或后处理变速），否则一节课都在等播报。
+
+试听材料在 `.scratch/offline-tts/assets/`（已被 `.gitignore` 的 `.scratch/*/assets/` 排除）。
+
+## 6c. 顺带发现：Qwen3-TTS 已有端侧格式
+
+HF 上除了官方 PyPI 权重，还有：
+
+- `litert-community/Qwen3-TTS-12Hz-0.6B-Base` —— Google **LiteRT**（原 TFLite）格式
+- `Serveurperso/Qwen3-TTS-GGUF` / `cstr/qwen3-tts-0.6b-customvoice-GGUF` —— GGUF 量化版
+- `mlx-community/Qwen3-TTS-12Hz-0.6B-*` —— MLX（Apple Silicon）4/5/6/8bit
+
+这条对 §5 的决策没有影响（我们仍然不需要端侧），但它意味着：
+**将来真要做「任意文本实时合成」，开源模型这条路已经通了，不必去买火山/阿里的装机量授权。**
+
+
+## 6d. 怎么复现
+
+复现材料在 `.scratch/offline-tts/tools/`（**手动跑，不进构建**）：`bench.py`（RTF）、
+`compare.py`（与 say 版逐条比时长）、`concat_bench.py`（拼接整句）、`samples.tsv`（20 条取样）、
+`bench-mps-Serena.csv`（原始逐条数据）。
+
+三步：
+
+```bash
+# 1. 环境（Python 3.13 / macOS 27）
+uv venv .venv && uv pip install --python .venv/bin/python qwen-tts
+# 2. 权重（2.3 GB）
+HF_HUB_DISABLE_XET=1 .venv/bin/python -c "from huggingface_hub import snapshot_download; \
+  snapshot_download('Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice', local_dir='model')"
+# 3. 跑
+.venv/bin/python bench.py Serena mps      # → bench-mps-Serena.{json,csv}
+.venv/bin/python compare.py               # 需先有 $TMPDIR/dk-clip-dump/inventory.tsv
+.venv/bin/python concat_bench.py Serena   # → concat/*.wav
+```
+
+⚠️ **代理变量有大小写陷阱**（这里踩过一次）：会话自带 `http_proxy=http://127.0.0.1:57455`
+（白名单代理，不放 huggingface.co），而 Python `requests` **优先读小写**变量。
+只设 `HTTPS_PROXY` 不设 `https_proxy` 时，请求走的是 57455 → `Tunnel connection failed: 502`。
+curl 相反（小写优先，但命令行 `env https_proxy=…` 会覆盖）。所以：
+
+```bash
+env -u http_proxy -u https_proxy -u ALL_PROXY HTTPS_PROXY=http://127.0.0.1:7890 … .venv/bin/python …
+```
+
+⚠️ 另两个小坑：`samples.tsv` 别带 BOM（`read_text(encoding="utf-8-sig")`）；
+`mkdir(exist_ok=True)` 在本机沙箱 shim 下目录已存在仍抛 `FileExistsError`。
 
 ## 7. 建议的下一步
 
-1. **`prototype/tts-render` 分支**：用 **Qwen3-TTS-12Hz-0.6B-CustomVoice**（自带 9 个精品音色，省掉自录参考音）渲染现有 496 条，输出与 `VoiceClips/` 同结构（同 `clipId` 命名）。
-2. **盲听 A/B**：同一节课、同一台 iPhone，`say` 版 vs Qwen 版 vs 系统 TTS，三个音源，只问一句「像不像一个人在说话」。
-3. **门槛**（沿用 `.scratch/coach-voice/README.md`）：许可干净 / 单句时长偏差 < 15% / 总体积可控（AAC 后 < 4MB）/ 不出现句尾发飘与数字吞音。
-4. 若 Qwen3-TTS 在 Mac 上 RTF > 1（纯 CPU），退 CosyVoice3 0.5B；仍不行退 MeloTTS（MIT，44.1kHz）；三者都不过，才回到「云 API 渲染 + 法务确认」。
+1. **`prototype/tts-render` 分支**：用 `Qwen3-TTS-12Hz-0.6B-CustomVoice` 的 **Serena**
+   渲染现有 496 条，输出与 `VoiceClips/` 同结构（同 `clipId` 命名）。两件事必须做在渲染脚本里：
+   - **裁首尾静音**（−45 dBFS 阈值，固定 0.2/0.3 s 也可直接裁）
+   - **重采样 24 kHz → 22.05 kHz**（`say` 版是 22050，播放层不必改）
+2. **盲听 A/B**：同一节课、同一台 iPhone，`say` 版 vs Serena 版，只问一句「像不像一个人在说话」。
+3. **门槛**（已按实测修正）：
+   - 许可干净 —— ✅ 已过（全部 Apache-2.0）
+   - **拼接整句**时长偏差 < 15%（不是单条比单条）—— Serena 已过（≤8%）
+   - 不出现句尾发飘与数字吞音 —— 只能人耳判
+   - 总体积可控（AAC 后 < 4MB）
+4. **不设 RTF 门槛**。3.28 是「渲染一晚」的量级，构建机一次性任务，与运行时无关。
+   真要压缩时间：换 MPS bf16（未试）、或起 2 进程并行（16 GB 内存够）。
+5. **换男声必须先解决语速**。Uncle_Fu 慢 50–130%，直接替换会让每句播报超预算。
+   要么 `instruct` 指定「语速稍快」，要么后处理变速（会改音色，慎用）。
+6. 只有 Serena 的**音质**被人耳否决，才退 CosyVoice3 0.5B；再不行退 MeloTTS（MIT，44.1 kHz）。
+
 
 ## 8. 一句话
 
 > 「Qwen 有离线 TTS」是对的，但那是**可自托管的开源模型**，不是 SDK；「火山有离线 TTS SDK」也是对的，但**我们不需要它**——我们需要的是构建机上的一次性渲染，而那件事用 Apache-2.0 的模型就能做，且成本与用户数无关。
 
+实测之后补一句：
+> 模型能跑（RTF 3.28，一晚出全量），许可干净（Apache-2.0），**真正的选择题是音色**——
+> Serena 拼接后与现有节奏差 ±8%，Uncle_Fu 慢到 +130%。换音色不是换个名字，是重做语速对齐。
+
 ## 来源
 
 - 火山引擎 SDK 概览：<https://www.volcengine.cn/docs/6561/79827>
 - 火山 iOS 接入流程（离线授权、资源包、合成场景）：<https://docs.volcengine.com/docs/6561/79837>
-- 火山 模型下发接口（V4 按音色/语种下发）：<https://www.volcengine.com/docs/6561/516028>
+- 火山 模型下发接口（V4 按音色/语种下发，单音色资源）：<https://www.volcengine.com/docs/6561/516028>
+- 火山 模型下发接口（V4，iOS/OC 版）：<https://www.volcengine.com/docs/6561/516112>
+- 火山 环境依赖（V2/V4 资源包、`OFFLINE_RESOURCE_PATH`）：<https://www.volcengine.com/docs/6561/79834>
 - 火山 音色列表（含离线 V4/V5）：<https://www.volcengine.com/docs/6561/97465>
 - 火山 移动端离线授权（绑定 BundleID + 有效期）：<https://docs.volcengine.com/docs/6561/1582481>
 - 阿里云 离线语音合成（标准版/精品版、永久授权、5 个试用）：<https://help.aliyun.com/zh/isi/developer-reference/offline-speech-synthesis>
@@ -101,5 +236,11 @@
 - 讯飞 离线合成服务说明（发音人 2000/4000 元）：<https://xfyun.cn/doc/tts/offline_tts/ttsoffline_description.html>
 - 讯飞 AIKit 轻量版 iOS SDK：<https://xfyun.cn/doc/tts/AIkit_offline_tts/iOS-SDK(Lightweight).html>
 - Qwen3-TTS 仓库（LICENSE 已核实 Apache-2.0）：<https://github.com/QwenLM/Qwen3-TTS>
+- Qwen3-TTS 0.6B CustomVoice 模型卡（`license: apache-2.0`、9 音色表）：<https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice>
+- Qwen3-TTS 0.6B `speech_tokenizer/config.json`（24 kHz 出处）：<https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice/blob/main/speech_tokenizer/config.json>
 - CosyVoice 仓库（LICENSE 已核实 Apache-2.0）：<https://github.com/QwenAudio/CosyVoice>
+- Fun-CosyVoice3-0.5B-2512（apache-2.0）：<https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512>
+- PyPI `qwen-tts`（Apache-2.0，依赖 torch/transformers 锁定版本）：<https://pypi.org/project/qwen-tts/>
+- LiteRT 版 Qwen3-TTS：<https://huggingface.co/litert-community/Qwen3-TTS-12Hz-0.6B-Base>
 - candle-tts（Qwen3-TTS / CosyVoice3 本地推理，24kHz 记录）：<https://lib.rs/crates/tts-qwen>
+
