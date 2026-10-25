@@ -165,3 +165,10 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - **别把超宽视图放进 ZStack**：背景装饰图 430pt 会把整页撑到比屏幕宽，面板边距、按钮宽度、顶部栏边距全跟着错。用 `.background` + `GeometryReader` 让它不参与布局。
 - **`clipped()` 会连带裁掉覆盖层**：贴底的面板会被裁进安全区，底部永久露一条白/灰条。裁剪只做在背景层。
 - `GeometryProxy.safeAreaInsets` 在已被消费安全区的层级里恒为 0，读不到 home indicator；要真值就问 key window。
+
+### 播报只允许封闭词表（2026-10-25，a1100df）
+
+- **自由文本不许进口播**。主题名、区块名这类 AI 生成的字符串会让整句回落系统 TTS，一节课两种音色。开场已改成「开始训练，共 9 组，3 个动作」；要加新句子，先把它拆成可预录的短语。
+- **动作要点（150 条）已在词表里**。加动作后必须重跑 `scripts/render-voice-clips.sh`，否则新要点会回落——`VoiceClipBankTests.fullSessionIsFullyCovered` 会红。
+- 词表容易漏的是**词形**，不是词：`durationText` 整分钟是「N 分钟」不是「N 分」，漏一个词形就让默认 60 秒休息整句回落。靠守卫测试枚举真实播报，别靠人读。
+- 兜底（`.fallback`）是安全网不是常态。日志里出现 `clip fallback` 就算 bug。
