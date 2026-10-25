@@ -1,7 +1,7 @@
 import Foundation
 
 public enum WorkoutAnnouncement: Equatable, Sendable {
-    case sessionStart(title: String, exerciseCount: Int, totalSets: Int)
+    case sessionStart(exerciseCount: Int, totalSets: Int)
     case setStart(name: String, setIndex: Int, totalSets: Int, dose: String)
     case restStart(seconds: Int)
     case restCountdown(secondsLeft: Int)
@@ -13,21 +13,21 @@ public enum WorkoutAnnouncement: Equatable, Sendable {
 
     public static let hardLimit = 32
 
-    static let sessionBudget = 15
+    static let sessionBudget = 18
     static let setBudget = 20
     static let restBudget = 22
     static let breakBudget = 26
     static let finishBudget = 20
     static let extrasBudget = 26
-    static let promptBudget = 12
 
     public var text: String {
         switch self {
-        case let .sessionStart(title, exerciseCount, totalSets):
-            let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        case let .sessionStart(exerciseCount, totalSets):
+            // 不念当天主题名：那是 AI 生成的自由文本，录不成音条，
+            // 一旦进句子，整句话就只能回落系统 TTS，一节课里出现两种音色。
+            // 主题屏幕上一直写着，语音的职责只是「我现在该做什么」。
             return Self.compose([
                 ("开始训练", true),
-                (name, true),
                 (totalSets > 0 ? "共 \(totalSets) 组" : "", false),
                 (exerciseCount > 0 ? "\(exerciseCount) 个动作" : "", false)
             ], budget: Self.sessionBudget)

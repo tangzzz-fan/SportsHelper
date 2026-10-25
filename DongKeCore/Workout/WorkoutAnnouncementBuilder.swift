@@ -12,15 +12,12 @@ public struct WorkoutAnnouncementBuilder: Sendable {
     private let exercises: [String: Exercise]
     private let setCounts: [String: Int]
     private let basePlannedSets: Int
-    private let dayTitle: String
 
     public init(plan: WorkoutPlan, dayIndex: Int, steps: [FlowStep]? = nil) {
         let flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)
         self.steps = steps ?? flow.steps
         self.setCounts = flow.setCounts
         self.basePlannedSets = flow.plannedSets
-        self.dayTitle = plan.days.first(where: { $0.dayIndex == dayIndex })?.title
-            ?? plan.meta.title
 
         var collected: [String: Exercise] = [:]
         for day in plan.days where day.dayIndex == dayIndex {
@@ -47,12 +44,7 @@ public struct WorkoutAnnouncementBuilder: Sendable {
     }
 
     public func sessionStart() -> WorkoutAnnouncement {
-        let sets = plannedSets
-        return .sessionStart(
-            title: sets > 0 ? dayTitle : "",
-            exerciseCount: exerciseCount,
-            totalSets: sets
-        )
+        .sessionStart(exerciseCount: exerciseCount, totalSets: plannedSets)
     }
 
     public func step(at index: Int) -> FlowStep? {

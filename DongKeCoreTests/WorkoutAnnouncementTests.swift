@@ -15,28 +15,17 @@ struct WorkoutAnnouncementTests {
         WorkoutAnnouncementBuilder(plan: plan(items: items), dayIndex: 1)
     }
 
-    @Test("开始训练先报名与主题，超出预算时先丢动作数")
-    func sessionStartReadsTitleFirst() {
-        let text = WorkoutAnnouncement.sessionStart(
-            title: "居家弹力带背部", exerciseCount: 4, totalSets: 14
-        ).text
-        #expect(text == "开始训练，居家弹力带背部")
-    }
-
-    @Test("没有计划名时保留总组数，动作数让位")
-    func sessionStartWithoutTitle() {
-        #expect(
-            WorkoutAnnouncement.sessionStart(title: "  ", exerciseCount: 3, totalSets: 9).text
-                == "开始训练，共 9 组"
-        )
+    @Test("开场报总组数与动作数，不念 AI 生成的主题名")
+    func sessionStartOmitsFreeText() {
+        // 主题名是 AI 生成的自由文本，无法预录音条；一旦进句子，整句只能回落
+        // 系统 TTS，一节课里就会出现两种音色。主题屏幕上一直写着。
+        let text = WorkoutAnnouncement.sessionStart(exerciseCount: 4, totalSets: 14).text
+        #expect(text == "开始训练，共 14 组，4 个动作")
     }
 
     @Test("休息日没有动作也没有组数时只报开始")
     func sessionStartWithoutSets() {
-        #expect(
-            WorkoutAnnouncement.sessionStart(title: "", exerciseCount: 0, totalSets: 0).text
-                == "开始训练"
-        )
+        #expect(WorkoutAnnouncement.sessionStart(exerciseCount: 0, totalSets: 0).text == "开始训练")
     }
 
     @Test("每组先说动作名，再报第几组与剂量")
@@ -263,14 +252,14 @@ struct WorkoutAnnouncementTests {
         #expect(totalSets == 6)
     }
 
-    @Test("开始训练读当天主题，不是整份计划名")
-    func sessionStartUsesDayTitle() {
+    @Test("开场不再读当天主题")
+    func sessionStartSkipsDayTitle() {
         let plan = makePlan(days: makeSevenDays(
             training: [1],
             blocks: [makeBlock(items: [makeItem(id: "i1", sets: 2)])]
         ))
         let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
 
-        #expect(builder.sessionStart().text == "开始训练，训练，共 2 组")
+        #expect(builder.sessionStart().text == "开始训练，共 2 组，1 个动作")
     }
 }

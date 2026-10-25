@@ -131,7 +131,7 @@ final class VoiceService {
             renderer: sharedRenderer()
         )
         previewCoordinator = created
-        created.announce(.sessionStart(title: "上肢与核心", exerciseCount: 3, totalSets: 9))
+        created.announce(.sessionStart(exerciseCount: 3, totalSets: 9))
     }
 
     func shutdown() {

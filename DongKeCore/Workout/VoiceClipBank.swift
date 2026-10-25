@@ -15,8 +15,11 @@ public enum VoiceClipPlan: Equatable, Sendable {
 
 /// 音条库：把 `WorkoutAnnouncement` 吐出来的整句，切成一段一段**预录**的短语。
 ///
-/// 为什么要切：整句是 43 个动作 × 组数 × 剂量 的组合，录不完；但短语是封闭的
-/// （动作名 + 「第 N 组」+「共 N 组」+ 剂量 + 几个固定词），几百条就能覆盖绝大多数句子。
+/// 为什么要切：整句是 50 个动作 × 组数 × 剂量 的组合，录不完；但短语是封闭的
+/// （动作名 + 要点 + 「第 N 组」+「共 N 组」+ 剂量 + 几个固定词），几百条就能全覆盖。
+///
+/// **约束：播报里不得出现自由文本。** 主题名、区块名这类 AI 生成的字符串一旦进句子，
+/// 整句就只能回落系统 TTS，一节课里就会有两种音色。要加新句子，先把它拆成封闭词表。
 ///
 /// 切不出来就 `.fallback`，交给系统 TTS——**不允许静默无声**。
 public enum VoiceClipBank {
@@ -27,6 +30,7 @@ public enum VoiceClipBank {
     public static let perSideRepsRange = 1...20
     public static let secondsRange = stride(from: 5, through: 120, by: 5)
     public static let minutesRange = 1...10
+    public static let exerciseCountRange = 1...20
     public static let metersRange = stride(from: 10, through: 300, by: 10)
     public static let kilometersRange = 1...10
     public static let percentRange = stride(from: 0, through: 100, by: 5)
@@ -40,6 +44,10 @@ public enum VoiceClipBank {
         var phrases = Set<String>()
         phrases.formUnion(fixedPhrases)
         phrases.formUnion(ExerciseLibrary.all.map(\.name))
+        // 动作要点（「髋部先向后坐，膝盖顺着脚尖方向」）也是播报的一部分。
+        // 它们来自动作库、条数有限，录成音条；否则标准档在撑到一半时会突然
+        // 换回系统 TTS 的音色。
+        phrases.formUnion(ExerciseLibrary.all.flatMap(\.cues))
         for n in setRange { phrases.insert("第 \(n) 组") }
         for n in totalSetRange { phrases.insert("共 \(n) 组") }
         for n in completedRange { phrases.insert("完成 \(n) 组") }
@@ -49,6 +57,11 @@ public enum VoiceClipBank {
         for n in perSideRepsRange { phrases.insert("每侧 \(n) 次") }
         for n in secondsRange { phrases.insert("\(n) 秒") }
         for n in minutesRange { phrases.insert("\(n) 分") }
+        // durationText 整分钟时输出「N 分钟」，不是「N 分」——少录这一个词形，
+        // 默认 60 秒休息就会整句回落系统 TTS。
+        for n in minutesRange { phrases.insert("\(n) 分钟") }
+        // 开场句的「3 个动作」。
+        for n in exerciseCountRange { phrases.insert("\(n) 个动作") }
         for n in metersRange { phrases.insert("\(n) 米") }
         for n in kilometersRange {
             phrases.insert("\(n) 公里")

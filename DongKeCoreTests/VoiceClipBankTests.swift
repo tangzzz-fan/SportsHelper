@@ -30,9 +30,98 @@ struct VoiceClipBankTests {
         #expect(VoiceClipBank.plan(for: "3") == .clips(["3"]))
     }
 
-    @Test("主题名在库外，开场句回退")
-    func sessionStartFallsBack() {
-        #expect(VoiceClipBank.plan(for: "开始训练，上肢与核心，3 个动作，共 9 组") == .fallback)
+    @Test("开场句不含主题名之后能切；带主题名就必然回落")
+    func sessionStartSplitOnlyWithoutTitle() {
+        #expect(VoiceClipBank.plan(for: "开始训练，共 9 组，3 个动作") == .clips(["开始训练", "共 9 组", "3 个动作"]))
+        // 这是它被去掉的原因：主题名是 AI 生成的，录不了。
+        #expect(VoiceClipBank.plan(for: "开始训练，上肢与核心") == .fallback)
+    }
+
+    @Test("整节课每一条播报都能切成音条，不需要回落系统 TTS")
+    func fullSessionIsFullyCovered() {
+        let blocks = [
+            makeBlock(
+                kind: .circuit,
+                rounds: 2,
+                items: [
+                    makeItem(id: "i1", name: "深蹲", sets: 2),
+                    makeItem(id: "i2", name: "平板支撑", sets: 2, value: 40, targetType: .durationSec)
+                ],
+                restBetweenItems: 30,
+                restBetweenRounds: 60
+            ),
+            makeBlock(
+                id: "b2",
+                items: [makeItem(id: "i3", name: "臀桥", sets: 3, value: 15)],
+                restBetweenItems: 90
+            )
+        ]
+        let plan = makePlan(days: makeSevenDays(training: [1], blocks: blocks))
+        let builder = WorkoutAnnouncementBuilder(plan: plan, dayIndex: 1)
+        let steps = WorkoutFlowModel(plan: plan, dayIndex: 1).steps
+
+        var texts: [String] = [builder.sessionStart().text]
+        for index in steps.indices {
+            switch steps[index] {
+            case .set:
+                if let announcement = builder.announcement(forStepAt: index) {
+                    texts.append(announcement.text)
+                }
+                for prompt in builder.prompts(at: index) {
+                    texts.append(WorkoutAnnouncement.setPrompt(prompt.prompt).text)
+                }
+            case let .roundBreak(seconds):
+                if let announcement = builder.restStart(seconds: seconds) {
+                    texts.append(announcement.text)
+                }
+            case let .blockBreak(seconds, _):
+                texts.append(
+                    WorkoutAnnouncement.blockBreak(
+                        seconds: seconds,
+                        nextLabel: builder.nextActionLabel(afterBlockBreakAt: index) ?? ""
+                    ).text
+                )
+            case .finished:
+                texts.append(builder.finished(completedSets: 5).text)
+                texts.append(builder.finished(completedSets: 5, extraSets: 2).text)
+            }
+        }
+        for left in [3, 2, 1] {
+            if let announcement = builder.countdown(secondsLeft: left) {
+                texts.append(announcement.text)
+            }
+        }
+        if let announcement = builder.restFinished(nextStepIndex: steps.indices.first {
+            if case .set = steps[$0] { true } else { false }
+        }) {
+            texts.append(announcement.text)
+        }
+
+        #expect(texts.count > 10)
+        for text in texts {
+            if case .fallback = VoiceClipBank.plan(for: text) {
+                Issue.record("这句会回落系统 TTS：\(text)")
+            }
+        }
+    }
+
+    @Test("动作库的每条要点都有音条")
+    func everyCueIsRecorded() {
+        for entry in ExerciseLibrary.all {
+            for cue in entry.cues {
+                #expect(VoiceClipBank.contains(cue), "缺要点音条：\(cue)")
+            }
+        }
+    }
+
+    @Test("要点句不超过 24 字，读出来不到 6 秒")
+    func cueLengthIsBounded() {
+        // .focus 不走 compose 的预算，长度只能靠内容自己守。实测 4.0–4.3 字/秒。
+        for entry in ExerciseLibrary.all {
+            for cue in entry.cues {
+                #expect(cue.count <= 24, "要点太长：\(cue)")
+            }
+        }
     }
 
     @Test("超范围的组数回退")
