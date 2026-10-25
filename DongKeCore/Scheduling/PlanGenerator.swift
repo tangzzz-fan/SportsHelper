@@ -68,10 +68,20 @@ public enum PlanGenerator {
     static let maxMainItems = 5
     static let maxMainSets = 6
     static let maxItemsPerLeadMuscle = 2
+    static let minSpecializedItems = 3
+    static let minSlotsPerGroup = 2
 
-    private static func spread(_ candidates: [CatalogItem], limit: Int) -> [CatalogItem] {
+    private static func spread(
+        _ candidates: [CatalogItem],
+        limit: Int,
+        seeded: [CatalogItem] = []
+    ) -> [CatalogItem] {
         var counts: [Muscle: Int] = [:]
-        var picked: [CatalogItem] = []
+        var picked: [CatalogItem] = seeded
+        for item in seeded {
+            guard let lead = leadMuscle(of: item.id) else { continue }
+            counts[lead, default: 0] += 1
+        }
         for pass in 1...maxItemsPerLeadMuscle {
             for item in candidates {
                 guard picked.count < limit else { return picked }
@@ -104,6 +114,38 @@ public enum PlanGenerator {
 
     private enum Focus {
         case lower, upper, full
+
+        var joint: PlanCatalog.Item.Joint? {
+            switch self {
+            case .lower: .lower
+            case .upper: .upper
+            case .full: nil
+            }
+        }
+
+        func claims(_ item: CatalogItem) -> Bool {
+            guard let joint else { return true }
+            return item.joint == joint
+        }
+
+        var needsEveryGroup: Bool {
+            switch self {
+            case .full: true
+            case .lower, .upper: false
+            }
+        }
+    }
+
+    private static func groupSeeds(in pool: [CatalogItem], shift: Int) -> [CatalogItem] {
+        [PlanCatalog.Item.Joint.lower, .upper].flatMap { joint in
+            spread(rotated(pool.filter { $0.joint == joint }, by: shift), limit: minSlotsPerGroup)
+        }
+    }
+
+    private static func resolvedFocus(_ focus: Focus, candidates: [CatalogItem]) -> Focus {
+        guard let joint = focus.joint else { return .full }
+        let own = candidates.filter { $0.joint == joint }
+        return spread(own, limit: maxMainItems).count >= minSpecializedItems ? focus : .full
     }
 
     private static func focusFor(rotation: Int) -> Focus {
@@ -174,21 +216,8 @@ public enum PlanGenerator {
         let shift = variation + weekday.rawValue
         let coreCandidates = rotated(pool.filter { $0.joint == .core }, by: shift)
 
-        var primary: [CatalogItem] = []
-        switch focus {
-        case .lower:
-            primary = mainCandidates.filter { $0.joint == .lower }
-        case .upper:
-            primary = mainCandidates.filter { $0.joint == .upper }
-        case .full:
-            primary = mainCandidates
-        }
-        primary = rotated(primary, by: shift)
-        let filler = rotated(
-            mainCandidates.filter { item in !primary.contains(where: { $0.id == item.id }) },
-            by: shift
-        )
-        var main = primary + filler
+        let focus = resolvedFocus(focus, candidates: mainCandidates)
+        let mainPool = rotated(mainCandidates.filter { focus.claims($0) }, by: shift)
 
         let targetSeconds = profile.sessionMinutes * 60
         let workPerSet = dose.estimatedWorkSeconds
@@ -201,7 +230,8 @@ public enum PlanGenerator {
         let usable = Int(Double(budget) * 0.85)
         let perSet = max(1, workPerSet + rest)
 
-        let picked = spread(main, limit: maxMainItems)
+        let seeds = focus.needsEveryGroup ? groupSeeds(in: mainPool, shift: shift) : []
+        let picked = spread(mainPool, limit: maxMainItems, seeded: seeds)
         var mainCount = max(1, picked.count)
         var mainSets = max(1, sets)
         let floor = min(2, picked.count)
@@ -211,7 +241,7 @@ public enum PlanGenerator {
         while mainSets < maxMainSets && (mainSets + 1) * mainCount * perSet <= usable {
             mainSets += 1
         }
-        main = Array(picked.prefix(mainCount))
+        let main = Array(picked.prefix(mainCount))
 
         var blocks: [ExerciseBlock] = []
 
