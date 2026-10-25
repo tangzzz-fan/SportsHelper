@@ -9,7 +9,7 @@ private func mainItems(_ day: PlanDay) -> [ExercisePrescription] {
 private func weeklySets(_ plan: WorkoutPlan) -> [Muscle: Int] {
     var out: [Muscle: Int] = [:]
     for day in plan.days where day.isRestDay == false {
-        for item in mainItems(day) {
+        for item in day.blocks.filter({ $0.kind != .warmup }).flatMap(\.items) {
             for muscle in PrimaryMuscleMap.muscles(for: item.catalogId) {
                 out[muscle, default: 0] += item.sets
             }
@@ -45,11 +45,10 @@ func mainItemsPerSession() {
 @Test(
     "单周单肌群组数落在 4–25 的宽松区间",
     .disabled("""
-    2026-10-25 实测（30 分钟 / 每周 3 天）：臀 24、股四头 9、小腿 9、腘绳 6、胸 9、背 3。\
-    默认档已经落在区间内，但**每周 5 天时臀仍是 65–78**——本轮的上限是「每次课」的，\
-    不是「每周」的。肩 / 臂在纯自重组里没有任何力量动作（shoulder_press / lateral_raise /\
-    biceps_curl 都要哑铃），是动作库缺口，不是排程问题；核心只出现在收尾块，本指标不计。\
-    差的是 §13 的 B：按肌群累计周组数。修完再打开这条。
+    2026-10-25 实测（含收尾块，30 分钟 / 每周 3 天）：臀 18、股四头 9、小腿 9、腘绳 6、\
+    胸 6、背 6、核心 3，肩 / 臂 0。默认档已经落在区间内，但**长时段与高频仍超**：\
+    45 分钟臀 30、60 分钟臀 36，每周 5 天时 27 / 45 / 54。本轮的上限是「每次课」的，\
+    不是「每周」的——差的是 §13 的 B：按肌群累计周组数。修完再打开这条。
     """)
 )
 func weeklySetsPerMuscle() {
@@ -93,4 +92,23 @@ func lowerDayCoversMoreThanTwoMuscles() {
     let lower = plan.days.first { !$0.isRestDay }!
     let leads = Set(mainItems(lower).compactMap { PlanGenerator.leadMuscle(of: $0.catalogId) })
     #expect(leads.count >= 3, "只覆盖了 \(leads.map(\.chineseName))")
+}
+
+@Test("同一份计划里，核心收尾不该每天都是同一个动作")
+func coreFinisherRotates() {
+    let plan = PlanGenerator.makePlan(profile: UserProfile())
+    let cores = plan.days.filter { $0.isRestDay == false }
+        .compactMap { day in day.blocks.first { $0.kind == .cooldown }?.items.first?.catalogId }
+    #expect(cores.count >= 2)
+    #expect(Set(cores).count > 1, "每天都是 \(cores.first ?? "无")")
+}
+
+@Test("两个下肢日的主力动作不该一模一样")
+func lowerDaysDiffer() {
+    let profile = UserProfile(availableWeekdays: Array(Weekday.allCases.prefix(5)), sessionMinutes: 30)
+    let plan = PlanGenerator.makePlan(profile: profile)
+    let lower = plan.days.filter { $0.isRestDay == false && $0.title == "下肢力量" }
+        .map { Set(mainItems($0).map(\.catalogId)) }
+    #expect(lower.count >= 2)
+    #expect(Set(lower.map { $0.sorted().joined(separator: ",") }).count > 1, "两个下肢日排的是同一批动作")
 }

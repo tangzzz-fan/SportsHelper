@@ -162,7 +162,8 @@ public enum PlanGenerator {
     ) -> PlanDay {
         let warmup = pool.filter(\.isDynamic).first
         let mainCandidates = pool.filter { $0.joint != .core && !$0.isDynamic }
-        let coreCandidates = pool.filter { $0.joint == .core }
+        let shift = variation + weekday.rawValue
+        let coreCandidates = rotated(pool.filter { $0.joint == .core }, by: shift)
 
         var primary: [CatalogItem] = []
         switch focus {
@@ -173,10 +174,10 @@ public enum PlanGenerator {
         case .full:
             primary = mainCandidates
         }
-        primary = rotated(primary, by: variation)
+        primary = rotated(primary, by: shift)
         let filler = rotated(
             mainCandidates.filter { item in !primary.contains(where: { $0.id == item.id }) },
-            by: variation
+            by: shift
         )
         var main = primary + filler
 
@@ -251,7 +252,7 @@ public enum PlanGenerator {
             }
         ))
 
-        if let core = coreCandidates.first {
+        if let core = coreItem {
             blocks.append(ExerciseBlock(
                 blockId: "\(weekday.rawValue)-core",
                 kind: .cooldown,

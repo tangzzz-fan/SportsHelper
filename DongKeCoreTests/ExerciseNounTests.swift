@@ -101,6 +101,7 @@ struct ExerciseNounTests {
             ("跪姿俯卧撑", "push_up", "跪姿"),
             ("钻石俯卧撑", "push_up", "钻石"),
             ("窄距俯卧撑", "push_up", "窄距"),
+            ("派克俯卧撑", "push_up", "派克"),
             ("上斜俯卧撑", "push_up", "上斜"),
             ("单臂划船", "dumbbell_row", "单臂"),
             ("坐姿划船", "dumbbell_row", "坐姿"),

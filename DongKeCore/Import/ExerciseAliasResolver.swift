@@ -106,7 +106,7 @@ public enum ExerciseAliasResolver {
         "箱式", "相扑", "上斜", "下斜", "窄距", "宽距", "高位", "低位",
         "跳箱", "跳跃", "爆发", "离心", "暂停", "半程", "靠墙",
         "单臂", "单腿", "单手",
-        "坐姿", "俯身", "跪姿", "钻石", "反向", "跳", "机"
+        "坐姿", "俯身", "跪姿", "钻石", "反向", "跳", "机", "派克"
     ]
 
     public static func match(for rawName: String, memory: AliasMemory = .empty) -> ExerciseMatch? {
