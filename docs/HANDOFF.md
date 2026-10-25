@@ -769,9 +769,11 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 
 **静态动作走保持时间轴。** `ProgressionAxis` 只抽两根：`reps` 与 `holdSeconds`，`distanceM` 没有轴。余力连续两次 ≤ 2 → 保持时间 +5 秒，上限 60 秒；到顶沉默，不转成加组。余力档位对静态映射为 10 / 5 / 2 秒，让「还能撑 10 秒」加 5 秒后仍留半档。强证据仍只覆盖 reps——UI 不记录「多撑了几秒」，`clearedEverySet` 对静态没有可用数据。
 
-**没做的两件**：静态动作的减量轴（疼痛仍减组，BACKLOG §1 文末）、加组的入口与断点续练（`.scratch/session-ledger/issues/01`）。后者是下一步：`WorkoutFlowModel` 不要改成可变，`WorkoutSession` 另持 `script`，checkpoint 要存额外组的插入位置。
+**加组已落（2026-10-25 续）**：`WorkoutSession.script` 在 `flow.steps` 上插入 `.set`，checkpoint 直接存整份脚本（`WorkoutCheckpoint.steps`），旧断点回落计划展开；完成额外组 `origin = .extra`，跳过不落日志，一节课最多 3 组。结束页 / 记录页 / 播报补「额外 N 组」，播报用 `finishedWithExtras`，完成率仍按计划组数。
 
-本轮单测 715 条全绿。
+**没做的**：静态动作的减量轴（疼痛仍减组，BACKLOG §1 文末）；休息页按钮与真机旧库迁移待手动走查。
+
+本轮单测 722 条全绿。
 
 ## 7. 换机后容易踩的坑
 1. **`xcodegen generate` 会改脏 `DongKe.xcodeproj`**：这个目录是入库的（与早期说法相反，`git ls-files` 可查），所以每次生成工程都会在 `project.pbxproj` / `DongKe.xcscheme` 里留 diff。改 `project.yml` 后**必须**重跑生成并一起提交，否则别人拉到的是旧工程。

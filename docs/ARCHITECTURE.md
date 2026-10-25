@@ -378,7 +378,7 @@ FlowStep
 
 循环块展开规则：`rounds` 轮，每轮依次走 `items`，轮内动作间用 `restBetweenItemsSec`，每轮结束插一条 `.roundBreak(restBetweenRoundsSec)`（最后一轮不插）。超级组同理（`restBetweenItemsSec = 0`）。`plannedSets` 等于展开后 `.set` 的数量，写进 `WorkoutSession` 作为分母，完成率分母从此固定：改计划不影响历史，**会话中加组也不改它**（额外组另记来源，见 §11.1）。
 
-这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。
+这是纯函数，输入 `WorkoutPlan`，输出 `[FlowStep]`，必须单测（含：循环块、超级组、休息为 0、单动作日、休息日）。运行时**不修改 `WorkoutFlowModel`**：`WorkoutSession` 另持一份 `script: [FlowStep]`，加组时在它上面插入 `.set`；`plannedSets` 永远取 flow 的原值。
 
 ### 5.4 排期：`occurrence` 回答「这一次兑现的是哪一天」
 
@@ -912,6 +912,8 @@ ActivityKit 实况通知（锁屏显示倒计时且不需要 App 运行）能显
 - `abandon` 保留已写入的日志，完成率照算。练了一半也是练了。
 - 训练开始时把 `plannedSets` 写死。中途改计划不影响这次的分母；会话中「今天再加一组」也不改它，额外组以 `origin = .extra` 落一条独立日志，完成率与「练过没有」都只看计划内。
 - 每条日志带 `origin`：`prescribed`（计划内）/ `extra`（当场加练）。旧 checkpoint 与旧库没有这个字段时按 `prescribed` 解码，不丢断点。
+- 加组入口在休息页：只在该动作最后一组（或已加的额外组）之后出现，一节课最多 3 组。`WorkoutSession.script` 在 `flow.steps` 之上插入 `.set`，`plannedSets` 仍取 `flow.plannedSets`；断点把整份 `script` 存进 `WorkoutCheckpoint.steps`，旧断点没有这个字段就回落到计划展开。
+- 完成额外组落 `origin = .extra`；跳过额外组不落日志。结束页 / 记录页 / 播报单独报「额外 N 组」，完成率不变。
 - 每次落盘后给一次轻量触感（`.light`），`reduceMotion` 或系统关闭触感时跳过。触感是「已记录」的唯一即时反馈。
 - 落盘失败必须冒泡到 UI 显示「这一组没有保存成功」，不吞掉。
 
@@ -1189,7 +1191,7 @@ PRD §9.4 要求过埋点，实现时没有落地。**没有服务端时，本�
 | `PlanNormalizer` | 缺 blocks 补空数组、重复 itemId 重编、sets clamp 到 1...20、restSec clamp 到 0...600、按 dayIndex 排序 |
 | `FreeTextPlanParser` | 中文数字（三组十二次）、`3x12`、`3×12`、`12-15次`、`30秒`、`1分钟`、`每侧`、`循环3轮`、`超级组`、`热身`、无数字只有动作名、完全无关文本（返回空草稿而不是崩溃） |
 | `RestTimerStateMachine` | §10.1 的 8 条不变量逐个覆盖；额外覆盖：tick 早于 endAt、正好等于 endAt、pause 后 tick 无效、extend 三段行为、skip 在 idle 态 |
-| `WorkoutSession` + `WorkoutFlowModel` | 普通三动作日、循环块 3 轮、超级组 0 休息、休息日为 0 步、`plannedSets` 计数、每个动作「最后一组」的判定、undo 连续 3 次、undo 到 0 后不再减、abandon 保留已完成、finish 幂等 |
+| `WorkoutSession` + `WorkoutFlowModel` | 普通三动作日、循环块 3 轮、超级组 0 休息、休息日为 0 步、`plannedSets` 计数、每个动作「最后一组」的判定、加组插入位置、checkpoint 脚本往返、旧断点无 `steps` 回落、undo 连续 3 次、undo 到 0 后不再减、abandon 保留已完成、finish 幂等 |
 | `WeeklyScheduleGenerator` | 有时间的训练日、无时间的回退、休息日不生成训练提醒、`leadMinutes` 跨零点（00:05 提前 30 分钟） |
 | `ReminderPlanBuilder` + `ReminderTrigger` + `RestNotificationBuilder` | 训练日 0 / 3 / 7 条时的生成数量；超出配额时截断；前缀不匹配的条目不被删除；`dk.plan.` 回读复核缺项能被检出；时区与跨年触发时刻 |
 | `HistoryStats` | `plannedSets == 0` 返回 nil；周进度按 `planDate` 归属；`isDone` 要求全部组完成；上周记录不算成下周；旧数据（`planDate` 为 nil）回落到会话日；连续天数在「今天未练」时的判定；周口径固定周一起 |

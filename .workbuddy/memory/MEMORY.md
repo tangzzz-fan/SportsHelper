@@ -117,7 +117,8 @@ xcodebuild -project DongKe.xcodeproj -scheme DongKe \
 - `SetLog.origin` 缺字段或未知值都回落 `.prescribed`；`SetLogEntity.originRaw` 可选列。`WorkoutCheckpointStore.load()` 用 `try?`，解码一抛错整条断点静默丢失——别直接 `decode(SetOrigin.self)`。
 - 静态动作走保持时间轴：余力连续两次 ≤ 2 → +5 秒，上限 60 秒；到顶沉默，不转加组。余力档位对静态是 10 / 5 / 2 秒。`distanceM` 没有轴。
 - 静态动作的**减量**没有统一：疼仍减组、太累不处理。要改先定「疼的时候减时间还是停做」。
-- 加组的入口/断点续练还没做，票在 `.scratch/session-ledger/issues/01`。`WorkoutFlowModel` 保持不可变，`WorkoutSession` 另持 `script`。
+- 加组入口在休息页：只在该动作最后一组（或已加的额外组）之后出现，一节课最多 3 组。`WorkoutFlowModel` 保持不可变，`WorkoutSession` 另持 `script`；断点把整份 `script` 存进 `WorkoutCheckpoint.steps`，旧断点回落计划展开。完成额外组落 `origin = .extra`，跳过不落日志。
+- 结束页 / 记录页 / 播报已补「额外 N 组」；播报用 `finishedWithExtras`，`extraSets == 0` 时仍走原 `.finished`。
 
 ## 环境
 
