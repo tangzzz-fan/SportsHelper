@@ -68,32 +68,49 @@ iPad 上仍能以兼容模式安装，只是不做原生适配。截图只需 iP
 
 ## 2.1 商品图（已生成）
 
-成品在 `.scratch/appstore/assets/marketing/`（已被 gitignore，脚本在 `tools/`）：
+成品在 `.scratch/appstore/assets/marketing/`，按**设备档位**分目录（已被 gitignore，脚本在 `tools/`）：
 
-| 文件 | 内容 | 点击后的意思 |
-|---|---|---|
-| `01-今日.png` | 今日页 | 今天练什么，已经排好了 |
-| `02-训练中.png` | 组中画面 | 跟着做就行，不用记组数 |
-| `03-动作库.png` | 动作库列表 | 每个动作都有要领 |
-| `04-总结.png` | 92% 完成率 | 完成了多少，一眼看清 |
-| `05-记录.png` | 历史记录 | 练过的都算数 |
+```
+1206x2622/           iPhone（必需档）+ 5 张
+1320x2868/           iPhone（可选大屏档）+ 5 张，同一份设计
+2007x2853-duo-inner/ iPhone Duo 内屏 + 2 张（两屏并排）
+1398x2034-duo-outer/ iPhone Duo 外屏 + 2 张
+```
 
-**上架规范（App Store Connect 的硬要求，差一条就传不上去）**
+**尺寸这张表比任何教程都准**（2026 年 Apple 按「有没有灵动岛 + 屏幕大小」分档，
+不再是「6.9 英寸」）：
 
-- 6.9 英寸竖屏，**精确 1320 × 2868**（iPhone 16 Pro Max 分辨率）。Apple 会把它自动缩到更小的机型，不用另外出 6.5" / 5.5"
-- **RGB，不能带 alpha 通道**。截出来的是 RGBA，不转 RGB 是上传失败最常见的原因
-- 单张 ≤ 8 MB；3–10 张
+| 档位 | 机型 | 接受尺寸 | 是否必需 |
+|---|---|---|---|
+| Dynamic Island (**medium**) | iPhone 18 Pro / 17 Pro / 16 Pro / 15 Pro | 1179×2556 · **1206×2622** | **必需** |
+| Dynamic Island (large) | iPhone Air / 18 Pro Max / 17 Pro Max / 16 Pro Max | 1260×2736 · 1290×2796 · 1320×2868 | 可选 |
+| Face ID (large) | iPhone 14 Plus / 13 Pro Max / 12 Pro Max … | 1284×2778 · 1242×2688 | 上面两档都没有时才用 |
+| iPhone Duo 外屏 | — | 1398×2034 | 用 iOS 27.1 SDK 及以上的 app，2027-04 起必需 |
+| iPhone Duo 内屏 | — | 2007×2853 | 同上 |
+
+> ⚠️ 这行最容易搞错：**必需的是 medium（1206×2622），不是 1320×2868**。
+> 1320×2868 属于 large 档，传进 medium 槽会被判「尺寸不对」。
+
+其余硬要求：
+
+- **RGB，不能带 alpha 通道**。模拟器出来的是 RGBA，不转 RGB 是上传失败最常见的原因
+- 单张 ≤ 8 MB；每档 1–10 张
 - 首张最重要：搜索结果里只露出前两三张
 
 重新生成（改文案就改脚本里的 `PAGES`）：
 
 ```bash
-python3 .scratch/appstore/tools/compose.py
+python3 .scratch/appstore/tools/compose.py       # 两档 iPhone
+python3 .scratch/appstore/tools/compose_duo.py   # 两档 Duo
 ```
 
-原始截图在同一目录的上一级（`assets/*.png`），由 `.scratch/appstore/tools/shoot_store.py`
-从模拟器抓取，演示数据靠 `DK_SEED_DEMO` / `DK_SEED_SESSION` / `DK_PREVIEW` 三个
-DEBUG 环境变量拼出来。
+原始截图在 `assets/*.png`，由 `tools/shoot_store.py` 从模拟器抓取，演示数据靠
+`DK_SEED_DEMO` / `DK_SEED_SESSION` / `DK_PREVIEW` 三个 DEBUG 环境变量拼出来。
+
+**Duo 那两张不是从 Duo 模拟器抓的**：本机只装了 iOS 27.0 运行时，
+而 `iPhone Duo` 设备类型要求更新的运行时——`simctl create` 返回 `Incompatible device`，
+试 iOS 27.1 / 27.2 都是 `Invalid runtime`。所以是用 iPhone 18 Pro 的真截图
+两屏并排排版的。装上 Xcode 27.1+ 运行时之后应换成真机抓图。
 
 **已知两处不完美**
 
