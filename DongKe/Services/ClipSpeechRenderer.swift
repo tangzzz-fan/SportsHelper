@@ -63,6 +63,11 @@ final class ClipSpeechRenderer: SpeechRendering {
     }
 
     func render(_ request: SpeechRequest, on event: @escaping (SpeechOutputEvent) -> Void) {
+        // 换句前先掐掉上一句。音条走 AVAudioPlayerNode、回落走系统 TTS，
+        // 是两条音轨；不先停就可能一条在播、另一条开始说话。
+        if current != nil { cancel() }
+        fallback.cancel()
+
         let plan = VoiceClipBank.plan(for: request.text)
         let segments = plan.segments
         guard segments.isEmpty == false, let buffer = buffer(for: segments) else {

@@ -72,6 +72,12 @@ final class SystemSpeechRenderer: NSObject, SpeechRendering {
     func prepare() {}
 
     func render(_ request: SpeechRequest, on event: @escaping (SpeechOutputEvent) -> Void) {
+        // 一个引擎一张嘴。协调器换句前本来会先 cancel，这里兜住「两个协调器
+        // 共用一个引擎」的情况（例如试听与训练同时存在）——不掐断的话
+        // AVSpeechSynthesizer 会把两句排队念完，听感就是两个音频。
+        if current != nil {
+            cancel()
+        }
         self.onEvent = event
         current = request
         startedAt = Date()
@@ -100,9 +106,9 @@ final class SystemSpeechRenderer: NSObject, SpeechRendering {
         self.current = nil
         currentUtterance = nil
         currentUtteranceID = nil
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
-        }
+        // 无条件停。`isSpeaking` 在 speak() 返回瞬间还是 false，用它当开关会漏停，
+        // 上一句继续念、下一句已经开始——听感就是两个音频。空闲时调用它没有副作用。
+        synthesizer.stopSpeaking(at: .immediate)
         voiceLog.notice("cancel text=\(current.text, privacy: .public)")
         onEvent?(.cancelled(current.id, .stopped))
         releaseLease()

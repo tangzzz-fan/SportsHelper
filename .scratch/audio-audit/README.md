@@ -97,3 +97,16 @@ PRD 只有存档效力且 **F12 指「动作替换推荐」，从未收录语音
 | 06 | 神经引擎试点（有门槛） | todo（要下 163MB 模型 + 真机） |
 | 07 | 真机验收（并入 brief-and-voice 10） | todo（需真机） |
 
+
+## 8. 首测第二轮：两个音频（2026-10-25）
+
+反馈「点提前练一次出现两个音频」。日志同一句开场被送进渲染器三次。四个原因叠在一起：
+
+| # | 原因 | 证据 |
+|---|---|---|
+| 1 | 播报会话归视图持有，`onAppear`/`onDisappear` 成对抖动 | 同一节课 `policy` 出现 3 次，其间 `deactivate → activate` 一轮 |
+| 2 | 开场与第一组同 tick 并列，后到者把开场截断 | `speak 开始训练，下肢力量` → `cancel` → `clip play 开合跳…` |
+| 3 | 每个协调器新建一个 `AVSpeechSynthesizer` | 多个 `activate playback` + 多次 `speak` 同文本 |
+| 4 | `cancel()` 用 `isSpeaking` 挡停 | 该值为 false 时跳过 `stopSpeaking`，上一句仍在念 |
+
+修法与判据见 ADR-0007「一课一嘴」。回归靠三条单测：开场只念一次、第一拍是组时让位、恢复训练不念开场。

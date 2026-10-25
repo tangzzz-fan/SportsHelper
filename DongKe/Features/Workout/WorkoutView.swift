@@ -12,6 +12,7 @@ struct WorkoutView: View {
     @State private var showDowngradeOptions = false
     @State private var bonusReps = 0
     @State private var effort: Int?
+    @State private var voiceStopTask: Task<Void, Never>?
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -47,7 +48,7 @@ struct WorkoutView: View {
 
     var body: some View {
         if session.showsSummary {
-            WorkoutSummaryView(title: session.sessionTitle, recap: session.recap, onDone: onClose)
+            WorkoutSummaryView(title: session.sessionTitle, recap: session.recap, onDone: close)
         } else {
             workoutBody
         }
@@ -135,17 +136,13 @@ struct WorkoutView: View {
             effort = nil
         }
         .onAppear(perform: startVoiceIfNeeded)
-        .onDisappear(perform: stopVoice)
-        .onChange(of: scenePhase) { _, _ in
-            VoiceService.shared.refreshPolicy()
+        .onDisappear(perform: scheduleVoiceTeardown)
+        .onChange(of: scenePhase) { _, phase in
+            VoiceService.shared.refreshPolicy(isForeground: phase != .background)
         }
         .onChange(of: voiceSettings.level) { _, level in
             VoiceService.shared.refreshPolicy()
-            guard let voice = session.voice else {
-                startVoiceIfNeeded()
-                return
-            }
-            voice.level = level
+            session.voice?.level = level
             if level.isEnabled, session.showsSummary == false {
                 startVoiceIfNeeded()
             }
@@ -153,34 +150,56 @@ struct WorkoutView: View {
     }
 
     private func startVoiceIfNeeded() {
-        guard session.showsSummary == false, VoiceService.isEnabledByUser else { return }
-        if session.voice != nil {
-            session.voice?.level = VoiceService.levelByUser
+        voiceStopTask?.cancel()
+        voiceStopTask = nil
+        guard session.showsSummary == false, VoiceService.isEnabledByUser else {
             VoiceService.shared.refreshPolicy()
             return
         }
-        let coordinator = VoiceService.shared.activeCoordinator()
-        let voice = WorkoutVoiceSession(
+        // 会话按 sessionId 缓存：视图重建几次都拿回同一个实例，开场只念一次。
+        let voice = VoiceService.shared.voice(
+            for: session.id,
             plan: session.plan,
             dayIndex: session.dayIndex,
-            coordinator: coordinator,
             steps: session.script
         )
-        voice.level = VoiceService.levelByUser
         session.voice = voice
-        voice.start()
+        voice.level = VoiceService.levelByUser
+        VoiceService.shared.refreshPolicy(isForeground: scenePhase != .background)
+        voice.start(atStep: session.stepIndex)
         voice.stepChanged(to: session.stepIndex)
     }
 
-    private func stopVoice() {
-        session.voice?.stop()
+    /// 视图消失不等于这节课结束。
+    ///
+    /// fullScreenCover 的转场会成对触发 onDisappear / onAppear，以前在 onDisappear 里
+    /// 直接拆会话，于是整节课的音频会话被释放又重建，开场被重念一遍。这里延后 0.8 秒：
+    /// 真的关掉了才拆，转场抖动会被下一次 onAppear 取消。
+    private func scheduleVoiceTeardown() {
+        voiceStopTask?.cancel()
+        voiceStopTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.8))
+            guard Task.isCancelled == false else { return }
+            finishVoice()
+        }
+    }
+
+    private func finishVoice() {
+        voiceStopTask?.cancel()
+        voiceStopTask = nil
+        VoiceService.shared.endVoice(sessionId: session.id)
         session.voice = nil
         VoiceService.shared.shutdown()
     }
 
+    private func close() {
+        finishVoice()
+        onClose()
+    }
+
     private var navBar: some View {
         HStack {
-            Button(action: onClose) {
+            Button(action: close) {
                 Image(systemName: Icons.close)
                     .font(Typography.buttonLabel)
                     .frame(minWidth: 44, minHeight: 44)

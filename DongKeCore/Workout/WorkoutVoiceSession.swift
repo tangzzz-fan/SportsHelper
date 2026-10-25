@@ -9,6 +9,8 @@ public final class WorkoutVoiceSession {
     private var lastStepIndex: Int?
     private var lastCountdown: Int?
     private var isActive = false
+    /// 开场只念一次。`stop()` 会把 `isActive` 打回 false，但视图重建不能因此重念开场。
+    private var didStart = false
     private var pendingPrompts: [TimedPrompt] = []
     private var firedPrompts: Set<Int> = []
 
@@ -39,11 +41,25 @@ public final class WorkoutVoiceSession {
         cues.lastSpokenText
     }
 
-    public func start() {
-        guard isActive == false, level.isEnabled else { return }
+    /// 开始播报。`index` 是即将进入的那一步。
+    ///
+    /// 第一拍本身就是一组时**不念开场句**。调用方紧接着会 `stepChanged(to: index)`，
+    /// 同一 tick 里两句并列，后到的 `setStart` 必然把开场句拦腰截断——真机上只听到
+    /// 「开始训练，下……」然后立刻换句。「一拍一句」在 t=0 也必须成立，所以这里
+    /// 让开场让位给「现在做什么」，当天主题交给屏幕。
+    public func start(atStep index: Int) {
+        guard didStart == false else { return }
+        didStart = true
         isActive = true
         lastStepIndex = nil
         lastCountdown = nil
+        // 静音档开课也要把 isActive 立起来：之后调回标准档时，
+        // stepChanged 还能接上，不会整节课哑掉。
+        guard level.isEnabled else { return }
+        // 只有「整节课的第一拍」才配开场。恢复训练时 stepIndex > 0，
+        // 那时候念「开始训练」是错的。
+        guard index == 0 else { return }
+        if case .set = builder.step(at: index) { return }
         cues.announce(builder.sessionStart())
     }
 

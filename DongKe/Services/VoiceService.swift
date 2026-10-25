@@ -11,6 +11,13 @@ final class VoiceService {
 
     private var coordinator: SpeechCueCoordinator?
     private var previewCoordinator: SpeechCueCoordinator?
+    /// 全 App 只留一个出声引擎。
+    ///
+    /// 以前每次 `activeCoordinator()` / `preview()` 都新建一个渲染器，也就新建一个
+    /// `AVSpeechSynthesizer`。两个 synthesizer 各自排队，上一句没念完就再 `speak` 时
+    /// 会依次念完——听感就是「两个音频」。现在引擎只有一个，谁都不能背着别人出声。
+    private var renderer: SpeechRendering?
+    private var workoutVoice: (sessionId: UUID, voice: WorkoutVoiceSession)?
     private var holdsSession = false
 
     private init() {
@@ -41,17 +48,52 @@ final class VoiceService {
             holdSession()
             return coordinator
         }
-        let created = SpeechCueCoordinator(renderer: Self.makeRenderer())
+        let created = SpeechCueCoordinator(renderer: sharedRenderer())
         coordinator = created
         refreshPolicy(isForeground: true)
         holdSession()
         return created
     }
 
+    /// 一节课只有一个播报会话。
+    ///
+    /// 播报会话原来由视图自己持有：`onAppear` 建一个、`onDisappear` 置空。
+    /// fullScreenCover 的呈现动画会成对触发这两个回调，于是同一节课会建出
+    /// 第二、第三个会话，每个都会念一遍开场——真机日志里同一句出现过三次。
+    /// 现在按 `sessionId` 缓存，视图重建多少次都拿回同一个实例。
+    func voice(
+        for sessionId: UUID,
+        plan: WorkoutPlan,
+        dayIndex: Int,
+        steps: [FlowStep]
+    ) -> WorkoutVoiceSession {
+        if let workoutVoice, workoutVoice.sessionId == sessionId {
+            return workoutVoice.voice
+        }
+        workoutVoice?.voice.stop()
+        let created = WorkoutVoiceSession(
+            plan: plan,
+            dayIndex: dayIndex,
+            coordinator: activeCoordinator(),
+            steps: steps
+        )
+        workoutVoice = (sessionId, created)
+        return created
+    }
+
+    func endVoice(sessionId: UUID) {
+        guard let workoutVoice, workoutVoice.sessionId == sessionId else { return }
+        workoutVoice.voice.stop()
+        self.workoutVoice = nil
+    }
+
     func refreshPolicy(isForeground: Bool? = nil) {
+        // `.inactive` 不是「不在前台」：下拉控制中心、来电横幅、fullScreenCover 转场
+        // 都会短暂进入 `.inactive`。以前把它当后台处理，播报会在转场瞬间被掐断，
+        // 会话也跟着释放再重新激活——日志里那串 deactivate / activate 就是它。
         let policy = SpeechCuePolicy(
             isEnabled: Self.isEnabledByUser,
-            isForeground: isForeground ?? (UIApplication.shared.applicationState == .active),
+            isForeground: isForeground ?? (UIApplication.shared.applicationState != .background),
             isVoiceOverRunning: UIAccessibility.isVoiceOverRunning
         )
         coordinator?.policy = policy
@@ -86,7 +128,7 @@ final class VoiceService {
         previewCoordinator?.stop()
         let created = SpeechCueCoordinator(
             policy: SpeechCuePolicy(isEnabled: true, isForeground: true, isVoiceOverRunning: false),
-            renderer: Self.makeRenderer()
+            renderer: sharedRenderer()
         )
         previewCoordinator = created
         created.announce(.sessionStart(title: "上肢与核心", exerciseCount: 3, totalSets: 9))
@@ -97,6 +139,8 @@ final class VoiceService {
         coordinator = nil
         previewCoordinator?.stop()
         previewCoordinator = nil
+        workoutVoice?.voice.stop()
+        workoutVoice = nil
         releaseSession()
     }
 
@@ -111,6 +155,13 @@ final class VoiceService {
 
     static var isEnabledByUser: Bool {
         levelByUser.isEnabled
+    }
+
+    private func sharedRenderer() -> SpeechRendering {
+        if let renderer { return renderer }
+        let created = Self.makeRenderer()
+        renderer = created
+        return created
     }
 
     private static func makeRenderer() -> SpeechRendering {
