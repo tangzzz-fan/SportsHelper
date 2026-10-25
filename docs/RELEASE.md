@@ -8,7 +8,7 @@
 | 项 | 结果 |
 |---|---|
 | Info.plist | 全部交给 `GENERATE_INFOPLIST_FILE` + `INFOPLIST_KEY_*`，仓库里**不维护自己的 plist**（与 `Fluent work/fluentwork-ios` 同一做法） |
-| 启动屏 | 系统默认 `INFOPLIST_KEY_UILaunchScreen_Generation`。为了品牌 logo 单开 plist 或 storyboard 不值得——首屏是 `systemGroupedBackground`，纯白启动屏切过去几乎看不出 |
+| 启动屏 | **品牌绿**。`UILaunchScreen` 是嵌套字典，而 Xcode 只有两个启动屏设置（`UILaunchScreen_Generation` 只会塞空字典、`UILaunchStoryboardName` 传文件名），**没有设颜色的入口**，所以配了 12 行的 `DongKe/Resources/LaunchScreen.storyboard` + `LaunchBackground` 颜色集。Info.plist 仍是 `GENERATE_INFOPLIST_FILE` 生成，没有自定义 plist |
 | 版本号 | `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` 提到顶层。**embed 的 framework 缺 `CFBundleShortVersionString` 会被 App Store 直接拒**：`The bundle 'Payload/DongKe.app/Frameworks/DongKeCore.framework' is missing plist key` |
 | 签名 | 自动签名下**不要**写 `CODE_SIGN_IDENTITY`。Xcode 按用途自己挑（debug → Apple Development，Archive → Apple Distribution）。手动指定会报 `conflicting provisioning settings` |
 | 真机 / 归档 | 真机 build、模拟器 build、`ARCHIVE SUCCEEDED` 均通过；archive 内 `DongKeCore.framework` 版本号已是 `1.0.0 / 1` |

@@ -24,6 +24,7 @@
 		0EEFEEA2A405021CDE6492E4 /* WeekdayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C85C4AD10CD5B680095721 /* WeekdayTests.swift */; };
 		10A01CF52F485F24C4072A57 /* VoiceInputTranscriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F752D3D2A7A567A04C7C6464 /* VoiceInputTranscriptTests.swift */; };
 		117BD82AB4C3B948C64A5969 /* DoseBudgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8F20CFD7D6BA91738249E3 /* DoseBudgetTests.swift */; };
+		143E64A93239D4AC178A96B9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = FA52D3633382D6110C6A0211 /* LaunchScreen.storyboard */; };
 		14723AAAF5EF451D7EB91FA1 /* VoiceInputCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FEEE966363741C21A914C4 /* VoiceInputCards.swift */; };
 		14E571A347030A6F8F9F816B /* AliasMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BBC30A47CBCB1FFBA3559E /* AliasMemory.swift */; };
 		16EE6EBB8A094075AC8C5054 /* PlanDraftParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32ED59B5C1D381FD9B98AB62 /* PlanDraftParser.swift */; };
@@ -550,6 +551,7 @@
 		F64AE095E82BB634A080D671 /* ExerciseFigure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseFigure.swift; sourceTree = "<group>"; };
 		F6C28068013C12917D964E48 /* AudioSessionLeaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionLeaseTests.swift; sourceTree = "<group>"; };
 		F752D3D2A7A567A04C7C6464 /* VoiceInputTranscriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputTranscriptTests.swift; sourceTree = "<group>"; };
+		FA52D3633382D6110C6A0211 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		FBE6B1CF1ADABF0850059CEB /* WorkoutFlowModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFlowModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -994,6 +996,7 @@
 			isa = PBXGroup;
 			children = (
 				431CBB2629090DC9F5BAD4B0 /* ai-defaults.json */,
+				FA52D3633382D6110C6A0211 /* LaunchScreen.storyboard */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1195,6 +1198,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1B09D690DAD249E81BEBCD5D /* Assets.xcassets in Resources */,
+				143E64A93239D4AC178A96B9 /* LaunchScreen.storyboard in Resources */,
 				1A53C4EC2BE1FBD009B415C9 /* PrivacyInfo.xcprivacy in Resources */,
 				64F5E6E5A1E9C78E256BEA78 /* VoiceClips in Resources */,
 				E5895FC6BEC77EB1698438AD /* ai-defaults.json in Resources */,
@@ -1683,7 +1687,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1705,7 +1709,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

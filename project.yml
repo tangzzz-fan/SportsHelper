@@ -48,9 +48,12 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios
         # Info.plist 全交给 Xcode 生成（GENERATE_INFOPLIST_FILE），不维护自己的 plist。
-        # 启动屏用系统默认：UILaunchScreen 是嵌套字典，INFOPLIST_KEY_* 传不了，
-        # 为它单开一个 plist 或 storyboard 都不值得——背景就是系统背景色，
-        # 跟首屏（systemGroupedBackground）差别极小。
+        #
+        # 启动屏要上色，只能走 storyboard：`UILaunchScreen` 是嵌套字典，
+        # 而 Xcode 只有两个启动屏相关设置（CoreBuildSystem.xcspec 可查）——
+        # `UILaunchScreen_Generation`（只会塞一个空字典）和 `UILaunchStoryboardName`。
+        # 没有设置 `UIColorName` 的入口，所以给一个 12 行的 storyboard + 一个颜色集。
+        # 注意两者互斥：留着 Generation=YES 会生成空 `UILaunchScreen`，它优先于 storyboard。
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # 只做 iPhone。界面没有 iPad 布局分支，方向声明也只有 iPhone 那套，
@@ -58,7 +61,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: 动刻
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSMicrophoneUsageDescription: 用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。
