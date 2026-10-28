@@ -82,6 +82,14 @@ public enum PrimaryMuscleMap {
         "cat_cow": [.back],
         "back_stretch": [.back],
         "child_pose": [.back],
+        "single_leg_stand": [.glutes, .calves],
+        "seated_leg_raise": [.quads],
+        "straight_leg_raise": [.quads],
+        "stair_climb": [.quads, .glutes],
+        "banded_external_rotation": [.shoulders],
+        "thoracic_extension": [.back],
+        "pendulum": [.shoulders],
+        "med_ball_slam": [.core],
     ]
 
     public static func muscles(for id: String) -> Set<Muscle> {

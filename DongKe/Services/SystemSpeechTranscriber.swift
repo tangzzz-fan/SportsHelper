@@ -55,6 +55,9 @@ final class SystemSpeechTranscriber: SpeechTranscribing {
         request.requiresOnDeviceRecognition = onDevice
         request.taskHint = .dictation
         request.addsPunctuation = true
+        // 把动作名与常用单位喂给识别器，显著提高「靠墙天使」「肩胛后缩」这类
+        // 低频词与生造词的命中率。词表随目录变化自动更新，不需要重新训练。
+        request.contextualStrings = SpeechVocabulary.planTerms
         self.request = request
         onEvent = events
 

@@ -204,6 +204,39 @@ extension ExerciseLibrary {
             regressionName: "直臂支撑",
             alternativeId: "biceps_curl",
             affectedParts: [.elbow, .shoulderNeck]
-        )
+        ),
+        ExerciseEntry(
+            id: "banded_external_rotation",
+            name: "弹力带肩外旋",
+            group: .upper,
+            equipment: .band,
+            isStatic: false,
+            cues: ["弹力带固定在体侧，与肘同高", "上臂夹紧体侧，屈肘 90 度", "只有前臂向外打开，打开时手比肘更远离身体"],
+            mistakes: ["整条手臂外展，变成侧平举", "上臂离开体侧，靠身体转动代偿"],
+            regressionName: "徒手肩外旋",
+            purposes: [.strength]
+        ),
+        ExerciseEntry(
+            id: "thoracic_extension",
+            name: "胸椎伸展",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: true,
+            cues: ["仰卧，泡沫轴横放在肩胛骨下方", "双手抱头，只有上背向后展开", "骨盆贴地不动，展开时吸气"],
+            mistakes: ["腰部跟着拱起，变成腰椎过伸", "臀部离地，用腰发力"],
+            regressionName: "仰卧胸椎伸展（不用轴）",
+            purposes: [.mobility]
+        ),
+        ExerciseEntry(
+            id: "pendulum",
+            name: "钟摆运动",
+            group: .upper,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["身体前倾约 70 度，健侧手扶住桌面", "患侧手臂完全放松下垂，像钟摆一样画小圈", "靠身体带动，肩膀不要主动发力"],
+            mistakes: ["主动抬手臂，变成侧平举", "身体直立，手臂贴着大腿摆不起来"],
+            regressionName: "被动垂臂画圈",
+            purposes: [.mobility]
+        ),
     ]
 }

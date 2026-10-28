@@ -236,7 +236,7 @@ extension ExerciseLibrary {
             group: .lower,
             equipment: .bodyweight,
             isStatic: false,
-            cues: ["单脚站稳，另一脚脚尖点地", "髋部后移，上身随之前倾", "下去时腿后侧拉长，起来时收臀"],
+            cues: ["单脚站稳，另一脚脚尖点地", "髋部后移，上身随之前倾", "下去时腿后侧拉长，起来时收臀", "图示为哑铃版，空手做同样成立"],
             mistakes: ["弓背点头够地面", "支撑腿膝盖锁死"],
             regressionName: "徒手髋铰链",
             alternativeId: "glute_bridge",
@@ -253,6 +253,54 @@ extension ExerciseLibrary {
             regressionName: "提踵",
             regressionId: "calf_raise",
             affectedParts: [.ankle]
+        ),
+        ExerciseEntry(
+            id: "single_leg_stand",
+            name: "单腿站立",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: true,
+            cues: ["单脚站直，脚掌踩实，另一脚离地", "骨盆保持水平，不要往抬腿那侧塌", "目视前方一个固定点，站满 30 秒再换边"],
+            mistakes: ["骨盆下沉、身体歪向支撑腿", "支撑腿屈膝或脚掌内侧离地"],
+            regressionName: "扶墙单腿站立",
+            affectedParts: [.ankle, .knee],
+            purposes: [.strength, .mobility]
+        ),
+        ExerciseEntry(
+            id: "seated_leg_raise",
+            name: "坐姿抬腿",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["坐在凳子上，背挺直，双手扶住凳沿", "一条腿伸直抬到与地面平行，脚尖回勾", "停一秒再慢慢放下，不要砸下去"],
+            mistakes: ["上身往后仰借力", "抬起的腿没伸直，膝盖弯着"],
+            regressionName: "坐姿伸膝",
+            affectedParts: [.knee],
+            purposes: [.strength]
+        ),
+        ExerciseEntry(
+            id: "straight_leg_raise",
+            name: "直腿抬高",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["仰卧，两腿伸直，腰背贴地", "一条腿伸直抬到 45 度，脚尖朝上", "慢起慢落，落下时脚跟不着地"],
+            mistakes: ["抬腿时腰离地拱起", "另一条腿屈膝借力"],
+            regressionName: "屈膝抬腿",
+            affectedParts: [.hip, .knee],
+            purposes: [.strength]
+        ),
+        ExerciseEntry(
+            id: "stair_climb",
+            name: "爬楼梯",
+            group: .lower,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["全脚掌踩上台阶，膝盖不要内扣", "用踩上去那条腿发力把身体推起来", "上身直立，不要弯腰前趴"],
+            mistakes: ["只用脚尖踩台阶", "上身过度前倾，变成爬行"],
+            regressionName: "单级上台阶",
+            affectedParts: [.knee, .hip],
+            purposes: [.warmup, .strength]
         ),
     ]
 }

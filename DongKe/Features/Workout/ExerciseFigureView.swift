@@ -45,9 +45,12 @@ struct ExerciseFigureView: View {
         FigureFitCalculator.fit(
             bounds: figure.bounds,
             into: FigureSize(width: figureSize.width, height: figureSize.height),
-            padding: 8
+            padding: 8,
+            framing: figure.framing
         )
     }
+
+    private var isCloseUp: Bool { figure.framing == .closeUp }
 
     private var isPlaying: Bool {
         playback.isPlaying && store.playingFigureID == catalogId
@@ -95,6 +98,13 @@ struct ExerciseFigureView: View {
             }
             .frame(width: figureSize.width, height: figureSize.height)
             .animation(.easeInOut(duration: 0.12), value: playback.displayedIndex)
+
+            if isCloseUp {
+                CloseUpBrackets()
+                    .stroke(Color.secondary.opacity(0.5), lineWidth: 1)
+                    .frame(width: figureSize.width - 6, height: figureSize.height - 6)
+                    .allowsHitTesting(false)
+            }
         }
         .frame(width: figureSize.width, height: figureSize.height)
         .contentShape(Rectangle())
@@ -111,7 +121,7 @@ struct ExerciseFigureView: View {
         .onChange(of: store.playingFigureID) { _, newValue in
             if newValue != catalogId, playback.isPlaying { playback.stop() }
         }
-        .accessibilityLabel(Text("动作图示"))
+        .accessibilityLabel(Text(isCloseUp ? "动作图示（局部特写）" : "动作图示"))
         .accessibilityAddTraits(playback.canPlay ? .isButton : [])
         .accessibilityHint(playback.canPlay ? Text(isPlaying ? "暂停动作演示" : "播放动作演示") : Text(""))
     }
@@ -131,6 +141,26 @@ struct ExerciseFigureView: View {
         guard autoPlays, reduceMotion == false, playback.canPlay else { return }
         store.playingFigureID = catalogId
         playback.play()
+    }
+}
+
+/// 局部特写的四角括号：告诉用户"这是放大的细节"，而不是另一张全身图。
+private struct CloseUpBrackets: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let arm = min(rect.width, rect.height) * 0.14
+        let corners: [(CGPoint, CGFloat, CGFloat)] = [
+            (CGPoint(x: rect.minX, y: rect.minY), 1, 1),
+            (CGPoint(x: rect.maxX, y: rect.minY), -1, 1),
+            (CGPoint(x: rect.minX, y: rect.maxY), 1, -1),
+            (CGPoint(x: rect.maxX, y: rect.maxY), -1, -1)
+        ]
+        for (corner, dx, dy) in corners {
+            path.move(to: CGPoint(x: corner.x + arm * dx, y: corner.y))
+            path.addLine(to: corner)
+            path.addLine(to: CGPoint(x: corner.x, y: corner.y + arm * dy))
+        }
+        return path
     }
 }
 

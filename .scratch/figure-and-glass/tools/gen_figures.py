@@ -14,6 +14,9 @@ import svgpath
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 ASSETS = os.path.join(ROOT, '.scratch/figure-and-glass/assets/workout-guide-main/packages/workout-guide/assets')
+# 自产素材（模型生成 + vtracer 矢量化）。上游 checkout 不存在时回落到这里，
+# 两边目录分开，重新 checkout 上游不会覆盖自产素材。
+ASSETS_GEN = os.path.join(ROOT, '.scratch/figure-and-glass/assets-generated')
 OUT = os.path.join(ROOT, 'DongKeCore/Figure/GeneratedFigureData.swift')
 
 # catalogId -> upstream asset slug. Verified against the upstream manifest
@@ -62,6 +65,36 @@ MAPPING = {
     'single_leg_glute_bridge': 'single-leg-glute-bridge',
     'clamshell': 'clamshell',
     'side_lying_leg_raise': 'side-lying-leg-raise',
+
+    # 2026-10-28 三个"孤儿 id"（既不在 MAPPING 也不在 UNMAPPED，因此一直没有图）。
+    # 逐条在 302 个上游素材里核对过，语义精确对应，动作模式未变：
+    #   single_leg_rdl        -> single-leg-romanian-deadlift（素材是哑铃版，
+    #                            动作定的是自重；按 §2 约定改文字不改图，cues 已补"空手做也行"）
+    #   single_leg_calf_raise -> single-leg-calf-raise（自重，同族 calf-raise 已有图）
+    #   bench_dip             -> bench-dip（自重 + 凳，器械一致）
+    'single_leg_rdl': 'single-leg-romanian-deadlift',
+    'single_leg_calf_raise': 'single-leg-calf-raise',
+    'bench_dip': 'bench-dip',
+
+    # 2026-10-28 自产素材（模型生成 → vtracer 矢量化，见 assets-generated/）。
+    # 全部过 tools/figure_acceptance.py 闸门，验收数值见 WorkoutGif/data/new_assets.json。
+    'chin_tuck': 'chin-tuck',
+    'scapular_retraction': 'scapular-retraction',
+    'neck_isometric': 'neck-isometric',
+    'ankle_circle': 'ankle-circle',
+    'hip_circle': 'hip-circle',
+    'scapular_circle': 'scapular-circle',
+    'wall_slide': 'wall-slide',
+    'march_in_place': 'march-in-place',
+    # 2026-10-28 新增目录动作（原先不在 App 目录，随自产素材一起加入）
+    'single_leg_stand': 'single-leg-stand',
+    'seated_leg_raise': 'seated-leg-raise',
+    'straight_leg_raise': 'straight-leg-raise',
+    'banded_external_rotation': 'banded-external-rotation',
+    'thoracic_extension': 'thoracic-extension',
+    'med_ball_slam': 'med-ball-slam',
+    'pendulum': 'pendulum',
+    'stair_climb': 'stair-climb',
 }
 
 # 上游 302 个素材里确实没有的，一律走 _generic 兜底，不做近似替换：
@@ -72,12 +105,17 @@ MAPPING = {
 #   march_in_place                                —— 唯一的候选 walking 画的是**跑步机**，
 #                                                    居家原地踏步的用户看到跑步机会以为走错了
 UNMAPPED = [
-    'hip_circle', 'scapular_circle', 'ankle_circle',
     'neck_stretch', 'thread_needle', 'back_stretch', 'dumbbell_floor_press',
-    'march_in_place',
     # 2026-10-25 肩颈康复四条：上游 neck / trap / cervical 全为 0，没有可接的。
-    'chin_tuck', 'scapular_retraction', 'wall_slide', 'neck_isometric',
+    # 2026-10-28 自产素材补上后移出本表：chin_tuck / scapular_retraction / wall_slide /
+    # neck_isometric / ankle_circle / hip_circle / scapular_circle / march_in_place。
 ]
+
+# 局部特写：取景档位与全身图不同，渲染时留更大边距 + 四角括号。
+# 定这批之前先读 docs/FIGURE-STYLE.md §6.6（Everkinetic 颈部特写被否的原因）。
+CLOSEUPS = {
+    'ankle_circle', 'hip_circle', 'scapular_circle',
+}
 
 # Explicit whitelist: isometric holds. Do not infer from upstream exerciseType --
 # mountain-climber and high-knees are also "duration" but they are dynamic.
@@ -87,6 +125,13 @@ STATIC_HOLDS = {
     # 循环播放会让画面在起始位与拉伸位之间反复跳，反而看不清终点姿势。
     'quad_stretch', 'hamstring_stretch', 'hip_flexor_stretch', 'chest_stretch',
     'calf_stretch', 'child_pose', 'butterfly',
+    # 自产素材：单帧静态保持，只显示第一帧
+    'chin_tuck', 'scapular_retraction', 'neck_isometric',
+    'ankle_circle', 'hip_circle', 'scapular_circle',
+    'wall_slide', 'march_in_place',
+    'single_leg_stand', 'seated_leg_raise', 'straight_leg_raise',
+    'banded_external_rotation', 'thoracic_extension', 'med_ball_slam',
+    'pendulum', 'stair_climb',
 }
 
 
@@ -152,6 +197,7 @@ def record(catalog_id, motion, dsls, source):
         f'            catalogId: "{catalog_id}",\n'
         f'            motion: .{motion},\n'
         f'            bounds: FigureBounds(minX: {x:.2f}, minY: {y:.2f}, width: {w:.2f}, height: {h:.2f}),\n'
+        f'            framing: .{"closeUp" if catalog_id in CLOSEUPS else "fullBody"},\n'
         '            frames: [\n'
         f'            {frames}\n'
         '            ]\n'
@@ -160,11 +206,14 @@ def record(catalog_id, motion, dsls, source):
 
 
 def main():
-    assert len(MAPPING) == 35, f'expected 35 catalog ids, got {len(MAPPING)}'
+    assert len(MAPPING) == 54, f'expected 54 catalog ids, got {len(MAPPING)}'
     assert not (set(UNMAPPED) & set(MAPPING)), 'unmapped id leaked into MAPPING'
+    assert 'chin_tuck' not in UNMAPPED, 'chin_tuck 已有自产素材，应从 UNMAPPED 移除'
     blocks = []
     for catalog_id, slug in MAPPING.items():
         folder = os.path.join(ASSETS, slug)
+        if not os.path.isdir(folder):
+            folder = os.path.join(ASSETS_GEN, slug)
         assert os.path.isdir(folder), f'missing asset folder: {folder}'
         dsls = [dsl_of(os.path.join(folder, f'frame-{i}.svg')) for i in (1, 2, 3)]
         for d in dsls:

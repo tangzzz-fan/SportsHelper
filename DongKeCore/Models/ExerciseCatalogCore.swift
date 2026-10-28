@@ -113,5 +113,17 @@ extension ExerciseLibrary {
             regressionName: "坐姿前屈",
             purposes: [.stretch]
         ),
+        ExerciseEntry(
+            id: "med_ball_slam",
+            name: "药球砸地",
+            group: .core,
+            equipment: .bodyweight,
+            isStatic: false,
+            cues: ["双手抱球举过头顶，身体拉长", "屈髋屈膝，把球用力砸向脚尖前方", "捡球时屈膝下蹲，不要弯腰"],
+            mistakes: ["只用手臂发力，躯干不参与", "球落在两脚之间，容易砸到脚背"],
+            regressionName: "徒手快速下劈",
+            affectedParts: [.lowerBack],
+            purposes: [.strength, .warmup]
+        ),
     ]
 }

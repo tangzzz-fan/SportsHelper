@@ -97,7 +97,26 @@ public enum ExerciseAliasResolver {
         ("肩胛收紧", "scapular_retraction"), ("scapular retraction", "scapular_retraction"),
         ("靠墙天使", "wall_slide"), ("靠墙滑臂", "wall_slide"), ("墙面天使", "wall_slide"), ("wall slide", "wall_slide"),
         ("颈部等长", "neck_isometric"), ("颈部静力", "neck_isometric"),
-        ("颈部等长收缩", "neck_isometric"), ("neck isometric", "neck_isometric")
+        ("颈部等长收缩", "neck_isometric"), ("neck isometric", "neck_isometric"),
+
+        // 2026-10-28 新增动作（随自产素材加入目录）
+        ("单腿站立", "single_leg_stand"), ("单脚站立", "single_leg_stand"),
+        ("单腿平衡", "single_leg_stand"), ("金鸡独立", "single_leg_stand"),
+        ("single leg stand", "single_leg_stand"),
+        ("坐姿抬腿", "seated_leg_raise"), ("坐位伸膝", "seated_leg_raise"),
+        ("坐姿直腿抬高", "seated_leg_raise"), ("seated leg raise", "seated_leg_raise"),
+        ("直腿抬高", "straight_leg_raise"), ("仰卧直腿抬高", "straight_leg_raise"),
+        ("直腿抬举", "straight_leg_raise"), ("straight leg raise", "straight_leg_raise"),
+        ("弹力带肩外旋", "banded_external_rotation"), ("肩外旋", "banded_external_rotation"),
+        ("弹力带外旋", "banded_external_rotation"), ("external rotation", "banded_external_rotation"),
+        ("胸椎伸展", "thoracic_extension"), ("胸椎后伸", "thoracic_extension"),
+        ("泡沫轴伸展", "thoracic_extension"), ("thoracic extension", "thoracic_extension"),
+        ("药球砸地", "med_ball_slam"), ("砸药球", "med_ball_slam"),
+        ("药球下砸", "med_ball_slam"), ("medicine ball slam", "med_ball_slam"),
+        ("钟摆运动", "pendulum"), ("钟摆", "pendulum"),
+        ("垂臂画圈", "pendulum"), ("pendulum", "pendulum"),
+        ("爬楼梯", "stair_climb"), ("上楼梯", "stair_climb"),
+        ("登阶", "stair_climb"), ("stair climb", "stair_climb"),
     ]
 
     public static let modifiers: [String] = [

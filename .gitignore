@@ -24,3 +24,11 @@ everkinetic-data/
 # 音条原型：由 macOS `say` 渲染，仅内部试听，不能随包上架
 VoiceClips/*.wav
 VoiceClips/*.txt
+
+# 离线 TTS 复现用的本地环境：venv 约 2.5GB、权重 2.3GB，都不进 git
+# 复现步骤见 .scratch/offline-tts/README.md §6d
+.scratch/*/.venv/
+.scratch/*/assets-generated/
+.scratch/*/model/
+.scratch/*/model-*/
+build/

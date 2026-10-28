@@ -5,6 +5,15 @@ public enum FigureMotion: String, Codable, Equatable, Sendable {
     case hold
 }
 
+/// 取景档位。局部特写（踝/腕/颈）与全身图不是同一个比例尺，
+/// 混在一起会让用户以为点错了页面（见 docs/FIGURE-STYLE.md §6.6）。
+public enum FigureFraming: String, Codable, Equatable, Sendable {
+    /// 全身入画，按包围盒铺满视图。
+    case fullBody
+    /// 局部特写。渲染时留更大边距 + 画四角括号，读作"细节放大"而不是"这个人就这么大"。
+    case closeUp
+}
+
 public struct FigureBounds: Codable, Equatable, Sendable {
     public var minX: Double
     public var minY: Double
@@ -115,19 +124,22 @@ public struct ExerciseFigure: Equatable, Sendable {
     public var bounds: FigureBounds
     public var frames: [FigureFrame]
     public var stroked: Bool
+    public var framing: FigureFraming
 
     public init(
         catalogId: String,
         motion: FigureMotion,
         bounds: FigureBounds,
         frames: [FigureFrame],
-        stroked: Bool = false
+        stroked: Bool = false,
+        framing: FigureFraming = .fullBody
     ) {
         self.catalogId = catalogId
         self.motion = motion
         self.bounds = bounds
         self.frames = frames
         self.stroked = stroked
+        self.framing = framing
     }
 }
 
@@ -180,9 +192,18 @@ public struct FigureFit: Equatable, Sendable {
 }
 
 public enum FigureFitCalculator {
-    public static func fit(bounds: FigureBounds, into size: FigureSize, padding: Double = 8) -> FigureFit {
-        let availableWidth = max(1, size.width - 2 * padding)
-        let availableHeight = max(1, size.height - 2 * padding)
+    /// 特写图额外留白：让它在同一行里读作"细节放大"，而不是"一个人占满整格"。
+    public static let closeUpPaddingFactor: Double = 1.35
+
+    public static func fit(
+        bounds: FigureBounds,
+        into size: FigureSize,
+        padding: Double = 8,
+        framing: FigureFraming = .fullBody
+    ) -> FigureFit {
+        let pad = framing == .closeUp ? padding * closeUpPaddingFactor : padding
+        let availableWidth = max(1, size.width - 2 * pad)
+        let availableHeight = max(1, size.height - 2 * pad)
         let scale = min(availableWidth / bounds.width, availableHeight / bounds.height)
         let scaledWidth = bounds.width * scale
         let scaledHeight = bounds.height * scale
@@ -200,6 +221,8 @@ struct FigureRecord: Sendable {
     var bounds: FigureBounds
     var frames: [String]
     var stroked: Bool = false
+    /// 默认全身；生成器对特写动作显式写 `framing: .closeUp`。
+    var framing: FigureFraming = .fullBody
 }
 
 struct BundledVectorFigures: FigureSource {
@@ -233,7 +256,8 @@ extension FigureRecord {
             motion: motion,
             bounds: bounds,
             frames: frames.map { FigureFrame.vector(VectorPath(dsl: $0)) },
-            stroked: stroked
+            stroked: stroked,
+            framing: framing
         )
     }
 }
