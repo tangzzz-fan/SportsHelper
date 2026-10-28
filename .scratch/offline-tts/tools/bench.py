@@ -1,11 +1,16 @@
-"""量 Qwen3-TTS 0.6B 在 M2 上的实际合成速度。
+"""量 Qwen3-TTS 在 M 系机器上的实际合成速度。
 
 只做一件事：逐条合成 samples.tsv，记录「墙钟耗时 / 音频时长」。
 不评估音质——音质靠人耳盲听，脚本给不出。
+
+模型目录与精度可用环境变量覆盖：
+    DK_TTS_MODEL=/path/to/model DK_TTS_DTYPE=bf16 python bench.py Serena mps-1.7b
+0.6B 在 MPS 上默认 fp32（与首次实测一致）；1.7B 权重 fp32 约 7 GB，16 GB 机器必须用 bf16。
 """
 
 import csv
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -14,7 +19,9 @@ import soundfile as sf
 import torch
 
 HERE = Path(__file__).parent
-MODEL_DIR = HERE / "model"
+MODEL_DIR = Path(os.environ.get("DK_TTS_MODEL", HERE / "model"))
+DTYPES = {"fp32": torch.float32, "bf16": torch.bfloat16, "fp16": torch.float16}
+DTYPE = os.environ.get("DK_TTS_DTYPE", "fp32")
 OUT = HERE / "out"
 SPEAKER = sys.argv[1] if len(sys.argv) > 1 else "Serena"
 TAG = sys.argv[2] if len(sys.argv) > 2 else "mps"
@@ -33,13 +40,17 @@ def main() -> None:
 
     OUT.mkdir(parents=True, exist_ok=True) if not OUT.is_dir() else None
     device = pick_device()
-    print(f"device={device} speaker={SPEAKER} torch={torch.__version__}", flush=True)
+    print(
+        f"device={device} speaker={SPEAKER} torch={torch.__version__} "
+        f"dtype={DTYPE} model={MODEL_DIR}",
+        flush=True,
+    )
 
     t0 = time.perf_counter()
     model = Qwen3TTSModel.from_pretrained(
         str(MODEL_DIR),
         device_map=device,
-        dtype=torch.float32 if device == "mps" else torch.bfloat16,
+        dtype=DTYPES[DTYPE],
     )
     load_s = time.perf_counter() - t0
     print(f"load={load_s:.1f}s", flush=True)
@@ -82,6 +93,8 @@ def main() -> None:
     summary = {
         "device": device,
         "speaker": SPEAKER,
+        "dtype": DTYPE,
+        "model": MODEL_DIR.name,
         "load_s": round(load_s, 2),
         "sr": rows[0]["sr"],
         "n": len(rows),
@@ -104,6 +117,8 @@ def main() -> None:
     for k in (
         "device",
         "speaker",
+        "dtype",
+        "model",
         "sr",
         "load_s",
         "total_audio_s",
