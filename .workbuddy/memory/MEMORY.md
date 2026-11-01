@@ -16,9 +16,11 @@
 
 ## 环境
 
-- 模拟器 UDID `D16A8318-973E-45CE-936B-94F5FFE3E0EC`；`content_size` 保持 `large`，不要设 AX3 当常规验收。
+- **Xcode 27.2 已在 `/Applications`**（2026-11-02 起本机能编能跑）。模拟器 UDID 会变，用 `xcrun simctl list devices available` 现查（iPhone 18 Pro 当前是 `1EBB60E3-3F86-4F2F-90D5-DB5884A26DD2`）。
+- **构建前必须有 `DongKe/Resources/ai-defaults.json`**（gitignore，缺了直接资源错误）。手写一份 `{"baseURL":"https://api.deepseek.com/v1","model":"deepseek-flash","apiKey":""}` 即可编译，Key 留空。
 - 推 origin：2026-11-01 起**直接 `git push` 就通**（环境换成透明代理，7890/57455 都已关闭）。失败先试直连，别照抄旧的 `nc -X connect -x 127.0.0.1:7890`——那条现在会报 `Connection closed`。
 - BSD grep 不支持 `\|` 交替，会**静默返回空**——用 `grep -E` 或 rg。看到空结果先怀疑模式。
+- **改到 `DongKe/Data/Persistence` 必须装模拟器跑一次**：单测只跑 `DongKeCore`，SwiftData 的谓词写错是 NSException 硬崩，`try?` 吞不掉。踩过的三种见 HANDOFF §6.31。
 
 ## 已定调，别再讨论
 
