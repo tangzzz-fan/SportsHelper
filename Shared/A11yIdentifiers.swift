@@ -15,6 +15,7 @@ enum A11y {
         static let skipToday = "today.skipToday"
         static let undoSkipToday = "today.undoSkipToday"
         static let alreadyDone = "today.alreadyDone"
+        static let microDose = "today.microDose"
     }
 
     enum Workout {

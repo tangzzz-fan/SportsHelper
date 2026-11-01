@@ -19,6 +19,7 @@ struct DongKeApp: App {
     @State private var profileStore: ProfileStore
     @State private var planStore: PlanStore
     @State private var userExerciseStore: UserExerciseStore
+    @State private var microDoseStore: MicroDoseStore
     @State private var aiSettings = AISettingsStore.shared
 
     init() {
@@ -30,13 +31,13 @@ struct DongKeApp: App {
         do {
             container = try ModelContainer(
                 for: SessionEntity.self, SetLogEntity.self, ProfileEntity.self,
-                PlanEntity.self, UserExerciseEntity.self,
+                PlanEntity.self, UserExerciseEntity.self, MicroDoseEntity.self,
                 configurations: configuration
             )
         } catch {
             container = try! ModelContainer(
                 for: SessionEntity.self, SetLogEntity.self, ProfileEntity.self,
-                PlanEntity.self, UserExerciseEntity.self,
+                PlanEntity.self, UserExerciseEntity.self, MicroDoseEntity.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }
@@ -136,6 +137,7 @@ struct DongKeApp: App {
         }
         #endif
         _userExerciseStore = State(initialValue: userStore)
+        _microDoseStore = State(initialValue: MicroDoseStore(context: container.mainContext))
 
         // 这行会读 `VoicePicker.bestChinese()`，也就是枚举 AVSpeechSynthesisVoice。
         // 冷启动时那一步要加载系统音色清单，几百毫秒起步，放在 init 里会直接把
@@ -253,6 +255,7 @@ struct DongKeApp: App {
                 .environment(profileStore)
                 .environment(planStore)
                 .environment(userExerciseStore)
+                .environment(microDoseStore)
                 .environment(aiSettings)
                 .environment(NotificationService.shared)
         }

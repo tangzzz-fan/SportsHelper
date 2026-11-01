@@ -844,3 +844,21 @@ SIMCTL_CHILD_DK_SEED_DEMO=1 SIMCTL_CHILD_DK_SEED_RECORDS=1 \
 SIMCTL_CHILD_DK_PREVIEW=workout \
 xcrun simctl launch <UDID> app.dongke.ios
 ```
+
+## 6.32 加了新 @Model 就等于赌了一次迁移（2026-11-02）
+
+微剂量要一张新表。`MicroDoseEntity` 加进 `ModelContainer(for:)` 的列表之后，全新安装一路正常；**但升级路径没验过**——这一轮全是卸载重装。
+
+真正的风险不在「迁移失败会崩」，在**它会静默降级**：
+
+```swift
+do {
+    container = try ModelContainer(for: …, configurations: configuration)
+} catch {
+    container = try! ModelContainer(for: …, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+}
+```
+
+迁移抛错时走 `catch`，App 照常启动、界面照常有空计划，**用户的历史记录全在内存里，杀进程就没了**，而且没有任何提示。
+
+所以：**加表 / 加列之后，必须做一次「装旧包 → 产生数据 → 覆盖装新包 → 看数据还在不在」**。本地没有旧包时，至少把它记成上架前的一项检查（同 `docs/RELEASE.md` 的口径）。别拿「全新安装能跑」当迁移验证。

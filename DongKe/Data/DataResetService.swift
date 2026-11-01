@@ -16,6 +16,7 @@ enum DataResetService {
         try? context.delete(model: PlanEntity.self)
         try? context.delete(model: ProfileEntity.self)
         try? context.delete(model: UserExerciseEntity.self)
+        try? context.delete(model: MicroDoseEntity.self)
         try? context.save()
 
         for key in Array(defaults.dictionaryRepresentation().keys) where key.hasPrefix(defaultsPrefix) {

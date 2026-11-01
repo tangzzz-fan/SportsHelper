@@ -17,4 +17,5 @@ enum Icons {
     static let mistake = "exclamationmark.triangle"
     static let mic = "mic"
     static let micStop = "stop.circle"
+    static let microDose = "figure.flexibility"
 }

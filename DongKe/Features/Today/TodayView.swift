@@ -11,9 +11,11 @@ struct TodayView: View {
 
     @State private var showSettings: Bool
     @State var showSkipConfirm = false
+    @State private var showMicroDose = false
     private let settingsStore = ReminderSettingsStore.shared
     @Bindable var daySkip = DaySkipStore.shared
     @Environment(NotificationService.self) private var notifications
+    @Environment(ProfileStore.self) private var profileStore
 
     init(
         plan: WorkoutPlan,
@@ -28,10 +30,13 @@ struct TodayView: View {
         self.onResume = onResume
         self.onEraseAll = onEraseAll
         var initial = false
+        var microDoseInitial = false
         #if DEBUG
         initial = ProcessInfo.processInfo.environment["DK_PREVIEW"] == "settings"
+        microDoseInitial = ProcessInfo.processInfo.environment["DK_PREVIEW"] == "microdose"
         #endif
         _showSettings = State(initialValue: initial)
+        _showMicroDose = State(initialValue: microDoseInitial)
     }
 
     @Environment(\.colorScheme) var colorScheme
@@ -110,6 +115,28 @@ struct TodayView: View {
                             .padding(.top, 10)
                     }
 
+                    if let dose = microDose {
+                        Button {
+                            showMicroDose = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: Icons.microDose)
+                                Text("三分钟活动一下 · \(dose.reason)")
+                                Spacer(minLength: 8)
+                                Image(systemName: Icons.disclosure)
+                                    .font(Typography.micro)
+                            }
+                            .font(Typography.secondary)
+                            .foregroundStyle(Theme.accent(for: colorScheme))
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .accessibilityIdentifier(A11y.Today.microDose)
+                    }
+
                 }
                 .padding(.top, 4)
             }
@@ -124,6 +151,11 @@ struct TodayView: View {
                 onReschedule: rescheduleReminders,
                 onEraseAll: onEraseAll
             )
+        }
+        .sheet(isPresented: $showMicroDose) {
+            if let dose = microDose {
+                MicroDoseView(dose: dose)
+            }
         }
         .task {
             await notifications.refreshStatus()
@@ -144,6 +176,11 @@ struct TodayView: View {
             await notifications.requestAuthorization()
             await notifications.reschedule(plan: plan, settings: settingsStore.settings)
         }
+    }
+
+    private var microDose: MicroDose? {
+        guard let profile = profileStore.profile else { return nil }
+        return MicroDosePlanner.pick(profile: profile, plan: plan, on: Date())
     }
 
     private func reminderBanner(_ health: ReminderHealth) -> some View {
