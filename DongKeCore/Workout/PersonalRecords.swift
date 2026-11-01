@@ -43,6 +43,23 @@ public extension PersonalRecord {
     }
 }
 
+public enum RecordGate {
+    public static func isRecord(best: Int?, actual: Int) -> Bool {
+        guard let best else { return false }
+        return actual > best
+    }
+}
+
+public enum RecordCelebration {
+    public static func text(name: String, value: Int, unit: SetTargetType) -> String? {
+        switch unit {
+        case .reps: "\(name)最高纪录 \(value) 个"
+        case .durationSec: "\(name)最长 \(value) 秒"
+        case .distanceM: nil
+        }
+    }
+}
+
 public enum PersonalRecords {
     public static func build(
         logs: [SetLog],

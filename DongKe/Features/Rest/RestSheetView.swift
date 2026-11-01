@@ -46,6 +46,7 @@ struct RestSheetView: View {
         static let timerTop: CGFloat = 2
         static let ringTop: CGFloat = 12
         static let extrasTop: CGFloat = 14
+        static let celebrationTop: CGFloat = 12
         static let extrasToButtons: CGFloat = 18
         static let buttonTop: CGFloat = 20
         static let bottom: CGFloat = 16
@@ -110,6 +111,16 @@ struct RestSheetView: View {
 
             ring
                 .padding(.top, Metrics.ringTop)
+
+            if let celebration = session.recordCelebration {
+                Text(celebration)
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, Metrics.celebrationTop)
+                    .accessibilityIdentifier(A11y.Workout.recordCelebration)
+            }
 
             if showsExtraSetRow {
                 extraSetRow

@@ -97,6 +97,7 @@ extension WorkoutSession {
 
     func advance(silent: Bool = false) {
         rest = .idle
+        recordCelebration = nil
         guard stepIndex + 1 < script.count else {
             saveCheckpoint()
             return

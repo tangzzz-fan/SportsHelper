@@ -24,6 +24,8 @@ final class WorkoutSession: Identifiable {
     var restKicker = "组间休息"
     var finishedAt: Date?
     var restFinishedToken = 0
+    var recordCelebration: String?
+    var celebratedActions: Set<String> = []
     var voice: WorkoutVoiceSession?
     var setTimer = SetTimerDriver()
 

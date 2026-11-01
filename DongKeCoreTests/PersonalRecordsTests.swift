@@ -155,4 +155,23 @@ struct PersonalRecordsTests {
         let walk = PersonalRecord(last: 800, best: 1200, timesDone: 1)
         #expect(walk.lineText(unit: .distanceM) == "上次 800 米 · 最好 1200 米")
     }
+
+    @Test func celebrationNamesTheActionAndTheNumber() {
+        #expect(RecordCelebration.text(name: "深蹲", value: 13, unit: .reps) == "深蹲最高纪录 13 个")
+        #expect(RecordCelebration.text(name: "平板支撑", value: 48, unit: .durationSec) == "平板支撑最长 48 秒")
+    }
+
+    @Test func celebrationIsSilentForDistance() {
+        #expect(RecordCelebration.text(name: "农夫行走", value: 800, unit: .distanceM) == nil)
+    }
+
+    @Test func gateNeedsAHistoryToBeat() {
+        #expect(RecordGate.isRecord(best: nil, actual: 13) == false)
+    }
+
+    @Test func gateIsStrictlyGreater() {
+        #expect(RecordGate.isRecord(best: 12, actual: 13))
+        #expect(RecordGate.isRecord(best: 12, actual: 12) == false)
+        #expect(RecordGate.isRecord(best: 12, actual: 11) == false)
+    }
 }

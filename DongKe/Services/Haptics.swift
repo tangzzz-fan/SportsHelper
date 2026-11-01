@@ -15,4 +15,8 @@ enum Haptics {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         AudioServicesPlaySystemSound(1057)
     }
+
+    static func recordBroken() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
 }

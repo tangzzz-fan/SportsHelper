@@ -50,6 +50,8 @@ struct AppShell: View {
         case "rest":
             let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)
             active.completeSet()
+            // 预览里没有日志库，破纪录判定不会触发；给一张固定的庆祝文案，用来校对休息面板的排版。
+            active.recordCelebration = "深蹲最高纪录 13 个"
             _session = State(initialValue: active)
         default:
             break

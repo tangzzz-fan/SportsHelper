@@ -7,6 +7,8 @@ extension WorkoutSession {
             advance()
             return
         }
+        let actual = target.value + max(0, bonus)
+        noteRecordIfBroken(actual: actual, target: target, now: now)
         appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
@@ -15,7 +17,7 @@ extension WorkoutSession {
             setIndex: setIndex,
             status: .done,
             plannedValue: target.value,
-            actualValue: target.value + max(0, bonus),
+            actualValue: actual,
             rpe: rpe,
             completedAt: now,
             origin: isExtraCurrentSet ? .extra : .prescribed
@@ -66,6 +68,26 @@ extension WorkoutSession {
         ), now: now)
         advance(silent: true)
         saveCheckpoint(now: now)
+    }
+
+    private func noteRecordIfBroken(actual: Int, target: SetTarget, now: Date) {
+        guard target.type != .distanceM,
+              let catalogId = currentPrescription?.catalogId,
+              celebratedActions.contains(catalogId) == false,
+              let setLogStore
+        else { return }
+
+        let logs = setLogStore.logs(forCatalogIds: [catalogId], before: now)
+        let best = PersonalRecords.build(logs: logs)[RecordKey(catalogId: catalogId, unit: target.type)]?.best
+        guard RecordGate.isRecord(best: best, actual: actual) else { return }
+
+        celebratedActions.insert(catalogId)
+        recordCelebration = RecordCelebration.text(
+            name: currentPrescription?.name ?? "",
+            value: actual,
+            unit: target.type
+        )
+        if recordCelebration != nil { Haptics.recordBroken() }
     }
 
     func refresh(now: Date = Date()) {
