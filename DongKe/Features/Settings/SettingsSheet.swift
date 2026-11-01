@@ -18,6 +18,7 @@ struct SettingsSheet: View {
 
     @State private var showEraseConfirm = false
     @State private var showHealthNotice = false
+    @State private var showCounters = false
     @State private var isErasing = false
 
     var body: some View {
@@ -65,6 +66,9 @@ struct SettingsSheet: View {
             .sheet(isPresented: $showHealthNotice) {
                 HealthNoticeView()
             }
+            .sheet(isPresented: $showCounters) {
+                LocalCountersView()
+            }
         }
     }
 
@@ -83,6 +87,24 @@ struct SettingsSheet: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Divider()
+            Button {
+                showCounters = true
+            } label: {
+                HStack {
+                    Text("本机记录")
+                        .font(Typography.rowTitle)
+                        .foregroundStyle(Color.primary)
+                    Spacer()
+                    Image(systemName: Icons.disclosure)
+                        .font(Typography.micro)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableGlassStyle())
+            .accessibilityIdentifier(A11y.Settings.countersEntry)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

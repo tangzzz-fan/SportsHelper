@@ -181,6 +181,7 @@ struct AppShell: View {
 
     private func resumeWorkout() {
         guard let checkpoint = resumeCandidate else { return }
+        LocalCounters.shared.increment(.checkpointResumed)
         let plan = activePlan
         let occurrence = PlanCalendar.occurrence(
             of: checkpoint.dayIndex,

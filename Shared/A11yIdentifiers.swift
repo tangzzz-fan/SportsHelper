@@ -90,6 +90,7 @@ enum A11y {
         static let largeTextToggle = "settings.largeTextToggle"
         static let healthNotice = "settings.healthNotice"
         static let healthNoticeEntry = "settings.healthNotice.entry"
+        static let countersEntry = "settings.counters.entry"
         static let done = "settings.done"
         static let erase = "settings.erase"
     }
