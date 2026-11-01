@@ -7,6 +7,7 @@ final class SetLogEntity {
     var sessionId: UUID
     var prescriptionId: String
     var catalogId: String?
+    var targetTypeRaw: String?
     var setIndex: Int
     var statusRaw: String
     var plannedValue: Int
@@ -21,6 +22,7 @@ final class SetLogEntity {
         sessionId: UUID,
         prescriptionId: String,
         catalogId: String? = nil,
+        targetTypeRaw: String? = nil,
         setIndex: Int,
         statusRaw: String,
         plannedValue: Int,
@@ -34,6 +36,7 @@ final class SetLogEntity {
         self.sessionId = sessionId
         self.prescriptionId = prescriptionId
         self.catalogId = catalogId
+        self.targetTypeRaw = targetTypeRaw
         self.setIndex = setIndex
         self.statusRaw = statusRaw
         self.plannedValue = plannedValue

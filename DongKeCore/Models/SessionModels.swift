@@ -34,6 +34,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var sessionId: UUID
     public var prescriptionId: String
     public var catalogId: String?
+    public var targetType: SetTargetType?
     public var setIndex: Int
     public var status: SetStatus
     public var plannedValue: Int
@@ -48,6 +49,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         sessionId: UUID,
         prescriptionId: String,
         catalogId: String? = nil,
+        targetType: SetTargetType? = nil,
         setIndex: Int,
         status: SetStatus,
         plannedValue: Int,
@@ -61,6 +63,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.sessionId = sessionId
         self.prescriptionId = prescriptionId
         self.catalogId = catalogId
+        self.targetType = targetType
         self.setIndex = setIndex
         self.status = status
         self.plannedValue = plannedValue
@@ -76,6 +79,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         case sessionId
         case prescriptionId
         case catalogId
+        case targetType
         case setIndex
         case status
         case plannedValue
@@ -92,6 +96,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         sessionId = try container.decode(UUID.self, forKey: .sessionId)
         prescriptionId = try container.decode(String.self, forKey: .prescriptionId)
         catalogId = try container.decodeIfPresent(String.self, forKey: .catalogId)
+        targetType = try container.decodeIfPresent(SetTargetType.self, forKey: .targetType)
         setIndex = try container.decode(Int.self, forKey: .setIndex)
         status = try container.decode(SetStatus.self, forKey: .status)
         plannedValue = try container.decode(Int.self, forKey: .plannedValue)

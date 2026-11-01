@@ -17,6 +17,7 @@ final class SetLogStore {
             sessionId: log.sessionId,
             prescriptionId: log.prescriptionId,
             catalogId: log.catalogId,
+            targetTypeRaw: log.targetType?.rawValue,
             setIndex: log.setIndex,
             statusRaw: log.status.rawValue,
             plannedValue: log.plannedValue,
@@ -46,6 +47,21 @@ final class SetLogStore {
         return ((try? context.fetch(descriptor)) ?? []).compactMap(Self.log(from:))
     }
 
+    func logs(forCatalogIds ids: [String], before date: Date = .distantFuture) -> [SetLog] {
+        guard ids.isEmpty == false else { return [] }
+        var result: [SetLog] = []
+        for id in ids {
+            let descriptor = FetchDescriptor<SetLogEntity>(
+                predicate: #Predicate { entity in
+                    entity.completedAt < date && entity.catalogId == id
+                },
+                sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
+            )
+            result += ((try? context.fetch(descriptor)) ?? []).compactMap(Self.log(from:))
+        }
+        return result
+    }
+
     private static func log(from entity: SetLogEntity) -> SetLog? {
         guard let status = SetStatus(rawValue: entity.statusRaw) else { return nil }
         return SetLog(
@@ -53,6 +69,7 @@ final class SetLogStore {
             sessionId: entity.sessionId,
             prescriptionId: entity.prescriptionId,
             catalogId: entity.catalogId,
+            targetType: entity.targetTypeRaw.flatMap(SetTargetType.init(rawValue:)),
             setIndex: entity.setIndex,
             status: status,
             plannedValue: entity.plannedValue,
