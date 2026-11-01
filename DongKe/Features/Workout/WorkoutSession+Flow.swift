@@ -8,7 +8,13 @@ extension WorkoutSession {
             return
         }
         let actual = target.value + max(0, bonus)
-        noteRecordIfBroken(actual: actual, target: target, now: now)
+        let record = personalRecord(for: target, now: now)
+        let predicted = Prediction.next(
+            record: record ?? PersonalRecord(),
+            unit: target.type,
+            lastRPE: lastRPE(for: target)
+        )
+        noteRecordIfBroken(record: record, actual: actual, target: target)
         appendLog(SetLog(
             sessionId: id,
             prescriptionId: prescriptionId,
@@ -18,6 +24,7 @@ extension WorkoutSession {
             status: .done,
             plannedValue: target.value,
             actualValue: actual,
+            predictedValue: predicted,
             rpe: rpe,
             completedAt: now,
             origin: isExtraCurrentSet ? .extra : .prescribed
@@ -70,16 +77,26 @@ extension WorkoutSession {
         saveCheckpoint(now: now)
     }
 
-    private func noteRecordIfBroken(actual: Int, target: SetTarget, now: Date) {
+    private func personalRecord(for target: SetTarget, now: Date) -> PersonalRecord? {
+        guard target.type != .distanceM,
+              let catalogId = currentPrescription?.catalogId,
+              let setLogStore
+        else { return nil }
+        let history = setLogStore.logs(forCatalogIds: [catalogId], before: now)
+        return PersonalRecords.build(logs: history)[RecordKey(catalogId: catalogId, unit: target.type)]
+    }
+
+    private func lastRPE(for target: SetTarget) -> Int? {
+        guard let catalogId = currentPrescription?.catalogId else { return nil }
+        return logs.last { $0.catalogId == catalogId && $0.status == .done }?.rpe
+    }
+
+    private func noteRecordIfBroken(record: PersonalRecord?, actual: Int, target: SetTarget) {
         guard target.type != .distanceM,
               let catalogId = currentPrescription?.catalogId,
               celebratedActions.contains(catalogId) == false,
-              let setLogStore
+              RecordGate.isRecord(best: record?.best, actual: actual)
         else { return }
-
-        let logs = setLogStore.logs(forCatalogIds: [catalogId], before: now)
-        let best = PersonalRecords.build(logs: logs)[RecordKey(catalogId: catalogId, unit: target.type)]?.best
-        guard RecordGate.isRecord(best: best, actual: actual) else { return }
 
         celebratedActions.insert(catalogId)
         recordCelebration = RecordCelebration.text(

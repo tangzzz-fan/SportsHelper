@@ -29,6 +29,7 @@
 		14E571A347030A6F8F9F816B /* AliasMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BBC30A47CBCB1FFBA3559E /* AliasMemory.swift */; };
 		16EE6EBB8A094075AC8C5054 /* PlanDraftParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32ED59B5C1D381FD9B98AB62 /* PlanDraftParser.swift */; };
 		178350EF2D8B046262C31CF4 /* MicroDoseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A556893795BD01263A8CD4 /* MicroDoseView.swift */; };
+		185192AC70317BD78D5EAD4E /* PredictionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9C34082A0EA92A681D1A4E /* PredictionTests.swift */; };
 		18B67E5BD328436B3D565038 /* WorkoutFlowModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2B7CF7245BF49C1982A0E /* WorkoutFlowModel.swift */; };
 		1A53C4EC2BE1FBD009B415C9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 310CFBA5BDEC46822C67998E /* PrivacyInfo.xcprivacy */; };
 		1A72BC85AC2062A46D79E648 /* ExerciseCatalogLower.swift in Sources */ = {isa = PBXBuildFile; fileRef = 066C1D6F10CA0FACB51A0367 /* ExerciseCatalogLower.swift */; };
@@ -200,6 +201,7 @@
 		AD989CEA80D00BACA2DC891C /* LargeTextStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917E30899C9FB8E4BFAAAE4 /* LargeTextStore.swift */; };
 		B20EAB16993A03B27277C0AF /* ExerciseFigure.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64AE095E82BB634A080D671 /* ExerciseFigure.swift */; };
 		B2B91C42D77FE564C87A4802 /* DoseAdjustment+Reduction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */; };
+		B2D4B06E5785E34BF11F64C0 /* Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F552ABB5E37AEBE4D0A6355 /* Prediction.swift */; };
 		B3BEEBA5111A92B4E36F1F65 /* PlanNormalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F0141EDD96F94F8781B2D4 /* PlanNormalizer.swift */; };
 		B47934793DB3300AB9518B73 /* FigurePlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266CCAEF6FD251113BC44158 /* FigurePlaybackTests.swift */; };
 		B92290989E3D5007C320C2AC /* TextNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCE26FA1AA5E22266904F7B /* TextNormalization.swift */; };
@@ -350,6 +352,7 @@
 		1B43784FEA6139D875499793 /* DoseReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReport.swift; sourceTree = "<group>"; };
 		1CD0ABA788794879DA1FB21B /* PlanCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanCalendarTests.swift; sourceTree = "<group>"; };
 		1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerStateMachineTests.swift; sourceTree = "<group>"; };
+		1F552ABB5E37AEBE4D0A6355 /* Prediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prediction.swift; sourceTree = "<group>"; };
 		1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTitleTests.swift; sourceTree = "<group>"; };
 		203F71D1C53C93AEE33B6D4F /* A11yIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11yIdentifiers.swift; sourceTree = "<group>"; };
 		21517B12A3B634A18027F5A2 /* SessionEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionEntity.swift; sourceTree = "<group>"; };
@@ -503,6 +506,7 @@
 		A8F4AD124AFA07118CD8E94A /* DoseAdjustmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseAdjustmentTests.swift; sourceTree = "<group>"; };
 		AB6AB296368355A6973FB533 /* PlanGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanGeneratorTests.swift; sourceTree = "<group>"; };
 		ABBFAFF50EAA19C6549674AA /* TodayView+Cards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TodayView+Cards.swift"; sourceTree = "<group>"; };
+		AC9C34082A0EA92A681D1A4E /* PredictionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictionTests.swift; sourceTree = "<group>"; };
 		ACA2DFBE1DD4F51BB07F99EA /* UserExercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExercise.swift; sourceTree = "<group>"; };
 		ACBB4A398AFB211439617B18 /* PlanEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEditSheet.swift; sourceTree = "<group>"; };
 		AEBFA19A1BC52C87ACFDAE30 /* SpeechCueCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechCueCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -619,6 +623,7 @@
 				3BB78085A5DF2DD2F9CA725A /* PlanCalendar.swift */,
 				992373A4ED862E6EFA6A3C49 /* PlanCatalog.swift */,
 				168C6D3E33852EFB889A046D /* PlanGenerator.swift */,
+				1F552ABB5E37AEBE4D0A6355 /* Prediction.swift */,
 				D3A2CC2703A871BE8D0DCD05 /* ReminderHealth.swift */,
 				0A1235595513A4C67691C071 /* ReminderTrigger.swift */,
 				CED96299F63D41D5B469BDFD /* WeekHighlights.swift */,
@@ -1083,6 +1088,7 @@
 				98FE090CC38440A20C32F275 /* PlanStructureEdgeCaseTests.swift */,
 				1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */,
 				F544178736E999F2C7729B36 /* PlanValidatorTests.swift */,
+				AC9C34082A0EA92A681D1A4E /* PredictionTests.swift */,
 				102F550CF1AA854CF2A097D6 /* ReminderHealthTests.swift */,
 				821E0A91BCE94A72DB17773E /* ReminderTriggerTests.swift */,
 				1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */,
@@ -1311,6 +1317,7 @@
 				1EAA0E5CA1CFE50A0A96F2A8 /* PlanSafetyChecker.swift in Sources */,
 				FF662691F24AB80298C81510 /* PlanSchemaJSON.swift in Sources */,
 				0BF68397448AA01C7529030A /* PlanValidator.swift in Sources */,
+				B2D4B06E5785E34BF11F64C0 /* Prediction.swift in Sources */,
 				A145922B969FA0DD34ED248A /* ProfileModels.swift in Sources */,
 				65025A0597219C4A50D8909D /* ProgressionAxis.swift in Sources */,
 				075965F5BDB12590FCA1BFFA /* ProposalMemory.swift in Sources */,
@@ -1399,6 +1406,7 @@
 				4F8D679A3688ACEE276864B4 /* PlanStructureEdgeCaseTests.swift in Sources */,
 				1E7DFD9223C03DB8790CD53E /* PlanTitleTests.swift in Sources */,
 				8FD2050517175859BF05CE25 /* PlanValidatorTests.swift in Sources */,
+				185192AC70317BD78D5EAD4E /* PredictionTests.swift in Sources */,
 				31234E55FA971E4396F49A1A /* ReminderHealthTests.swift in Sources */,
 				4185758B7014D2F8F74A9828 /* ReminderTriggerTests.swift in Sources */,
 				468DBB22E7F0F320E2D20A62 /* RestTimerStateMachineTests.swift in Sources */,

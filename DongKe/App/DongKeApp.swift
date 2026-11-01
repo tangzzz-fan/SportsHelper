@@ -67,7 +67,12 @@ struct DongKeApp: App {
         if ProcessInfo.processInfo.environment["DK_SEED_RECORDS"] == "1",
            setLogs.logs(forCatalogIds: ["squat"]).isEmpty {
             let midnight = Calendar.current.startOfDay(for: Date())
-            let seed: [(daysAgo: Double, values: [Int])] = [(6, [12, 11, 10]), (3, [10, 10, 9])]
+            let seed: [(daysAgo: Double, values: [Int], predicted: Int)] = [
+                (13, [9, 9, 8], 10),
+                (10, [9, 8, 8], 9),
+                (6, [12, 11, 10], 12),
+                (3, [10, 10, 9], 11)
+            ]
             for item in seed {
                 let sessionId = UUID()
                 let at = midnight.addingTimeInterval(-item.daysAgo * 86_400 + 20 * 3_600)
@@ -81,6 +86,7 @@ struct DongKeApp: App {
                         status: .done,
                         plannedValue: 12,
                         actualValue: value,
+                        predictedValue: item.predicted,
                         completedAt: at.addingTimeInterval(Double(index) * 120)
                     ))
                 }

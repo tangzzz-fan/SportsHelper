@@ -39,6 +39,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var status: SetStatus
     public var plannedValue: Int
     public var actualValue: Int
+    public var predictedValue: Int?
     public var skipReason: SkipReason?
     public var rpe: Int?
     public var completedAt: Date
@@ -54,6 +55,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         status: SetStatus,
         plannedValue: Int,
         actualValue: Int,
+        predictedValue: Int? = nil,
         skipReason: SkipReason? = nil,
         rpe: Int? = nil,
         completedAt: Date,
@@ -68,6 +70,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.status = status
         self.plannedValue = plannedValue
         self.actualValue = actualValue
+        self.predictedValue = predictedValue
         self.skipReason = skipReason
         self.rpe = rpe
         self.completedAt = completedAt
@@ -84,6 +87,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         case status
         case plannedValue
         case actualValue
+        case predictedValue
         case skipReason
         case rpe
         case completedAt
@@ -101,6 +105,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         status = try container.decode(SetStatus.self, forKey: .status)
         plannedValue = try container.decode(Int.self, forKey: .plannedValue)
         actualValue = try container.decode(Int.self, forKey: .actualValue)
+        predictedValue = try container.decodeIfPresent(Int.self, forKey: .predictedValue)
         skipReason = try container.decodeIfPresent(SkipReason.self, forKey: .skipReason)
         rpe = try container.decodeIfPresent(Int.self, forKey: .rpe)
         completedAt = try container.decode(Date.self, forKey: .completedAt)

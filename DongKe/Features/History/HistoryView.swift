@@ -11,6 +11,7 @@ struct HistoryView: View {
 
     @State private var report = DoseReport()
     @State private var highlights = WeekHighlights()
+    @State private var calibration = PredictionCalibration(unit: .reps, weeks: [])
     @State private var acceptedThisWeek = 0
 
     private var formatter: DateFormatter {
@@ -59,6 +60,12 @@ struct HistoryView: View {
                             .padding(.top, 12)
                     }
 
+                    if calibration.isPublishable {
+                        calibrationCard
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                    }
+
                     Text("最近训练")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.secondary)
@@ -85,6 +92,7 @@ struct HistoryView: View {
         let logs = setLogStore.recentLogs()
         report = DoseReportBuilder.build(logs: logs)
         highlights = WeekHighlightsBuilder.build(logs: logs)
+        calibration = PredictionCalibrationBuilder.build(logs: logs)
         let start = HistoryStats.weekStart(for: Date(), calendar: Calendar(identifier: .gregorian))
         let days = Set(ProposalMemo.shared.memory.acceptedChanges
             .filter { $0.at >= start }
@@ -245,6 +253,58 @@ struct HistoryView: View {
     private func weekLabel(_ index: Int) -> String {
         let remaining = report.weeklySets.count - 1 - index
         return remaining == 0 ? "本周" : "\(remaining) 周前"
+    }
+
+    private var calibrationCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("我的猜测有多准")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Chart {
+                ForEach(Array(calibration.weeks.enumerated()), id: \.element.id) { index, week in
+                    BarMark(
+                        x: .value("周", calibrationLabel(index)),
+                        y: .value("平均差", week.meanAbsoluteError)
+                    )
+                    .foregroundStyle(
+                        index == calibration.weeks.count - 1
+                            ? Theme.accent(for: colorScheme)
+                            : Color.primary.opacity(0.18)
+                    )
+                    .cornerRadius(3)
+                }
+            }
+            .chartYAxis(.hidden)
+            .chartLegend(.hidden)
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondary)
+                }
+            }
+            .frame(height: 68)
+
+            if let headline = calibration.headline {
+                Text(headline)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassSurface(radius: Theme.Radius.glassCard)
+        .accessibilityIdentifier(A11y.History.calibration)
+    }
+
+    private func calibrationLabel(_ index: Int) -> String {
+        let calendar = Calendar(identifier: .gregorian)
+        let current = HistoryStats.weekStart(for: Date(), calendar: calendar)
+        let start = calibration.weeks[index].start
+        let gap = calendar.dateComponents([.weekOfYear], from: start, to: current).weekOfYear ?? 0
+        return gap <= 0 ? "本周" : "\(gap) 周前"
     }
 
     private var skipCard: some View {
