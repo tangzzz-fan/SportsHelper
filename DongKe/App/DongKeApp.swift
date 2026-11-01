@@ -41,7 +41,8 @@ struct DongKeApp: App {
             )
         }
         self.container = container
-        _store = State(initialValue: SessionStore(context: container.mainContext))
+        let sessions = SessionStore(context: container.mainContext)
+        _store = State(initialValue: sessions)
         let setLogs = SetLogStore(context: container.mainContext)
         _setLogStore = State(initialValue: setLogs)
         let profiles = ProfileStore(context: container.mainContext)
@@ -83,6 +84,29 @@ struct DongKeApp: App {
                     ))
                 }
             }
+        }
+        if ProcessInfo.processInfo.environment["DK_SEED_BREAK"] == "1",
+           setLogs.logs(forCatalogIds: ["squat"]).contains(where: { $0.prescriptionId == "seed-break" }) == false {
+            setLogs.add(SetLog(
+                sessionId: UUID(),
+                prescriptionId: "seed-break",
+                catalogId: "squat",
+                targetType: .reps,
+                setIndex: 1,
+                status: .done,
+                plannedValue: 12,
+                actualValue: 13,
+                completedAt: Date().addingTimeInterval(-3_600)
+            ))
+            let start = Calendar.current.startOfDay(for: Date()).addingTimeInterval(7 * 3_600)
+            sessions.upsert(
+                id: UUID(),
+                title: "下肢力量",
+                plannedSets: 12,
+                completedSets: 12,
+                startedAt: start,
+                finishedAt: start.addingTimeInterval(28 * 60)
+            )
         }
         #endif
 

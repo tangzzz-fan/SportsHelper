@@ -10,6 +10,7 @@ struct HistoryView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var report = DoseReport()
+    @State private var highlights = WeekHighlights()
     @State private var acceptedThisWeek = 0
 
     private var formatter: DateFormatter {
@@ -81,7 +82,9 @@ struct HistoryView: View {
     }
 
     private func reload() {
-        report = DoseReportBuilder.build(logs: setLogStore.recentLogs())
+        let logs = setLogStore.recentLogs()
+        report = DoseReportBuilder.build(logs: logs)
+        highlights = WeekHighlightsBuilder.build(logs: logs)
         let start = HistoryStats.weekStart(for: Date(), calendar: Calendar(identifier: .gregorian))
         let days = Set(ProposalMemo.shared.memory.acceptedChanges
             .filter { $0.at >= start }
@@ -96,6 +99,20 @@ struct HistoryView: View {
                 metric(value: "\(store.completedDaysThisWeek) / \(weeklyTarget)", label: "训练天")
                 metric(value: "\(store.streakDays) 天", label: "连续")
                 Spacer()
+            }
+
+            if let headline = highlights.headline {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(headline)
+                        .font(Typography.secondary.weight(.semibold))
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                    if let names = highlights.names {
+                        Text(names)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .accessibilityIdentifier(A11y.History.weekRecords)
             }
 
             Text(footnote)

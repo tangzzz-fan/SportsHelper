@@ -82,6 +82,7 @@ enum A11y {
 
     enum History {
         static let weekChart = "history.weekChart"
+        static let weekRecords = "history.weekRecords"
     }
 
     enum Settings {
