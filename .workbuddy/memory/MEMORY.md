@@ -17,7 +17,7 @@
 ## 环境
 
 - 模拟器 UDID `D16A8318-973E-45CE-936B-94F5FFE3E0EC`；`content_size` 保持 `large`，不要设 AX3 当常规验收。
-- 推 origin 要代理：`git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`
+- 推 origin：2026-11-01 起**直接 `git push` 就通**（环境换成透明代理，7890/57455 都已关闭）。失败先试直连，别照抄旧的 `nc -X connect -x 127.0.0.1:7890`——那条现在会报 `Connection closed`。
 - BSD grep 不支持 `\|` 交替，会**静默返回空**——用 `grep -E` 或 rg。看到空结果先怀疑模式。
 
 ## 已定调，别再讨论
