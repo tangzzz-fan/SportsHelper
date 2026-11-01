@@ -792,3 +792,55 @@ UI 上的处理：`FigureLibrary.hasArtwork(for:)` 返回 false 时，详情页�
 4. **`git push` 直连 22 端口超时**：本机走代理。本地代理在 `127.0.0.1:7890` 时用
    `git -c core.sshCommand="ssh -o ProxyCommand='nc -X connect -x 127.0.0.1:7890 %h %p'" push origin main`。
    港区/公司网络换端口就换这一段，别去改 remote 地址。
+
+## 6.31 SwiftData 的 #Predicate 会硬崩，单测抓不到（2026-11-02）
+
+个人纪录那一票要给 `SetLogStore` 加「按动作 id 查历史」。第一版这样写：
+
+```swift
+#Predicate { entity in
+    entity.completedAt < date && ids.contains(entity.catalogId ?? "")
+}
+```
+
+编译通过、785 条单测全绿，**模拟器一启动就崩**：
+
+```
+CoreData: error: unimplemented SQL generation for predicate :
+(TERNARY(catalogId != nil, catalogId, "") IN {"squat"}) (bad LHS)
+*** Terminating app due to uncaught exception 'NSInvalidArgumentException'
+```
+
+三件事要记住：
+
+1. **`?? ""` 会把可选列翻译成 `TERNARY(...)`，CoreData 的 SQL 生成器不认这个 LHS。** 不要在 `#Predicate` 里给可选字段兜默认值。
+2. **这是 NSException，不是会返回的 error。** `try? context.fetch` 吞不掉它，进程直接终止。
+3. **正确写法是按 id 逐个查再合并**：`entity.catalogId == id`（可选列与常量比较没问题），不要在谓词里遍历数组。
+
+```swift
+for id in ids {
+    let descriptor = FetchDescriptor<SetLogEntity>(
+        predicate: #Predicate { $0.completedAt < date && $0.catalogId == id },
+        sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
+    )
+    result += ((try? context.fetch(descriptor)) ?? []).compactMap(Self.log(from:))
+}
+```
+
+**这一类 bug 的教训在流程上，不在代码上**：单测只跑 `DongKeCore`，一行 SwiftData 都不碰；「编译过 + 单测绿」证明不了 App 能启动。凡是改到 `DongKe/Data/Persistence` 的票，**必须装到模拟器跑一次那条路**，`xcrun simctl io … screenshot` 截图留证。
+
+### 预览路径上没有 setLogStore
+
+`DK_PREVIEW=workout` 是在 `AppShell.init` 里直接造 `WorkoutSession` 的，那条路**不走 `startWorkout`**，所以 `session.setLogStore` 是 nil（真正的会话才在 `startWorkout` 里挂上）。
+
+视图要从 `@Environment(SetLogStore.self)` 取，不要从 `session.setLogStore` 取——否则真机上看得到、预览里永远是空，「预览对不上真机」这种假 bug 会反复耗时间。
+
+### 验证用的种子
+
+`DK_SEED_RECORDS=1` 会写两条深蹲历史（6 天前 12/11/10、3 天前 10/10/9），用来给训练页那行「上次 10 · 最好 12」截图。它和 `DK_SEED_DEMO` 一起用：
+
+```bash
+SIMCTL_CHILD_DK_SEED_DEMO=1 SIMCTL_CHILD_DK_SEED_RECORDS=1 \
+SIMCTL_CHILD_DK_PREVIEW=workout \
+xcrun simctl launch <UDID> app.dongke.ios
+```

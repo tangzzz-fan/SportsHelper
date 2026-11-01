@@ -42,7 +42,8 @@ struct DongKeApp: App {
         }
         self.container = container
         _store = State(initialValue: SessionStore(context: container.mainContext))
-        _setLogStore = State(initialValue: SetLogStore(context: container.mainContext))
+        let setLogs = SetLogStore(context: container.mainContext)
+        _setLogStore = State(initialValue: setLogs)
         let profiles = ProfileStore(context: container.mainContext)
         _profileStore = State(initialValue: profiles)
         let plans = PlanStore(context: container.mainContext)
@@ -57,6 +58,31 @@ struct DongKeApp: App {
             let (demoProfile, demoPlan) = Self.demoSeed()
             profiles.save(demoProfile)
             plans.save(demoPlan)
+        }
+        #endif
+
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["DK_SEED_RECORDS"] == "1",
+           setLogs.logs(forCatalogIds: ["squat"]).isEmpty {
+            let midnight = Calendar.current.startOfDay(for: Date())
+            let seed: [(daysAgo: Double, values: [Int])] = [(6, [12, 11, 10]), (3, [10, 10, 9])]
+            for item in seed {
+                let sessionId = UUID()
+                let at = midnight.addingTimeInterval(-item.daysAgo * 86_400 + 20 * 3_600)
+                for (index, value) in item.values.enumerated() {
+                    setLogs.add(SetLog(
+                        sessionId: sessionId,
+                        prescriptionId: "seed-\(Int(item.daysAgo))",
+                        catalogId: "squat",
+                        targetType: .reps,
+                        setIndex: index + 1,
+                        status: .done,
+                        plannedValue: 12,
+                        actualValue: value,
+                        completedAt: at.addingTimeInterval(Double(index) * 120)
+                    ))
+                }
+            }
         }
         #endif
 

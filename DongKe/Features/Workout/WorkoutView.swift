@@ -8,6 +8,7 @@ struct WorkoutView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(SetLogStore.self) private var setLogs
     @State private var showSkipOptions = false
     @State private var showDowngradeOptions = false
     @State private var bonusReps = 0
@@ -15,6 +16,8 @@ struct WorkoutView: View {
     @State private var voiceStopTask: Task<Void, Never>?
     /// 休息面板的实际高度。休息时动作图要在面板以上居中，否则会被从腰上切断。
     @State private var restSheetHeight: CGFloat = 0
+    /// 「上次 10 · 最好 12」。进入本组时算一次，训练中途不跟着变。
+    @State private var recordLine: String?
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -46,6 +49,22 @@ struct WorkoutView: View {
 
     private var halfTargetTitle: String {
         prescription?.target.type == .durationSec ? "减一半时间" : "减一半次数"
+    }
+
+    private func refreshRecordLine() {
+        guard let prescription else {
+            recordLine = nil
+            return
+        }
+        let type = prescription.target.type
+        guard type != .distanceM else {
+            recordLine = nil
+            return
+        }
+        let catalogId = prescription.catalogId
+        let logs = setLogs.logs(forCatalogIds: [catalogId], before: session.startedAt)
+        let record = PersonalRecords.build(logs: logs)[RecordKey(catalogId: catalogId, unit: type)]
+        recordLine = record?.lineText(unit: type)
     }
 
     private var setCounterText: Text {
@@ -89,6 +108,13 @@ struct WorkoutView: View {
                                             .font(Typography.body)
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
+                                        if let recordLine {
+                                            Text(recordLine)
+                                                .font(Typography.secondary)
+                                                .foregroundStyle(.tertiary)
+                                                .monospacedDigit()
+                                                .fixedSize(horizontal: false, vertical: true)
+                                        }
                                         if cueLines.isEmpty == false {
                                             VStack(spacing: 3) {
                                                 ForEach(cueLines, id: \.self) { cue in
@@ -106,6 +132,7 @@ struct WorkoutView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .frame(minHeight: max(0, proxy.size.height - restingInset), alignment: .center)
+                                .task(id: prescription.catalogId) { refreshRecordLine() }
                             } else {
                                 finishedPlaceholder
                                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)
