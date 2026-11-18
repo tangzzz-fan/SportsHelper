@@ -42,7 +42,8 @@ public enum WeekHighlightsBuilder {
 
             let key = RecordKey(
                 catalogId: catalogId,
-                unit: log.targetType ?? PersonalRecords.unit(for: catalogId)
+                unit: log.targetType ?? PersonalRecords.unit(for: catalogId),
+                loadKey: log.actualLoad?.recordKey ?? RecordKey.unspecifiedLoad
             )
             guard seen.contains(key) == false,
                   let best = before[key]?.best,

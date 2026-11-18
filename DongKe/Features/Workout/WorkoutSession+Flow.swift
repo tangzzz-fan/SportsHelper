@@ -81,11 +81,17 @@ extension WorkoutSession {
 
     private func personalRecord(for target: SetTarget, now: Date) -> PersonalRecord? {
         guard target.type != .distanceM,
-              let catalogId = currentPrescription?.catalogId,
+              let item = currentPrescription,
               let setLogStore
         else { return nil }
-        let history = setLogStore.logs(forCatalogIds: [catalogId], before: now)
-        return PersonalRecords.build(logs: history)[RecordKey(catalogId: catalogId, unit: target.type)]
+        let history = setLogStore.logs(forCatalogIds: [item.catalogId], before: now)
+        return PersonalRecords.record(
+            for: item.catalogId,
+            unit: target.type,
+            load: currentLoad,
+            isUsingPrescribedLoad: loadOverrides[item.itemId] == nil,
+            in: PersonalRecords.build(logs: history)
+        )
     }
 
     private func lastRPE(for target: SetTarget) -> Int? {
@@ -104,7 +110,8 @@ extension WorkoutSession {
         recordCelebration = RecordCelebration.text(
             name: currentPrescription?.name ?? "",
             value: actual,
-            unit: target.type
+            unit: target.type,
+            loadText: recordedLoad?.shortText ?? currentLoad?.shortText
         )
         if recordCelebration != nil { Haptics.recordBroken() }
     }

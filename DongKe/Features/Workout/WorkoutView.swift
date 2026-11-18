@@ -61,8 +61,20 @@ struct WorkoutView: View {
         }
         let catalogId = prescription.catalogId
         let logs = setLogs.logs(forCatalogIds: [catalogId], before: session.startedAt)
-        let record = PersonalRecords.build(logs: logs)[RecordKey(catalogId: catalogId, unit: type)]
-        recordLine = record?.lineText(unit: type)
+        let record = PersonalRecords.record(
+            for: catalogId,
+            unit: type,
+            load: session.currentLoad,
+            isUsingPrescribedLoad: session.loadOverrides[prescription.itemId] == nil,
+            in: PersonalRecords.build(logs: logs)
+        )
+        recordLine = record?.lineText(unit: type, loadText: session.currentLoad?.shortText)
+    }
+
+    /// 重量也是这条对照的一部分：改了重量，「上次」要跟着换成那个重量下的。
+    private var recordLineTaskKey: String {
+        let id = prescription?.catalogId ?? ""
+        return "\(id)#\(session.currentLoad?.recordKey ?? "none")"
     }
 
     private var setCounterText: Text {
@@ -143,7 +155,7 @@ struct WorkoutView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .frame(minHeight: max(0, proxy.size.height - restingInset), alignment: .center)
-                                .task(id: prescription.catalogId) { refreshRecordLine() }
+                                .task(id: recordLineTaskKey) { refreshRecordLine() }
                             } else {
                                 finishedPlaceholder
                                     .frame(maxWidth: .infinity, minHeight: proxy.size.height)

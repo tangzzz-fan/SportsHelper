@@ -1,12 +1,21 @@
 import Foundation
 
 public struct RecordKey: Hashable, Sendable {
+    /// 旧日志没有重量时落在这里。查询只在「用户没改重量」时才回落到它。
+    public static let unspecifiedLoad = "unspecified"
+
     public var catalogId: String
     public var unit: SetTargetType
+    public var loadKey: String
 
-    public init(catalogId: String, unit: SetTargetType) {
+    public init(
+        catalogId: String,
+        unit: SetTargetType,
+        loadKey: String = RecordKey.unspecifiedLoad
+    ) {
         self.catalogId = catalogId
         self.unit = unit
+        self.loadKey = loadKey
     }
 }
 
@@ -27,9 +36,10 @@ public struct PersonalRecord: Equatable, Sendable {
 }
 
 public extension PersonalRecord {
-    func lineText(unit: SetTargetType) -> String? {
+    func lineText(unit: SetTargetType, loadText: String? = nil) -> String? {
         guard let last else { return nil }
-        let lastText = "上次 \(Self.valueText(last, unit: unit))"
+        let prefix = loadText.map { "\($0) · " } ?? ""
+        let lastText = "\(prefix)上次 \(Self.valueText(last, unit: unit))"
         guard let best else { return lastText }
         return "\(lastText) · 最好 \(Self.valueText(best, unit: unit))"
     }
@@ -51,11 +61,17 @@ public enum RecordGate {
 }
 
 public enum RecordCelebration {
-    public static func text(name: String, value: Int, unit: SetTargetType) -> String? {
+    public static func text(
+        name: String,
+        value: Int,
+        unit: SetTargetType,
+        loadText: String? = nil
+    ) -> String? {
+        let weight = loadText.map { " \($0) " } ?? ""
         switch unit {
-        case .reps: "\(name)最高纪录 \(value) 个"
-        case .durationSec: "\(name)最长 \(value) 秒"
-        case .distanceM: nil
+        case .reps: return "\(name)\(weight)最高纪录 \(value) 个"
+        case .durationSec: return "\(name)\(weight)最长 \(value) 秒"
+        case .distanceM: return nil
         }
     }
 }
@@ -75,7 +91,8 @@ public enum PersonalRecords {
 
             let key = RecordKey(
                 catalogId: catalogId,
-                unit: log.targetType ?? unit(for: catalogId)
+                unit: log.targetType ?? unit(for: catalogId),
+                loadKey: log.actualLoad?.recordKey ?? RecordKey.unspecifiedLoad
             )
             var tally = sessions[key, default: [:]][log.sessionId] ?? SessionTally(at: log.completedAt)
             tally.at = max(tally.at, log.completedAt)
@@ -111,6 +128,23 @@ public enum PersonalRecords {
             return .reps
         }
         return .durationSec
+    }
+
+    /// 查某个重量下的纪录。先精确匹配；只有用户没改重量时，才回落到旧日志的
+    /// `unspecified` 桶——换了重量还拿旧数据当「上次」，比没有更糟。
+    public static func record(
+        for catalogId: String,
+        unit: SetTargetType,
+        load: Load?,
+        isUsingPrescribedLoad: Bool,
+        in records: [RecordKey: PersonalRecord]
+    ) -> PersonalRecord? {
+        if let load,
+           let exact = records[RecordKey(catalogId: catalogId, unit: unit, loadKey: load.recordKey)] {
+            return exact
+        }
+        guard isUsingPrescribedLoad else { return nil }
+        return records[RecordKey(catalogId: catalogId, unit: unit)]
     }
 }
 

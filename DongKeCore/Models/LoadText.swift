@@ -1,6 +1,10 @@
 import Foundation
 
 public extension Load {
+    /// 纪录与预测的分组键：「dumbbell:8」「bodyweight:0」。
+    /// 8kg 的 12 个和 10kg 的 9 个不是同一件事，不能互相覆盖。
+    var recordKey: String { "\(type.rawValue):\(WeightText.format(value))" }
+
     /// 「10kg」「弹力带」。自重且 0kg 时返回 nil——不显示，也不占位。
     var shortText: String? {
         switch type {
