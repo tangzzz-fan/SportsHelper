@@ -27,6 +27,10 @@ struct PlanView: View {
         #endif
     }
 
+    private var planExerciseCount: Int {
+        Set(plan.days.flatMap { $0.blocks.flatMap(\.items).map(\.catalogId) }).count
+    }
+
     private var weeks: [(weekday: Weekday, day: PlanDay?)] {
         Weekday.allCases.map { weekday in
             (weekday, plan.days.first(where: { $0.weekday == weekday }))
@@ -83,7 +87,7 @@ struct PlanView: View {
                     .padding(.top, 20)
 
                     HStack(spacing: 6) {
-                        Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(ExerciseLibrary.all.count) 个动作")
+                        Text("每周 \(plan.meta.daysPerWeek) 天 · 每次 \(plan.meta.sessionMinutes) 分钟 · \(planExerciseCount) 个动作")
                         PlanOriginBadge(source: plan.source)
                     }
                     .font(Typography.meta)

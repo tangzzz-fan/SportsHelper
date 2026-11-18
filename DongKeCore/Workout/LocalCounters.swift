@@ -5,6 +5,13 @@ public enum LocalCounter: String, CaseIterable, Sendable {
     case recordBroken
     case microDoseStarted
     case microDoseFinished
+    case receiptCopied
+    case receiptViewed
+    case shortSessionStarted
+    case swapUsed
+    case checkpointExpired
+    case loadRecorded
+    case recordAtWeight
 
     public var key: String { "dk.counter.\(rawValue)" }
 
@@ -14,6 +21,13 @@ public enum LocalCounter: String, CaseIterable, Sendable {
         case .recordBroken: "破纪录"
         case .microDoseStarted: "三分钟 · 打开"
         case .microDoseFinished: "三分钟 · 做完"
+        case .receiptCopied: "回执 · 复制"
+        case .receiptViewed: "回执 · 预览"
+        case .shortSessionStarted: "短版 · 开始"
+        case .swapUsed: "训练中换动作"
+        case .checkpointExpired: "断点 · 过期"
+        case .loadRecorded: "记下重量"
+        case .recordAtWeight: "分重量破纪录"
         }
     }
 }
