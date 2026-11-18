@@ -1,6 +1,7 @@
 # 动刻 · UI/UX 设计规范 v3.3
 
 > 设计师：颜好看 ｜ 2026-10-22
+> **状态（2026-11-18）**：本文停在 2026-10-22。动作图示仍写「自绘 12 关节骨架」，实际已换成开源线稿；训练页、结束页、今日页、计划页在 `2026-11-18` 深化方案里另有新增界面（重量、短版、回执、版本对比、减载标记）。**现行界面以代码与 `.scratch/product-deepening/issues/` 为准**，本文保留为 Gate 2 的设计推演。
 > 效力顺序：`FROZEN-BASELINE.md` + `SPEC.md` 高于 `PRD.md` 高于 `ARCHITECTURE.md` 高于本文件（FROZEN-BASELINE 开篇原文：「与 PRD / ARCHITECTURE / UIUX / design-tokens 冲突处，以本表 + SPEC.md 为准」）
 > 平台：iOS 18.0+ / SwiftUI / iPhone 竖屏 / 简体中文 ｜ 设计寄存器：**Product** ｜ 三轴：`VARIANCE 4` / `MOTION 3` / `DENSITY 5`
 > 取值唯一出处：`docs/design-tokens.json` v4.1.0。**本文件不写 hex、不写字号字面量、不写图标字面量**。动作文案见 `docs/exercise-copy.sample.json`；骨架位姿数据见 `docs/figure-specs.sample.json`（**P1 存档，本期不实现**）。
