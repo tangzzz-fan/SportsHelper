@@ -1,7 +1,7 @@
 # 动刻 iOS 架构设计
 
-版本：v1.5
-状态：已交付并持续维护（v1.5 补会话账本与保持时间进阶，见下方修订记录）
+版本：v1.6
+状态：已交付并持续维护（v1.6 补记准与解释两层：重量、回执、档位、减载、换动作）
 适用范围：居家减脂运动提醒助手 iOS MVP（iPhone）
 配套契约：`docs/plan-schema.json`（计划数据唯一契约）
 生效顺序：`docs/FROZEN-BASELINE.md` + `docs/SPEC.md` > 本文 > `docs/PRD.md` / `docs/UIUX.md` / `docs/design-tokens.json`。冲突时以 FROZEN-BASELINE 与 SPEC 为准。
@@ -14,6 +14,7 @@
 - v1.2 定稿收敛：动作库锁定 18 个 catalogId（与 `plan-schema.json` 白名单一致）；素材入包 18 动作 × 3 帧 = 54 张，新增 §12.5 文件映射表与导入流程（v1.3 已撤销）；久坐提醒移出 MVP 列 P1（§9.6），通知常驻量回到 ≤7 条、预算按此重算（§9.3）；主色裁决为深青绿 `#0E7C66`（§14.3、§14.6）；取消打包字体，改系统等宽（§14.4）；最低版本 iOS 18.0 与直连 AI 进 MVP 均确认
 - v1.3 按 `FROZEN-BASELINE.md` 回同步：动作图示恢复为**自绘参数化骨架 12 关节**（决策 6，撤销 D-20 的第三方素材）、主色确认**深青绿 `#0E7C66` / `#34B39A`**（决策 11）、**跳过并顺延移出 MVP 列 P1**（§2）、**字体改零打包**（撤销 B612 Mono Bold 打包，系统等宽 + `.monospacedDigit()`）、久坐额度不再提 48 小时滚动窗口（决策 8）；§12 全章重写，§5.4 退化为 weekday 匹配
 - v1.4 对齐当前实现（2026-10-25）：§4.1 / §4.2 按实际的 **framework 拆分**重写（纯逻辑在 `DongKeCore` target，不是早期草案里的 `DongKe/Domain` 目录）；§5.4 排期解析从 `ScheduleResolver` 换成 `PlanCalendar`（回答「这一次兑现的是哪一天」）；§5 / §6.1 补 `planDate` 与 `catalogId`；§10 新增余力采集（§10.5）与剂量回路（§10.6）；§11 统计口径改为按计划日归属；§15.1 必测清单补 `PlanGenerator` / `PlanCalendar` / `DoseAdjustment` / `DoseReport`
+- v1.6 记准与解释（2026-11-18）：`SetLog` 加 `actualLoad` / `swappedFromCatalogId`；新增 `TrainingReceipt`（回执，人看 / AI 看两个出口）、`SessionNarrative`（结束页一句话）、`SessionCompressor`（短版）、`LoadRack`（器械档位）、`DeloadWeek`（每 4 周第 4 周）、`SwapCandidates`（训练中换动作）、`PlanDiff`（版本差异）。见 §21
 - v1.5 会话账本（2026-10-25）：§5.2 / §10.4 明确加组不改完成率分母；§11 新增 `SessionLedger` 作为会话计数唯一出处，完成率与剂量分账（ADR-0006）；§10.6 静态动作走保持时间轴（+5 秒，上限 60 秒；疼/太累也走同一根轴），证据只看计划内日志
 
 ---
@@ -1380,3 +1381,31 @@ PRD §9.4 要求过埋点，实现时没有落地。**没有服务端时，本�
 - [ ] 想清楚它由哪条测试守着。想不出来，说明要么不需要这个改动，要么还没想清
 
 改完之后必跑 §4.3 的门禁 grep，以及 `DongKeCoreTests` 全量单测（§15.3）。
+
+## 21. 记准与解释（v1.6）
+
+计划是外面给的，App 只负责「记准发生的事、把它说清楚」。这一层不新增计划来源，也不改 ADR-0004。
+
+### 21.1 新增的 Core 类型
+
+| 类型 | 职责 | 不做什么 |
+|---|---|---|
+| `SetLog.actualLoad` | 这一组实际用的重量；nil = 按处方，旧日志不写 0kg | 不做单位换算、不猜器械 |
+| `SetLog.swappedFromCatalogId` | 这组是换过动作之后做的，值是换之前的 `catalogId` | 不改处方、不改计划 |
+| `LoadRack` | 家里买得到的重量：可调 2.5 / 5kg 或固定档位 | 不决定加多少，只回答「下一档是多少」 |
+| `TrainingReceipt` / `TrainingReceiptBuilder` | 最近 N 周的执行回执；`summary` 压到 1200 字给提示词用 | 不提建议、不联网 |
+| `SessionNarrative` | 结束页那一句判断：破纪录 > 降阶 > 沉默 | 不夸、不空话 |
+| `SessionCompressor` | 当天压成 10 / 15 / 20 分钟短版 | 不改计划、不改 revision |
+| `DeloadWeek` | 每 4 周第 4 周目标 ×0.6，重量与组数不动 | 不写回计划 |
+| `SwapCandidates` | 训练中能换成什么：低阶优先、同肌群、同类型、器械可用、最多 3 个 | 不改计划 |
+| `PlanDiff` | 新旧两版逐条差异 | 不评价好坏 |
+
+### 21.2 三条口径
+
+1. **纪录按 `(catalogId, unit, loadKey)` 分组**。8kg×12 和 10kg×9 各自成纪录；旧日志归 `unspecified` 桶，只在用户没改重量时回落到它。
+2. **剂量按原动作归肌群**。换过动作的组用 `swappedFromCatalogId` 算肌群；纪录仍归新动作。
+3. **加量只落在真实档位**。`lever(for:rack:)` 在没有更重档位时改判加组；耐受好一次跳两档，其余一档。旧版按百分比乘出的 20.3kg 不再出现。
+
+### 21.3 读这一层的顺序
+
+`SetLog` → `PersonalRecords` / `DoseReport` / `TrainingReceipt` → 界面。三个出口共用同一份日志，任何出口自己再算一遍都是 bug（HANDOFF §6 里踩过）。

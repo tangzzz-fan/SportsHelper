@@ -344,7 +344,8 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 - **多久跑一次**：不进默认测试。`scripts/ui-test.sh` 单独跑，实测 39 秒（编译约 20 秒 + 用例约 19 秒）。
 - **为什么是它**：`SetLog → SetLogEntity → SQLite → 重开 → PersonalRecords → 训练页` 这条链，`DongKeCoreTests` 一条都碰不到。
 - **不测什么**：布局、命中区、文案、引导、导入、播报——这些仍走 `PressableGlassStyle` + 人工走查。
-- **两个调试钩子**：`DK_SKIP_ONBOARDING=1`（跳过引导）、`DK_WORKOUT_LOAD=1`（`DK_PREVIEW=workout` 时跳到第一个负重动作）。都在 `#if DEBUG` 里，发布构建没有这个分支。
+- **调试钩子**：`DK_SKIP_ONBOARDING=1`（跳过引导）、`DK_WORKOUT_LOAD=1`（`DK_PREVIEW=workout` 时跳到第一个负重动作）、`DK_SWAP_FIRST=1`（先换掉第一个动作）。都在 `#if DEBUG` 里，发布构建没有这个分支。
+- **首次进训练页会弹「重量档位」**，UI 测试必须带 `-dk.load.rackAsked YES` 启动参数把它按住，否则面板挡住训练页（2026-11-18 加的）。
 - **它不是幂等断言**：测试比较的是「加完之后的剂量行」与「重开后的剂量行」，不写死 8kg——写死的话第二次跑就会因为上一次落库的重量而失败（第一次真踩了）。
 - **如果它开始 flaky**：删掉，不要加超时。误报的测试会教会人不信测试。
 
