@@ -83,7 +83,12 @@ public struct ProposalMemory: Equatable, Sendable, Codable {
     }
 
     public func hasRejected(_ proposal: PlanProposal) -> Bool {
-        rejected.contains { $0.fingerprint == proposal.fingerprint }
+        hasRejected(fingerprint: proposal.fingerprint)
+    }
+
+    /// 提醒时间这类不在计划里的提案也要用同一份拒绝记忆，所以指纹单独开放一层。
+    public func hasRejected(fingerprint: String) -> Bool {
+        rejected.contains { $0.fingerprint == fingerprint }
     }
 
     public func accepting(_ proposal: PlanProposal, now: Date) -> ProposalMemory {
@@ -126,9 +131,13 @@ public struct ProposalMemory: Equatable, Sendable, Codable {
     }
 
     public func rejecting(_ proposal: PlanProposal, now: Date) -> ProposalMemory {
+        rejecting(fingerprint: proposal.fingerprint, now: now)
+    }
+
+    public func rejecting(fingerprint: String, now: Date) -> ProposalMemory {
         var next = self
         next.consecutiveRejections += 1
-        next.rejected.append(Entry(fingerprint: proposal.fingerprint, at: now))
+        next.rejected.append(Entry(fingerprint: fingerprint, at: now))
         if next.rejected.count > Self.historyLimit {
             next.rejected.removeFirst(next.rejected.count - Self.historyLimit)
         }

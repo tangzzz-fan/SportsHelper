@@ -12,7 +12,9 @@ public enum WeeklyScheduleGenerator {
 
         return plan.days.filter { !$0.isRestDay }.compactMap { day in
             let workoutTime = day.scheduledTime ?? settings.defaultTime
-            let rawMinutes = workoutTime.minutesSinceMidnight - settings.leadMinutes
+            // 提醒跟着实际开练走：只挪提醒，不动计划里的训练时刻。
+            let shift = settings.shift(for: day.weekday)
+            let rawMinutes = workoutTime.minutesSinceMidnight - settings.leadMinutes + shift
             let weekday: Weekday
             let triggerMinutes: Int
 

@@ -30,16 +30,33 @@ struct WorkoutResumeTests {
         #expect(WorkoutResumePolicy.canResume(makeCheckpoint(now: now), now: now))
     }
 
-    @Test func justUnderThirtyMinutesIsResumable() {
-        let now = Date()
-        let checkpoint = makeCheckpoint(now: now, updatedAt: now.addingTimeInterval(-1799))
-        #expect(WorkoutResumePolicy.canResume(checkpoint, now: now))
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        return calendar
     }
 
-    @Test func exactlyThirtyMinutesIsNotResumable() {
-        let now = Date()
-        let checkpoint = makeCheckpoint(now: now, updatedAt: now.addingTimeInterval(-1800))
-        #expect(WorkoutResumePolicy.canResume(checkpoint, now: now) == false)
+    private func at(_ hour: Int, _ minute: Int, _ second: Int = 0, day: Int = 18) -> Date {
+        calendar.date(from: DateComponents(
+            year: 2026, month: 11, day: day,
+            hour: hour, minute: minute, second: second
+        ))!
+    }
+
+    @Test func sameEveningIsResumable() {
+        let checkpoint = makeCheckpoint(now: at(19, 0), updatedAt: at(19, 0))
+        #expect(WorkoutResumePolicy.canResume(checkpoint, now: at(23, 0), calendar: calendar))
+    }
+
+    @Test func lastSecondOfTheDayIsStillResumable() {
+        let checkpoint = makeCheckpoint(now: at(19, 0), updatedAt: at(19, 0))
+        #expect(WorkoutResumePolicy.canResume(checkpoint, now: at(23, 59, 59), calendar: calendar))
+    }
+
+    @Test func nextDayIsAbandoned() {
+        let checkpoint = makeCheckpoint(now: at(22, 0), updatedAt: at(22, 0))
+        #expect(WorkoutResumePolicy.canResume(checkpoint, now: at(0, 1, day: 19), calendar: calendar) == false)
+        #expect(WorkoutResumePolicy.canResume(checkpoint, now: at(0, 0, 0, day: 19), calendar: calendar) == false)
     }
 
     @Test func finishedStepIndexIsNotResumable() {

@@ -139,17 +139,50 @@ public struct ReminderSettings: Codable, Equatable, Sendable {
     public var leadMinutes: Int
     public var soundEnabled: Bool
     public var defaultTime: TimeOfDay
+    /// 每个 weekday 的提醒相对计划时间往后挪多少分钟，键是 `Weekday.rawValue` 的字符串。
+    /// 只影响提醒，不改计划的 `scheduledTime`、不改 `revision`。
+    public var shifts: [String: Int]
 
     public init(
         enabled: Bool = true,
         leadMinutes: Int = 5,
         soundEnabled: Bool = true,
-        defaultTime: TimeOfDay = TimeOfDay(hour: 20, minute: 30)
+        defaultTime: TimeOfDay = TimeOfDay(hour: 20, minute: 30),
+        shifts: [String: Int] = [:]
     ) {
         self.enabled = enabled
         self.leadMinutes = leadMinutes
         self.soundEnabled = soundEnabled
         self.defaultTime = defaultTime
+        self.shifts = shifts
+    }
+
+    public func shift(for weekday: Weekday) -> Int {
+        shifts[String(weekday.rawValue)] ?? 0
+    }
+
+    public mutating func addShift(_ minutes: Int, for weekday: Weekday) {
+        let key = String(weekday.rawValue)
+        shifts[key] = (shifts[key] ?? 0) + minutes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case enabled
+        case leadMinutes
+        case soundEnabled
+        case defaultTime
+        case shifts
+    }
+
+    /// 老版本没有 `shifts`，缺字段时按空处理，不能因为多一个字段整份设置读不出来。
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try container.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        leadMinutes = try container.decodeIfPresent(Int.self, forKey: .leadMinutes) ?? 5
+        soundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
+        defaultTime = (try? container.decodeIfPresent(TimeOfDay.self, forKey: .defaultTime))
+            ?? TimeOfDay(hour: 20, minute: 30)
+        shifts = try container.decodeIfPresent([String: Int].self, forKey: .shifts) ?? [:]
     }
 }
 

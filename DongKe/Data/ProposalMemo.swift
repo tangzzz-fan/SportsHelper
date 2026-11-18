@@ -44,6 +44,15 @@ final class ProposalMemo {
         persist(memory.rejecting(proposal, now: now))
     }
 
+    /// 提醒时间这类不在计划里的提案，共用同一份拒绝记忆。
+    func reject(fingerprint: String, now: Date = Date()) {
+        persist(memory.rejecting(fingerprint: fingerprint, now: now))
+    }
+
+    func hasRejected(fingerprint: String) -> Bool {
+        memory.hasRejected(fingerprint: fingerprint)
+    }
+
     func settle(with logs: [SetLog]) {
         let next = memory.settling(logs: logs)
         if next != memory { persist(next) }

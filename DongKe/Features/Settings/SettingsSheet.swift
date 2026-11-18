@@ -9,6 +9,7 @@ struct SettingsSheet: View {
     var onEraseAll: () -> Void = {}
 
     @Environment(NotificationService.self) private var notifications
+    @Environment(SessionStore.self) private var sessionStore
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
@@ -232,8 +233,78 @@ struct SettingsSheet: View {
             .padding(16)
             .opacity(settingsStore.settings.enabled ? 1 : 0.45)
             .disabled(!settingsStore.settings.enabled)
+
+            if let nudge {
+                Divider().overlay(Color.primary.opacity(0.06)).padding(.leading, 16)
+                nudgeRow(nudge)
+            }
         }
         .glassSurface(radius: Theme.Radius.card)
+    }
+
+    /// 最近三次这个 weekday 都晚很多才开练，才问一次要不要挪。
+    private var nudge: ReminderNudge? {
+        guard settingsStore.settings.enabled else { return nil }
+        let specs = ReminderPlanBuilder.build(plan: plan, settings: settingsStore.settings, now: Date())
+        let triggers = Dictionary(specs.map { ($0.weekday, $0.triggerTime) }, uniquingKeysWith: { first, _ in first })
+        let calendar = Calendar.current
+        let samples: [ReminderSample] = sessionStore.sessions
+            .sorted { $0.date < $1.date }
+            .compactMap { session in
+                guard let weekday = Weekday(systemWeekday: calendar.component(.weekday, from: session.date)),
+                      let trigger = triggers[weekday] else { return nil }
+                let parts = calendar.dateComponents([.hour, .minute], from: session.date)
+                guard let hour = parts.hour, let minute = parts.minute else { return nil }
+                return ReminderSample(
+                    weekday: weekday,
+                    reminderMinute: trigger.minutesSinceMidnight,
+                    startMinute: hour * 60 + minute
+                )
+            }
+        guard let found = ReminderNudgePlanner.propose(samples: samples) else { return nil }
+        return ProposalMemo.shared.hasRejected(fingerprint: found.fingerprint) ? nil : found
+    }
+
+    private func nudgeRow(_ nudge: ReminderNudge) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("提醒时间要不要挪")
+                .font(Typography.rowTitle)
+            Text("最近三次\(nudge.weekday.chineseName)，你都在提醒之后 \(nudge.averageLateMinutes) 分钟才开练。挪到 \(nudge.to.stringValue)？计划里的训练时间不动。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Button {
+                    var settings = settingsStore.settings
+                    settings.addShift(nudge.shiftMinutes, for: nudge.weekday)
+                    settingsStore.settings = settings
+                    onReschedule()
+                } label: {
+                    Text("挪到 \(nudge.to.stringValue)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.callToActionInk(for: colorScheme))
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 36)
+                        .background(Theme.accent(for: colorScheme), in: Capsule())
+                }
+                .buttonStyle(PressableGlassStyle())
+                .accessibilityIdentifier(A11y.Settings.reminderNudgeAccept)
+
+                Button {
+                    ProposalMemo.shared.reject(fingerprint: nudge.fingerprint)
+                    onReschedule()
+                } label: {
+                    Text("不用")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 36)
+                }
+                .buttonStyle(PressableGlassStyle())
+                .accessibilityIdentifier(A11y.Settings.reminderNudgeDismiss)
+            }
+        }
+        .padding(16)
     }
 
     private var largeTextCard: some View {

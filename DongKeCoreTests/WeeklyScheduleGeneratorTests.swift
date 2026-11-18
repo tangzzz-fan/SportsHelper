@@ -35,6 +35,26 @@ struct WeeklyScheduleGeneratorTests {
         #expect(specs.first?.triggerTime == TimeOfDay(hour: 18, minute: 55))
     }
 
+    @Test func weekdayShiftMovesOnlyTheReminder() throws {
+        let plan = makePlan(days: makeSevenDays(training: [1], blocks: [makeBlock(items: [makeItem()])]))
+        var settings = ReminderSettings(leadMinutes: 5)
+        settings.addShift(30, for: .monday)
+        let spec = try #require(WeeklyScheduleGenerator.makeSpecs(plan: plan, settings: settings, now: now).first)
+        #expect(spec.triggerTime == TimeOfDay(hour: 20, minute: 55))
+        // 计划里的训练时刻不动，只挪提醒。
+        #expect(spec.workoutTime == TimeOfDay(hour: 20, minute: 30))
+    }
+
+    @Test func legacySettingsWithoutShiftsStillDecode() throws {
+        let json = """
+        {"enabled": true, "leadMinutes": 10, "soundEnabled": false, "defaultTime": {"hour": 20, "minute": 30}}
+        """
+        let decoded = try JSONDecoder().decode(ReminderSettings.self, from: Data(json.utf8))
+        #expect(decoded.leadMinutes == 10)
+        #expect(decoded.shifts.isEmpty)
+        #expect(decoded.shift(for: .monday) == 0)
+    }
+
     @Test func restDaysProduceNoSpecs() {
         let plan = makePlan(days: makeSevenDays(training: [], blocks: []))
         let specs = WeeklyScheduleGenerator.makeSpecs(plan: plan, settings: ReminderSettings(), now: now)

@@ -304,7 +304,19 @@ struct AppShell: View {
         }
         #endif
         let stored = checkpoints.load()
-        resumeCandidate = WorkoutResumePolicy.canResume(stored, now: Date()) ? stored : nil
+        guard let stored else {
+            resumeCandidate = nil
+            return
+        }
+        guard WorkoutResumePolicy.canResume(stored, now: Date()) else {
+            // 过了窗口才回来：计一次，顺手清掉——不清的话每次进页面都会再加一次，
+            // 计数就没法用来判断「窗口是不是太短」。
+            LocalCounters.shared.increment(.checkpointExpired)
+            checkpoints.clear()
+            resumeCandidate = nil
+            return
+        }
+        resumeCandidate = stored
     }
 
     private var resumeHint: String? {

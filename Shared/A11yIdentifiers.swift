@@ -106,6 +106,8 @@ enum A11y {
 
     enum Settings {
         static let reminderToggle = "settings.reminderToggle"
+        static let reminderNudgeAccept = "settings.reminderNudge.accept"
+        static let reminderNudgeDismiss = "settings.reminderNudge.dismiss"
         static let scheduledCount = "settings.scheduledCount"
         static let voiceToggle = "settings.voiceToggle"
         static let largeTextToggle = "settings.largeTextToggle"

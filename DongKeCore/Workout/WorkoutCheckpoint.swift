@@ -38,9 +38,17 @@ public struct WorkoutCheckpoint: Codable, Equatable, Sendable {
 }
 
 public enum WorkoutResumePolicy {
-    public static let window: TimeInterval = 30 * 60
+    /// 旧窗口（30 分钟）。留着是为了让老测试和老文档说清「从哪改过来的」；
+    /// 现行规则是「当天都算」，见 `canResume`。
+    public static let legacyWindow: TimeInterval = 30 * 60
 
-    public static func canResume(_ checkpoint: WorkoutCheckpoint?, now: Date) -> Bool {
+    /// 当天有效：晚上 19:00 退出，23:59 回来还能接上；跨天算放弃——
+    /// 昨天的疲劳账不能记到今天，而且第二天本来就该按当天的状态重新开始。
+    public static func canResume(
+        _ checkpoint: WorkoutCheckpoint?,
+        now: Date,
+        calendar: Calendar = Calendar(identifier: .gregorian)
+    ) -> Bool {
         guard let checkpoint else { return false }
         guard checkpoint.totalSteps > 0,
               checkpoint.stepIndex >= 0,
@@ -48,7 +56,7 @@ public enum WorkoutResumePolicy {
         else {
             return false
         }
-        return now.timeIntervalSince(checkpoint.updatedAt) < window
+        return calendar.isDate(checkpoint.updatedAt, inSameDayAs: now)
     }
 
     public static func restState(_ checkpoint: WorkoutCheckpoint, now: Date) -> RestState {
