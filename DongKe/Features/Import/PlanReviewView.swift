@@ -25,8 +25,13 @@ struct PlanReviewView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(UserExerciseStore.self) private var userExercises
     @Environment(ProfileStore.self) private var profileStore
+    @Environment(PlanStore.self) private var planStore
+    @Environment(SetLogStore.self) private var setLogStore
     @State private var editing: PlanEditRow?
     @State private var soreParts: Set<BodyPart> = []
+    /// 只有用户自己勾了才加版本号：导入往往只是同一份计划的小修，
+    /// 自动加会让老用户重开 App 时看到计划自己变了（revision 同时是重排种子）。
+    @State private var isNewVersion = false
     private let memo = AliasMemoStore()
     private let corrections = CorrectionStore()
 
@@ -40,6 +45,95 @@ struct PlanReviewView: View {
         plan.days.filter { !$0.isRestDay }
     }
 
+    private var previousPlan: WorkoutPlan? {
+        planStore.plan
+    }
+
+    private var diff: PlanDiff {
+        guard let previousPlan else { return PlanDiff() }
+        return PlanDiff.compare(
+            old: previousPlan,
+            new: plan,
+            painCatalogIds: Set(setLogStore.recentLogs().filter { $0.skipReason == .pain }.compactMap(\.catalogId))
+        )
+    }
+
+    private var planToSave: WorkoutPlan {
+        guard isNewVersion, let previousPlan else { return plan }
+        return plan.markingSource(plan.source, revision: previousPlan.revision + 1)
+    }
+
+    private var diffCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("和上一版比")
+                .font(Typography.cardTitle)
+
+            ForEach(diff.lines) { line in
+                HStack(alignment: .top, spacing: 8) {
+                    Text(label(for: line.kind))
+                        .font(Typography.capsLabel)
+                        .foregroundStyle(color(for: line.kind))
+                        .frame(width: 30, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(line.text)
+                            .font(Typography.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(line.day)
+                            .font(Typography.meta)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
+            if diff.painful.isEmpty == false {
+                Text("上一版里 \(diff.painful.joined(separator: "、")) 标过疼，这一版还在。")
+                    .font(Typography.meta)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .glassSurface(radius: Theme.Radius.card)
+        .accessibilityIdentifier(A11y.Import.diffCard)
+    }
+
+    private var newVersionToggle: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("这是上一份的新版本")
+                    .font(Typography.rowTitle)
+                Text("勾了版本号加一，旧记录按版本对上；不勾就当成另一份计划。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            Toggle("", isOn: $isNewVersion)
+                .labelsHidden()
+                .tint(Theme.accent(for: colorScheme))
+                .accessibilityIdentifier(A11y.Import.newVersionToggle)
+        }
+        .padding(16)
+        .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private func label(for kind: PlanDiff.Kind) -> String {
+        switch kind {
+        case .added: "新增"
+        case .removed: "换下"
+        case .changed: "调整"
+        }
+    }
+
+    private func color(for kind: PlanDiff.Kind) -> Color {
+        switch kind {
+        case .added: Theme.accent(for: colorScheme)
+        case .removed: .secondary
+        case .changed: .secondary
+        }
+    }
+
     private var blocking: [ParseIssue] {
         draft.issues.filter { $0.severity == .error }
     }
@@ -50,6 +144,14 @@ struct PlanReviewView: View {
                 header
 
                 PlanOriginNotice(source: plan.source)
+
+                if diff.isEmpty == false {
+                    diffCard
+                }
+
+                if previousPlan != nil {
+                    newVersionToggle
+                }
 
                 if !blocking.isEmpty {
                     PlanIssueBanner(issues: blocking)
@@ -98,7 +200,7 @@ struct PlanReviewView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("保存") {
-                    onSave(plan)
+                    onSave(planToSave)
                 }
                 .font(Typography.buttonLabel)
                 .foregroundStyle(Theme.accent(for: colorScheme))

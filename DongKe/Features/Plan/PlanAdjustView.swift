@@ -8,6 +8,9 @@ struct PlanAdjustView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(SetLogStore.self) private var setLogStore
+    @Environment(PlanStore.self) private var planStore
+    @State private var showReceipt = false
     @State private var goal: PlanGoal
     @State private var level: TrainingLevel
     @State private var minutes: Int
@@ -39,6 +42,39 @@ struct PlanAdjustView: View {
         ).markingSource(.generated, revision: plan.revision + 1)
     }
 
+    /// 首屏先把「带着记录回去问」摆出来：计划是外面给的，就该拿执行数据回去改。
+    private var askFirstCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("带着记录回去问")
+                .font(Typography.cardTitle)
+            Text("把最近 4 周的执行情况复制给你的 AI 或教练，让他们按真实数据改这份计划。比在这里换一批动作准得多。")
+                .font(Typography.meta)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button {
+                showReceipt = true
+            } label: {
+                Text("复制训练回执")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .frame(minHeight: 40)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier(A11y.Plan.adjustReceipt)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .glassSurface(radius: Theme.Radius.card)
+        .sheet(isPresented: $showReceipt) {
+            ReceiptSheet(text: receiptText)
+        }
+    }
+
+    private var receiptText: String {
+        let plan = planStore.plan ?? self.plan
+        return TrainingReceiptBuilder.build(logs: setLogStore.recentLogs(limit: 600), plan: plan).text
+    }
+
     private var changedIds: (added: [String], removed: [String]) {
         let old = workoutIds(in: plan)
         let new = workoutIds(in: draftPlan)
@@ -59,7 +95,9 @@ struct PlanAdjustView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("练久了觉得腻，就在这儿换一批动作。改完会排一份新计划，历史记录继续保留。加量减量不用你来发现——那件事交给记录和提案。")
+                    askFirstCard
+
+                    Text("下面的选项是不联网时的兜底：换一批动作、改难度。加量减量不用你来发现——那件事交给记录和提案。")
                         .font(Typography.meta)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -88,7 +126,7 @@ struct PlanAdjustView: View {
 
                     changePreview
 
-                    Text("改动会写进你的档案，下次重新生成也沿用。当前是第 \(plan.revision) 版，改完是第 \(plan.revision + 1) 版。")
+                    Text("会替换掉当前这份计划，没有副本；已经练过的记录不受影响。改动写进档案，下次重新生成也沿用。第 \(plan.revision) 版 → 第 \(plan.revision + 1) 版。")
                         .font(Typography.capsLabel)
                         .foregroundStyle(.tertiary)
                         .fixedSize(horizontal: false, vertical: true)
