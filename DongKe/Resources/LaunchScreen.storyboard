@@ -15,8 +15,28 @@
                     <view key="view" contentMode="scaleToFill" id="DK0-launch-view">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchGlow" translatesAutoresizingMaskIntoConstraints="NO" id="DK0-launch-glow">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchMark" translatesAutoresizingMaskIntoConstraints="NO" id="DK0-launch-mark">
+                                <rect key="frame" x="144.5" y="305.5" width="104" height="104"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="104" id="DK0-launch-mark-w"/>
+                                    <constraint firstAttribute="height" constant="104" id="DK0-launch-mark-h"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="DK0-launch-safe"/>
                         <color key="backgroundColor" name="LaunchBackground"/>
+                        <constraints>
+                            <constraint firstItem="DK0-launch-glow" firstAttribute="leading" secondItem="DK0-launch-view" secondAttribute="leading" id="DK0-launch-glow-l"/>
+                            <constraint firstAttribute="trailing" secondItem="DK0-launch-glow" secondAttribute="trailing" id="DK0-launch-glow-t"/>
+                            <constraint firstItem="DK0-launch-glow" firstAttribute="top" secondItem="DK0-launch-view" secondAttribute="top" id="DK0-launch-glow-top"/>
+                            <constraint firstAttribute="bottom" secondItem="DK0-launch-glow" secondAttribute="bottom" id="DK0-launch-glow-b"/>
+                            <constraint firstItem="DK0-launch-mark" firstAttribute="centerX" secondItem="DK0-launch-view" secondAttribute="centerX" id="DK0-launch-mark-cx"/>
+                            <constraint firstItem="DK0-launch-mark" firstAttribute="centerY" secondItem="DK0-launch-view" secondAttribute="bottom" multiplier="0.42" id="DK0-launch-mark-cy"/>
+                        </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="DK0-launch-fr" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -25,8 +45,10 @@
         </scene>
     </scenes>
     <resources>
+        <image name="LaunchGlow" width="256" height="256"/>
+        <image name="LaunchMark" width="104" height="104"/>
         <namedColor name="LaunchBackground">
-            <color red="0.054901960784313725" green="0.48627450980392156" blue="0.40000000000000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.0392156862745098" green="0.37254901960784315" blue="0.3215686274509804" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

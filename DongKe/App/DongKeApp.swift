@@ -25,6 +25,12 @@ struct DongKeApp: App {
     init() {
         #if DEBUG
         dkInitTick = ProcessInfo.processInfo.systemUptime
+        // 启动屏在模拟器上只挂 50ms 不到，录屏抓不到完整一帧，改启动屏等于闭眼改。
+        // 把首帧钉在这里，launch screen 就会一直显示，方便截图校对。
+        if let raw = ProcessInfo.processInfo.environment["DK_LAUNCH_HOLD_MS"],
+           let hold = Double(raw), hold > 0 {
+            Thread.sleep(forTimeInterval: hold / 1000)
+        }
         #endif
         let configuration = ModelConfiguration()
         let container: ModelContainer
