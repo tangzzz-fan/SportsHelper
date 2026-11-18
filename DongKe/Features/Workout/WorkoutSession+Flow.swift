@@ -89,7 +89,7 @@ extension WorkoutSession {
             for: item.catalogId,
             unit: target.type,
             load: currentLoad,
-            isUsingPrescribedLoad: loadOverrides[item.itemId] == nil,
+            isUsingPrescribedLoad: isUsingPrescribedLoad,
             in: PersonalRecords.build(logs: history)
         )
     }

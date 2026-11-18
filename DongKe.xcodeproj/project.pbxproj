@@ -201,6 +201,7 @@
 		ACF270562B1FB9D442F9E98D /* WorkoutVoiceSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E86479AAFCD30D8F848DD8 /* WorkoutVoiceSessionTests.swift */; };
 		AD06013D051FFC5BBD560182 /* PlanBrief.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE5B2C09743E59AC5900F75 /* PlanBrief.swift */; };
 		AD12AAEB83C8F0FD65D1A25D /* SpeechCueCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEBFA19A1BC52C87ACFDAE30 /* SpeechCueCoordinatorTests.swift */; };
+		AD2BC19CB8AA71CAA50321EF /* LoadPersistenceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 763EEB986525785D1137B045 /* LoadPersistenceUITests.swift */; };
 		AD989CEA80D00BACA2DC891C /* LargeTextStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4917E30899C9FB8E4BFAAAE4 /* LargeTextStore.swift */; };
 		B20EAB16993A03B27277C0AF /* ExerciseFigure.swift in Sources */ = {isa = PBXBuildFile; fileRef = F64AE095E82BB634A080D671 /* ExerciseFigure.swift */; };
 		B2B91C42D77FE564C87A4802 /* DoseAdjustment+Reduction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */; };
@@ -280,6 +281,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		803BCFC601DBF6DE6D9F4E42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CA23B9519231E1A218E1A83 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E3C2F1BFA76FA190F0AFFA80;
+			remoteInfo = DongKe;
+		};
 		AC737CCD3797319159B6D5AF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7CA23B9519231E1A218E1A83 /* Project object */;
@@ -329,6 +337,7 @@
 		02B42B1F0F88B24A1DD63EC3 /* AIGenerateCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIGenerateCard.swift; sourceTree = "<group>"; };
 		03643DAA4EC8E11D9610D7E6 /* RestSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestSheetView.swift; sourceTree = "<group>"; };
 		04E26A133B3A13BA93DBA66D /* ExerciseNounTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseNounTests.swift; sourceTree = "<group>"; };
+		0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DongKeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		066C1D6F10CA0FACB51A0367 /* ExerciseCatalogLower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogLower.swift; sourceTree = "<group>"; };
 		072B203C1325BFB3873E3159 /* UserExerciseEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExerciseEntity.swift; sourceTree = "<group>"; };
 		07835A2181449460CC9EC8AB /* NotificationPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanTests.swift; sourceTree = "<group>"; };
@@ -455,6 +464,7 @@
 		72B96976FA8249583E45F1CC /* SpeechTranscribing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscribing.swift; sourceTree = "<group>"; };
 		75E86479AAFCD30D8F848DD8 /* WorkoutVoiceSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutVoiceSessionTests.swift; sourceTree = "<group>"; };
 		7639FAB5F2D2B1FD70D1BFF2 /* QuickAIPlanSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAIPlanSheet.swift; sourceTree = "<group>"; };
+		763EEB986525785D1137B045 /* LoadPersistenceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadPersistenceUITests.swift; sourceTree = "<group>"; };
 		773AB6EF665D07DFC65D3C55 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		78924005EB823B3946C2AB57 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		7A914C997A43E378CED2EDEE /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
@@ -934,6 +944,7 @@
 				7A49239A495A2E9FE47AC44C /* DongKe */,
 				2942F7C69C3A60F67A01D516 /* DongKeCore */,
 				ED17C09AC3F94F576722ED4F /* DongKeCoreTests */,
+				89A2AC2618AF7F095F207A41 /* DongKeUITests */,
 				6F604DF6ABD9D1A440CCC395 /* Shared */,
 				FD31F01E3064600A0A79188E /* Products */,
 			);
@@ -967,6 +978,14 @@
 				93F59479C1FEAE86AE86E4FD /* Persistence */,
 			);
 			path = Data;
+			sourceTree = "<group>";
+		};
+		89A2AC2618AF7F095F207A41 /* DongKeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				763EEB986525785D1137B045 /* LoadPersistenceUITests.swift */,
+			);
+			path = DongKeUITests;
 			sourceTree = "<group>";
 		};
 		93F59479C1FEAE86AE86E4FD /* Persistence */ = {
@@ -1140,6 +1159,7 @@
 				0FEF4EA879539D2164037BF2 /* DongKe.app */,
 				90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */,
 				AEE4D84B72E75ED4CFD5D951 /* DongKeCoreTests.xctest */,
+				0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1147,6 +1167,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		0DDB01FA4600953CEADDB6F2 /* DongKeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 66F373D414998C23E566E9CB /* Build configuration list for PBXNativeTarget "DongKeUITests" */;
+			buildPhases = (
+				E060F80D8F20D85863B71CE1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4AC24A713A305D4CEAB640DD /* PBXTargetDependency */,
+			);
+			name = DongKeUITests;
+			packageProductDependencies = (
+			);
+			productName = DongKeUITests;
+			productReference = 0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		8ECD9815B56A9D26B825FD36 /* DongKeCoreTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9BBA43C54A35EED68E063F16 /* Build configuration list for PBXNativeTarget "DongKeCoreTests" */;
@@ -1214,6 +1252,11 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					0DDB01FA4600953CEADDB6F2 = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
+						TestTargetID = E3C2F1BFA76FA190F0AFFA80;
+					};
 					8ECD9815B56A9D26B825FD36 = {
 						DevelopmentTeam = UKXWZ3FS84;
 						ProvisioningStyle = Automatic;
@@ -1245,6 +1288,7 @@
 				F151BEEF59A26017A462EFCF /* DongKeCore */,
 				E3C2F1BFA76FA190F0AFFA80 /* DongKe */,
 				8ECD9815B56A9D26B825FD36 /* DongKeCoreTests */,
+				0DDB01FA4600953CEADDB6F2 /* DongKeUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -1455,6 +1499,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E060F80D8F20D85863B71CE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD2BC19CB8AA71CAA50321EF /* LoadPersistenceUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E422F397C669F036DD2537C7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1554,6 +1606,11 @@
 			isa = PBXTargetDependency;
 			target = F151BEEF59A26017A462EFCF /* DongKeCore */;
 			targetProxy = AC737CCD3797319159B6D5AF /* PBXContainerItemProxy */;
+		};
+		4AC24A713A305D4CEAB640DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E3C2F1BFA76FA190F0AFFA80 /* DongKe */;
+			targetProxy = 803BCFC601DBF6DE6D9F4E42 /* PBXContainerItemProxy */;
 		};
 		7A5002D5681D4438A38CFE26 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1775,6 +1832,23 @@
 			};
 			name = Debug;
 		};
+		744B113FFCC2ED0E7E037652 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.ui.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DongKe;
+			};
+			name = Debug;
+		};
 		8A407F436A32FE60DD7E4130 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1794,6 +1868,23 @@
 				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.ios;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		C56266E98000049B4BF807C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.ui.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DongKe;
 			};
 			name = Release;
 		};
@@ -1828,6 +1919,15 @@
 			buildConfigurations = (
 				0E3297B4B58B77B6D598F596 /* Debug */,
 				FAE10DD90F429451C80C7203 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		66F373D414998C23E566E9CB /* Build configuration list for PBXNativeTarget "DongKeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				744B113FFCC2ED0E7E037652 /* Debug */,
+				C56266E98000049B4BF807C7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

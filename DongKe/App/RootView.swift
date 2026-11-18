@@ -30,6 +30,10 @@ struct RootView: View {
     }
 
     private var showsOnboarding: Bool {
+        #if DEBUG
+        // UI 测试要直达训练页，不能每次点五屏。只在 DEBUG 构建里存在。
+        if ProcessInfo.processInfo.environment["DK_SKIP_ONBOARDING"] == "1" { return false }
+        #endif
         if profiles.hasOnboarded == false { return true }
         #if DEBUG
         return ProcessInfo.processInfo.environment["DK_PREVIEW"] == "onboarding"

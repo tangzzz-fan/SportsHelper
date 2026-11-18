@@ -76,6 +76,20 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.core.tests
         GENERATE_INFOPLIST_FILE: YES
+  # 只有一条用例：重量落库后杀掉重进还在不在。
+  # 单测不碰 SwiftData，这条链断在哪一层只有它能看出来。
+  # 不进默认测试，用 scripts/ui-test.sh 单独跑——理由见 docs/HANDOFF.md §6.6。
+  DongKeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: DongKeUITests
+    dependencies:
+      - target: DongKe
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ui.tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   DongKe:
     build:
@@ -88,3 +102,4 @@ schemes:
       config: Debug
       targets:
         - DongKeCoreTests
+        - DongKeUITests

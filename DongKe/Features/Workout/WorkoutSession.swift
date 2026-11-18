@@ -23,6 +23,9 @@ final class WorkoutSession: Identifiable {
     /// 用户临时改的重量，按 `itemId` 记忆：同一动作的下一组沿用，换动作回到它自己的处方。
     /// 只在本次会话里有效，不进计划、不写版本。
     var loadOverrides: [String: Double] = [:]
+    /// 每个动作上一次实际用的重量。进训练页时预加载一次，让「上次用 10kg」变成这次的默认值，
+    /// 用户不用每一组都重新调。
+    var lastLoads: [String: Double] = [:]
     var rest: RestState = .idle
     var restKicker = "组间休息"
     var finishedAt: Date?
@@ -101,30 +104,51 @@ final class WorkoutSession: Identifiable {
         return target
     }
 
-    /// 当前组该显示的重量。自重且 0kg 返回 nil，训练页不显示重量。
+    /// 当前组该显示的重量。优先级：本会话改过的 > 上次实际用的 > 处方。
+    /// 自重且 0kg 返回 nil，训练页不显示重量。
     var currentLoad: Load? {
         guard let item = currentPrescription else { return nil }
         let base = item.load
         guard base.type != .bodyweight || base.value > 0 else { return nil }
-        return Load(type: base.type, value: loadOverrides[item.itemId] ?? base.value)
+        let value = loadOverrides[item.itemId] ?? lastLoads[item.itemId] ?? base.value
+        return Load(type: base.type, value: value)
     }
 
-    /// 落库用。只有用户真的改过才有值：没改记 nil，读的人按处方重量处理。
+    /// 落库用。和处方一致时记 nil（读的人按处方处理），不一致才写下来。
     var recordedLoad: Load? {
-        guard let item = currentPrescription, let value = loadOverrides[item.itemId] else { return nil }
-        return Load(type: item.load.type, value: value)
+        guard let item = currentPrescription, let current = currentLoad else { return nil }
+        return current.value == item.load.value ? nil : current
+    }
+
+    /// 当前重量是否就是处方重量。旧日志没有重量时，只有这种情况才允许回落到它们的纪录。
+    var isUsingPrescribedLoad: Bool {
+        guard let item = currentPrescription else { return true }
+        return currentLoad?.value == item.load.value
     }
 
     func adjustLoad(by delta: Double) {
-        guard let item = currentPrescription, currentLoad != nil else { return }
-        let base = loadOverrides[item.itemId] ?? item.load.value
-        let next = max(0, base + delta)
+        guard let item = currentPrescription, let current = currentLoad else { return }
+        let next = max(0, current.value + delta)
         loadOverrides[item.itemId] = next == item.load.value ? nil : next
     }
 
     func resetLoad() {
         guard let item = currentPrescription else { return }
         loadOverrides[item.itemId] = nil
+    }
+
+    /// 进训练页时调一次：把每个动作最近一次记住的重量取出来，作为这次的默认值。
+    func preloadLastLoads() {
+        guard let setLogStore, let day else { return }
+        var result: [String: Double] = [:]
+        for item in day.blocks.flatMap(\.items) {
+            guard item.load.type != .bodyweight || item.load.value > 0 else { continue }
+            let logs = setLogStore.logs(forCatalogIds: [item.catalogId], before: startedAt)
+            if let load = logs.first(where: { $0.actualLoad != nil })?.actualLoad {
+                result[item.itemId] = load.value
+            }
+        }
+        lastLoads = result
     }
 
     var acceptsBonusReps: Bool {

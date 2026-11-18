@@ -21,10 +21,23 @@ struct AppShell: View {
     init() {
         #if DEBUG
         let preview = ProcessInfo.processInfo.environment["DK_PREVIEW"] ?? ""
-        let dayIndex = SampleData.trainingDayIndex(for: Date())
+        var dayIndex = SampleData.trainingDayIndex(for: Date())
+        if ProcessInfo.processInfo.environment["DK_WORKOUT_LOAD"] == "1",
+           let loadedDay = SampleData.plan.days.first(where: { day in
+               day.blocks.flatMap(\.items).contains {
+                   $0.load.type != .bodyweight && $0.load.value > 0
+               }
+           })?.dayIndex {
+            // 负重动作不一定落在「今天」那一节，UI 测试要一个确定的起点。
+            dayIndex = loadedDay
+        }
         switch preview {
         case "workout":
-            _session = State(initialValue: WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex))
+            let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)
+            if ProcessInfo.processInfo.environment["DK_WORKOUT_LOAD"] == "1" {
+                active.stepIndex = Self.firstLoadedStepIndex(in: active) ?? active.stepIndex
+            }
+            _session = State(initialValue: active)
         case "plan":
             _tab = State(initialValue: .plan)
         case "history":
@@ -58,6 +71,18 @@ struct AppShell: View {
         }
         #endif
     }
+
+    #if DEBUG
+    /// UI 测试用：跳到第一个负重动作，省掉「先做几组自重」的点击。
+    private static func firstLoadedStepIndex(in session: WorkoutSession) -> Int? {
+        let items = session.day?.blocks.flatMap(\.items) ?? []
+        let loads = Dictionary(uniqueKeysWithValues: items.map { ($0.itemId, $0.load) })
+        return session.script.firstIndex { step in
+            guard case let .set(id, _, _, _) = step, let load = loads[id] else { return false }
+            return load.type != .bodyweight && load.value > 0
+        }
+    }
+    #endif
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -139,6 +164,12 @@ struct AppShell: View {
                 session = nil
                 refreshResumeCandidate()
             }
+            .onAppear {
+                // DK_PREVIEW=workout 会绕过 start() 直接造会话，这里补一次依赖注入。
+                active.setLogStore = setLogs
+                active.store = store
+                active.preloadLastLoads()
+            }
         }
         .onAppear(perform: refreshResumeCandidate)
     }
@@ -178,6 +209,7 @@ struct AppShell: View {
         active.setLogStore = setLogs
         active.checkpointStore = checkpoints
         active.restNotifications = NotificationService.shared
+        active.preloadLastLoads()
         session = active
     }
 
@@ -202,6 +234,7 @@ struct AppShell: View {
         active.setLogStore = setLogs
         active.checkpointStore = checkpoints
         active.restNotifications = NotificationService.shared
+        active.preloadLastLoads()
         resumeCandidate = nil
         session = active
     }

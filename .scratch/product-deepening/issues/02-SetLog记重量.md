@@ -13,4 +13,4 @@
 - [x] 重量调节步进固定 2.5kg，按 `itemId` 记忆——同一动作下一组沿用，换动作回到它自己的处方
 - [x] 文案抽到 `ExercisePrescription.workoutDoseLine(load:)`，单测覆盖自重 / 负重 / 单侧 / 静止 / 弹力带 6 种
 - [x] 模拟器：旧包建库 → 新包覆盖安装不崩；`PRAGMA table_info(ZSETLOGENTITY)` 已出现 `ZACTUALLOADVALUE`（FLOAT）与 `ZACTUALLOADTYPERAW`（VARCHAR）
-- [ ] **未验**：真实完成一组 8kg 后杀掉重进，训练页的「上次」是否带重量。模拟器无法自动化点击，等第一次真机走查补上
+- [x] **已验**（2026-11-18，UI 测试）：`testWeightSurvivesRelaunch` 加一档重量、完成一组、杀掉重进，剂量行回到上次用的重量。见 `DongKeUITests/`，跑法 `scripts/ui-test.sh`

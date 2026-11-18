@@ -336,6 +336,18 @@ AX3（`xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large
 
 **将来若要恢复**：`git log --diff-filter=D -- DongKeUITests` 能找到删除那次提交，643 行原样可取回。恢复前先回答一个问题——**这次是给谁看、多久跑一次**；答不上来就别恢复。
 
+### 2026-11-18 恢复了一条
+
+恢复的不是原来那 21 条，只有一条：`testWeightSurvivesRelaunch` —— 加一档重量、完成一组、杀掉重进，断言剂量行回到上次用的重量。
+
+- **给谁看**：改 `DongKe/Data/Persistence` 或 `DongKe/Features/Workout` 的人，加发布前一次。
+- **多久跑一次**：不进默认测试。`scripts/ui-test.sh` 单独跑，实测 39 秒（编译约 20 秒 + 用例约 19 秒）。
+- **为什么是它**：`SetLog → SetLogEntity → SQLite → 重开 → PersonalRecords → 训练页` 这条链，`DongKeCoreTests` 一条都碰不到。
+- **不测什么**：布局、命中区、文案、引导、导入、播报——这些仍走 `PressableGlassStyle` + 人工走查。
+- **两个调试钩子**：`DK_SKIP_ONBOARDING=1`（跳过引导）、`DK_WORKOUT_LOAD=1`（`DK_PREVIEW=workout` 时跳到第一个负重动作）。都在 `#if DEBUG` 里，发布构建没有这个分支。
+- **它不是幂等断言**：测试比较的是「加完之后的剂量行」与「重开后的剂量行」，不写死 8kg——写死的话第二次跑就会因为上一次落库的重量而失败（第一次真踩了）。
+- **如果它开始 flaky**：删掉，不要加超时。误报的测试会教会人不信测试。
+
 ## 6.7 引导不再是全屏弹层（2026-10-23）
 
 原来的 `AppShell` 同时挂了两个 `fullScreenCover`（引导 + 训练），SwiftUI 只认先注册的那个，**训练页永远弹不出来**（点「开始训练」毫无反应）。现在引导挪到 `RootView`：`profileStore.hasOnboarded == false` 就直接渲染 `OnboardingView`，否则渲染 `AppShell`。清空数据后 `profileStore.load()` 变空，根视图自动切回引导，不需要额外的状态位。

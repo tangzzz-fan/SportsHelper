@@ -65,7 +65,7 @@ struct WorkoutView: View {
             for: catalogId,
             unit: type,
             load: session.currentLoad,
-            isUsingPrescribedLoad: session.loadOverrides[prescription.itemId] == nil,
+            isUsingPrescribedLoad: session.isUsingPrescribedLoad,
             in: PersonalRecords.build(logs: logs)
         )
         recordLine = record?.lineText(unit: type, loadText: session.currentLoad?.shortText)

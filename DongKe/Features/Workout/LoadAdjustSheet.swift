@@ -38,6 +38,7 @@ struct LoadAdjustSheet: View {
                                 .frame(width: 64, height: 46)
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityIdentifier(A11y.Workout.loadMinus)
 
                         Button {
                             session.adjustLoad(by: step)
@@ -46,11 +47,12 @@ struct LoadAdjustSheet: View {
                                 .frame(width: 64, height: 46)
                         }
                         .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier(A11y.Workout.loadPlus)
                     }
                     .font(.system(size: 18, weight: .semibold))
 
                     if canReset {
-                        Button("恢复到处方重量") {
+                        Button("恢复默认重量") {
                             session.resetLoad()
                         }
                         .font(Typography.secondary)
@@ -64,6 +66,7 @@ struct LoadAdjustSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("完成") { dismiss() }
+                        .accessibilityIdentifier(A11y.Workout.loadDone)
                 }
             }
         }
