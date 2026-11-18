@@ -24,6 +24,7 @@ final class SetLogStore {
             actualValue: log.actualValue,
             actualLoadValue: log.actualLoad?.value,
             actualLoadTypeRaw: log.actualLoad?.type.rawValue,
+            swappedFromCatalogId: log.swappedFromCatalogId,
             predictedValue: log.predictedValue,
             skipReasonRaw: log.skipReason?.rawValue,
             completedAt: log.completedAt,
@@ -82,6 +83,7 @@ final class SetLogStore {
                     .flatMap(LoadType.init(rawValue:))
                     .map { Load(type: $0, value: value) }
             },
+            swappedFromCatalogId: entity.swappedFromCatalogId,
             predictedValue: entity.predictedValue,
             skipReason: entity.skipReasonRaw.flatMap(SkipReason.init(rawValue:)),
             rpe: entity.rpe,

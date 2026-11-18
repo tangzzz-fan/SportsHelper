@@ -68,6 +68,7 @@ extension SetLog {
         setIndex: Int,
         plannedValue: Int,
         reason: SkipReason?,
+        swappedFromCatalogId: String? = nil,
         at date: Date
     ) -> SetLog {
         SetLog(
@@ -79,6 +80,7 @@ extension SetLog {
             status: .skipped,
             plannedValue: plannedValue,
             actualValue: 0,
+            swappedFromCatalogId: swappedFromCatalogId,
             skipReason: reason,
             completedAt: date
         )

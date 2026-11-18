@@ -9,6 +9,7 @@ struct WorkoutView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.scenePhase) private var scenePhase
     @Environment(SetLogStore.self) private var setLogs
+    @Environment(ProfileStore.self) private var profiles
     @State private var showSkipOptions = false
     @State private var showDowngradeOptions = false
     @State private var bonusReps = 0
@@ -20,6 +21,13 @@ struct WorkoutView: View {
     @State private var recordLine: String?
     @State private var showLoadSheet = false
     @State private var showReceipt = false
+    @State private var showSwapSheet: Bool = {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["DK_PREVIEW"] == "swap"
+        #else
+        return false
+        #endif
+    }()
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -46,6 +54,11 @@ struct WorkoutView: View {
             return typeSize.isAccessibilitySize ? CGSize(width: 118, height: 138) : CGSize(width: 186, height: 220)
         }
         return typeSize.isAccessibilitySize ? CGSize(width: 132, height: 156) : CGSize(width: 220, height: 260)
+    }
+
+    /// 全部可用动作里，这次能换的那几个。空的时候入口不出现。
+    private var swapOptions: [ExerciseEntry] {
+        session.swapCandidates(available: profiles.profile?.equipment ?? [.bodyweight])
     }
 
     private var cueLines: [String] {
@@ -236,6 +249,16 @@ struct WorkoutView: View {
         .onAppear(perform: startVoiceIfNeeded)
         .sheet(isPresented: $showLoadSheet) {
             LoadAdjustSheet(session: session)
+        }
+        .sheet(isPresented: $showSwapSheet) {
+            SwapExerciseSheet(
+                currentName: prescription?.name ?? "",
+                candidates: swapOptions
+            ) { entry in
+                session.swapCurrent(with: entry)
+                bonusReps = 0
+                effort = nil
+            }
         }
         .onDisappear(perform: scheduleVoiceTeardown)
         .onChange(of: scenePhase) { _, phase in
@@ -518,16 +541,31 @@ struct WorkoutView: View {
             .buttonStyle(PressableGlassStyle())
             .accessibilityIdentifier(A11y.Workout.downgrade)
 
-            Button {
-                showSkipOptions = true
-            } label: {
-                Text("跳过本组")
-                    .font(Typography.secondary)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+            HStack(spacing: 0) {
+                if swapOptions.isEmpty == false {
+                    Button {
+                        showSwapSheet = true
+                    } label: {
+                        Text("换个动作")
+                            .font(Typography.secondary)
+                            .foregroundStyle(Theme.accent(for: colorScheme))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(PressableGlassStyle())
+                    .accessibilityIdentifier(A11y.Workout.swapEntry)
+                }
+
+                Button {
+                    showSkipOptions = true
+                } label: {
+                    Text("跳过本组")
+                        .font(Typography.secondary)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(PressableGlassStyle())
+                .accessibilityIdentifier(A11y.Workout.skipSet)
             }
-            .buttonStyle(PressableGlassStyle())
-            .accessibilityIdentifier(A11y.Workout.skipSet)
         }
         .padding(16)
         .glassSurface(radius: Theme.Radius.glassCard)

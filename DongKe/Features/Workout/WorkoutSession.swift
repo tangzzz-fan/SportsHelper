@@ -29,6 +29,10 @@ final class WorkoutSession: Identifiable {
     var lastLoads: [String: Double] = [:]
     var rest: RestState = .idle
     var restKicker = "组间休息"
+    /// 换过的动作：`itemId` → 换成的处方。`itemId` 不变，流程、组数、断点都不用改。
+    var swapped: [String: ExercisePrescription] = [:]
+    /// `itemId` → 原来的 `catalogId`。落库时写进 `swappedFromCatalogId`，剂量按原动作归肌群。
+    var swapOriginals: [String: String] = [:]
     var finishedAt: Date?
     /// 结束页那一句判断。`finish` 时算一次，之后不跟着视图刷新重算。
     var narrative: String?
@@ -91,7 +95,14 @@ final class WorkoutSession: Identifiable {
 
     var currentPrescription: ExercisePrescription? {
         guard case let .set(prescriptionId, _, _, _)? = currentStep else { return nil }
-        return day?.blocks.flatMap(\.items).first(where: { $0.itemId == prescriptionId })
+        guard let item = day?.blocks.flatMap(\.items).first(where: { $0.itemId == prescriptionId }) else { return nil }
+        return swapped[prescriptionId] ?? item
+    }
+
+    /// 当前动作是换来的话，返回换之前的 `catalogId`。
+    var currentSwapOrigin: String? {
+        guard case let .set(prescriptionId, _, _, _)? = currentStep else { return nil }
+        return swapOriginals[prescriptionId]
     }
 
     var currentSetIndex: Int {
@@ -140,6 +151,24 @@ final class WorkoutSession: Identifiable {
     func resetLoad() {
         guard let item = currentPrescription else { return }
         loadOverrides[item.itemId] = nil
+    }
+
+    /// 现在能换成什么。空数组时训练页不显示入口——没得选就别放个点不动的按钮。
+    func swapCandidates(available: [Equipment]) -> [ExerciseEntry] {
+        guard let item = currentPrescription else { return [] }
+        return SwapCandidates.suggestions(for: item, available: available)
+    }
+
+    /// 换掉当前动作剩下的组。已经做完的组保留原动作的纪录；之后的组记在新动作名下，
+    /// 但带上 `swappedFromCatalogId`，剂量仍归原肌群。
+    func swapCurrent(with entry: ExerciseEntry) {
+        guard let item = currentPrescription, entry.id != item.catalogId else { return }
+        var next = SwapCandidates.prescription(replacing: item, with: entry)
+        next.itemId = item.itemId
+        swapOriginals[item.itemId] = swapOriginals[item.itemId] ?? item.catalogId
+        swapped[item.itemId] = next
+        loadOverrides[item.itemId] = nil
+        LocalCounters.shared.increment(.swapUsed)
     }
 
     /// 进训练页时调一次：把每个动作最近一次记住的重量取出来，作为这次的默认值。

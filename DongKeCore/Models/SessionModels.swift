@@ -48,6 +48,9 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     /// 这一组实际用的重量。nil 表示「按处方」，与 `planDate` 的回落同构：
     /// 旧日志没有这个字段时，读的人按处方重量处理，而不是当成 0kg。
     public var actualLoad: Load?
+    /// 这一组是换过动作之后做的：值是换之前的 `catalogId`。
+    /// 剂量按原动作归肌群，纪录按新动作算——两件事各归各处。
+    public var swappedFromCatalogId: String?
     public var predictedValue: Int?
     public var skipReason: SkipReason?
     public var rpe: Int?
@@ -65,6 +68,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         plannedValue: Int,
         actualValue: Int,
         actualLoad: Load? = nil,
+        swappedFromCatalogId: String? = nil,
         predictedValue: Int? = nil,
         skipReason: SkipReason? = nil,
         rpe: Int? = nil,
@@ -81,6 +85,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.plannedValue = plannedValue
         self.actualValue = actualValue
         self.actualLoad = actualLoad
+        self.swappedFromCatalogId = swappedFromCatalogId
         self.predictedValue = predictedValue
         self.skipReason = skipReason
         self.rpe = rpe
@@ -99,6 +104,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         case plannedValue
         case actualValue
         case actualLoad
+        case swappedFromCatalogId
         case predictedValue
         case skipReason
         case rpe
@@ -118,6 +124,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         plannedValue = try container.decode(Int.self, forKey: .plannedValue)
         actualValue = try container.decode(Int.self, forKey: .actualValue)
         actualLoad = (try? container.decodeIfPresent(Load.self, forKey: .actualLoad)) ?? nil
+        swappedFromCatalogId = try container.decodeIfPresent(String.self, forKey: .swappedFromCatalogId)
         predictedValue = try container.decodeIfPresent(Int.self, forKey: .predictedValue)
         skipReason = try container.decodeIfPresent(SkipReason.self, forKey: .skipReason)
         rpe = try container.decodeIfPresent(Int.self, forKey: .rpe)

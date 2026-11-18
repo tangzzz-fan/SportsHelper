@@ -37,6 +37,23 @@ struct SetLogLoadTests {
         #expect(decoded.actualLoad == Load(type: .bodyweight, value: 0))
     }
 
+    @Test func swapOriginSurvivesRoundTrip() throws {
+        let original = SetLog(
+            sessionId: UUID(),
+            prescriptionId: "p1",
+            catalogId: "squat",
+            targetType: .reps,
+            setIndex: 1,
+            status: .done,
+            plannedValue: 12,
+            actualValue: 12,
+            swappedFromCatalogId: "dumbbell_row",
+            completedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let decoded = try JSONDecoder().decode(SetLog.self, from: JSONEncoder().encode(original))
+        #expect(decoded.swappedFromCatalogId == "dumbbell_row")
+    }
+
     @Test func nilLoadSurvivesRoundTrip() throws {
         let decoded = try JSONDecoder().decode(
             SetLog.self,

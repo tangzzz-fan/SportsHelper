@@ -33,10 +33,15 @@ struct AppShell: View {
             dayIndex = loadedDay
         }
         switch preview {
-        case "workout":
+        case "workout", "swap":
             let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)
             if ProcessInfo.processInfo.environment["DK_WORKOUT_LOAD"] == "1" {
                 active.stepIndex = Self.firstLoadedStepIndex(in: active) ?? active.stepIndex
+            }
+            if ProcessInfo.processInfo.environment["DK_SWAP_FIRST"] == "1",
+               let entry = active.swapCandidates(available: [.bodyweight]).first {
+                // 预览用：换掉第一个动作，用来校对换完之后那一页。
+                active.swapCurrent(with: entry)
             }
             _session = State(initialValue: active)
         case "plan":

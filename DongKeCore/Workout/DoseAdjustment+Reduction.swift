@@ -32,6 +32,50 @@ extension DoseAdjustment {
 }
 
 extension DoseAdjustment {
+    /// 同一动作被换掉两次，就不再问「这次换成什么」，而是把计划里的也换掉。
+    /// 用的是现有的 `.swap`，不新增提案类型。
+    static func repeatedSwapProposal(_ context: DoseContext, sessions: [LoggedSession]) -> PlanProposal? {
+        let recent = Array(sessions.suffix(3))
+        guard recent.count >= minimumSessions else { return nil }
+
+        var swapped: [String: [SetLog]] = [:]
+        for session in recent {
+            for log in session.logs where log.swappedFromCatalogId != nil {
+                swapped[log.prescriptionId, default: []].append(log)
+            }
+        }
+
+        for itemId in swapped.keys.sorted() {
+            guard let logs = swapped[itemId] else { continue }
+            guard Set(logs.map(\.sessionId)).count >= minimumSessions else { continue }
+            guard let item = item(for: itemId, in: context.plan) else { continue }
+            guard let latest = logs.max(by: { $0.completedAt < $1.completedAt }),
+                  let newId = latest.catalogId,
+                  let entry = ExerciseLibrary.entry(for: newId),
+                  entry.id != item.catalogId else { continue }
+
+            return PlanProposal(
+                kind: .swap,
+                changes: [
+                    PlanProposal.Change(
+                        itemId: item.itemId,
+                        name: item.name,
+                        field: .exercise,
+                        fromValue: 0,
+                        toValue: 0,
+                        toName: entry.name,
+                        toId: entry.id
+                    )
+                ],
+                reason: "最近几节课你把 \(item.name) 换成了 \(entry.name)。计划里也换掉，省得每次再换。",
+                createdAt: context.now
+            )
+        }
+        return nil
+    }
+}
+
+extension DoseAdjustment {
     static func reductionProposal(_ context: DoseContext, sessions: [LoggedSession]) -> PlanProposal? {
         if let tooHard = tooHardProposal(context, sessions: sessions) { return tooHard }
         return noTimeProposal(context, sessions: sessions)

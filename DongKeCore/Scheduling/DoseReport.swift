@@ -133,7 +133,8 @@ public enum DoseReportBuilder {
     }
 
     static func muscles(for log: SetLog) -> Set<Muscle> {
-        guard let catalogId = log.catalogId else { return [] }
+        // 换过动作的组按原动作归肌群：那次训练本来就是练那块，换只是因为没器械或疼。
+        guard let catalogId = log.swappedFromCatalogId ?? log.catalogId else { return [] }
         return PrimaryMuscleMap.muscles(for: catalogId)
     }
 }

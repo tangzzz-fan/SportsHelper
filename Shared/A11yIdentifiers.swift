@@ -43,6 +43,8 @@ enum A11y {
         static let loadMinus = "workout.load.minus"
         static let loadPlus = "workout.load.plus"
         static let loadDone = "workout.load.done"
+        static let swapEntry = "workout.swap.entry"
+        static func swapOption(_ id: String) -> String { "workout.swap.\(id)" }
     }
 
     enum Summary {

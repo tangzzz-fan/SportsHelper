@@ -25,6 +25,7 @@ extension WorkoutSession {
             plannedValue: target.value,
             actualValue: actual,
             actualLoad: recordedLoad,
+            swappedFromCatalogId: currentSwapOrigin,
             predictedValue: predicted,
             rpe: rpe,
             completedAt: now,
@@ -48,6 +49,7 @@ extension WorkoutSession {
             plannedValue: target.value,
             actualValue: max(1, target.value / 2),
             actualLoad: recordedLoad,
+            swappedFromCatalogId: currentSwapOrigin,
             skipReason: .tooHard,
             completedAt: now,
             origin: isExtraCurrentSet ? .extra : .prescribed
@@ -75,6 +77,7 @@ extension WorkoutSession {
             // 短版里的「没时间」是当天的情况，不写进 reason——
             // 否则连续三次会触发减量规则，把一次性状况当成计划本身的问题。
             reason: kind == .short && reason == .noTime ? nil : reason,
+            swappedFromCatalogId: currentSwapOrigin,
             at: now
         ), now: now)
         advance(silent: true)
