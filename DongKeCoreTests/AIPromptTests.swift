@@ -35,6 +35,36 @@ struct AIPromptBuilderTests {
         #expect(object?["$defs"] != nil)
     }
 
+    @Test func omittedSummaryKeepsTheBriefByteForByte() {
+        var profile = UserProfile()
+        profile.heightCm = 178
+        profile.weightKg = 72.5
+        let legacy = AIPromptBuilder.userBrief(profile: profile, brief: PlanBrief(sentence: "别练腿"))
+        let explicitNil = AIPromptBuilder.userBrief(
+            profile: profile,
+            brief: PlanBrief(sentence: "别练腿"),
+            receiptSummary: nil
+        )
+        let blank = AIPromptBuilder.userBrief(
+            profile: profile,
+            brief: PlanBrief(sentence: "别练腿"),
+            receiptSummary: "   \n "
+        )
+        #expect(legacy == explicitNil)
+        #expect(legacy == blank)
+    }
+
+    @Test func summaryRidesAlongWithTheBrief() {
+        let brief = AIPromptBuilder.userBrief(
+            profile: UserProfile(),
+            brief: PlanBrief(sentence: "每周三天"),
+            receiptSummary: "动作 | 计划 | 实际\n深蹲 | 12 次 | 10kg 12 个"
+        )
+        #expect(brief.contains("最近 4 周"))
+        #expect(brief.contains("10kg"))
+        #expect(brief.contains("每周三天"))
+    }
+
     @Test func userBriefCarriesProfileFacts() {
         var profile = UserProfile()
         profile.heightCm = 178

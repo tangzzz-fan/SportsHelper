@@ -93,6 +93,28 @@ public struct TrainingReceipt: Equatable, Sendable {
         \(PlanSchemaJSON.text)
         """
     }
+
+    /// 塞进 AI 提示词的摘要：只留正文，压到 1200 字以内，行不会被拦腰截断。
+    /// 不带 schema——schema 在 system prompt 里，重复一遍只会挤掉记录本身。
+    public var summary: String {
+        let limit = TrainingReceipt.summaryLimit
+        guard body.count > limit else { return body }
+
+        let lines = body.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var kept: [String] = []
+        var used = 0
+        for line in lines {
+            let cost = line.count + 1
+            // 留 30 字给末尾那句「另有 N 行未列出」。
+            if used + cost > limit - 30 { break }
+            kept.append(line)
+            used += cost
+        }
+        let dropped = lines.count - kept.count
+        return kept.joined(separator: "\n") + "\n…（另有 \(dropped) 行未列出）"
+    }
+
+    public static let summaryLimit = 1200
 }
 
 public enum TrainingReceiptBuilder {

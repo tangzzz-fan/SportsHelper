@@ -6,6 +6,7 @@ public protocol AIPlanGenerating {
         profile: UserProfile,
         brief: PlanBrief,
         memory: AliasMemory,
-        exercises: UserExerciseCatalog
+        exercises: UserExerciseCatalog,
+        receiptSummary: String?
     ) async throws -> ParsedPlanDraft
 }

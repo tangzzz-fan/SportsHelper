@@ -10,6 +10,8 @@ struct AIGenerateCard: View {
 
     @Environment(AISettingsStore.self) private var ai
     @Environment(ProfileStore.self) private var profiles
+    @Environment(SetLogStore.self) private var setLogs
+    @Environment(PlanStore.self) private var plans
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var isGenerating = false
@@ -18,6 +20,9 @@ struct AIGenerateCard: View {
     @State private var showSettings = false
     @State private var pendingSheet: BriefSheet?
     @State private var didAutoRun = false
+    /// 默认关：多数人第一次生成时还没有记录，开着只会多一段噪声。
+    @State private var includesReceipt = false
+    @State private var showReceiptPreview = false
 
     private struct BriefSheet: Identifiable {
         let id = UUID()
@@ -50,6 +55,7 @@ struct AIGenerateCard: View {
             if canGenerate {
                 sentenceEditor
                 VoiceInputBar(text: $sentence)
+                receiptToggle
             }
 
             if let errorText {
@@ -78,6 +84,9 @@ struct AIGenerateCard: View {
         .glassSurface(radius: Theme.Radius.glassCard)
         .sheet(isPresented: $showSettings) {
             AISettingsSheet()
+        }
+        .sheet(isPresented: $showReceiptPreview) {
+            AIReceiptPreviewSheet(text: receiptSummary)
         }
         .sheet(item: $pendingSheet) { sheet in
             BriefConfirmView(brief: sheet.brief, profile: profile) {
@@ -155,6 +164,41 @@ struct AIGenerateCard: View {
         }
     }
 
+    private var receiptToggle: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle(isOn: $includesReceipt) {
+                Text("带上最近 4 周记录")
+                    .font(Typography.secondary)
+            }
+            .tint(Theme.accent(for: colorScheme))
+            .accessibilityIdentifier(A11y.Import.aiReceiptToggle)
+
+            Text("AI 会看到你实际做了多少、用了多重，不再从零开始猜。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if includesReceipt {
+                Button {
+                    showReceiptPreview = true
+                } label: {
+                    Text("预览要发出去的内容")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(minHeight: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(A11y.Import.aiReceiptPreview)
+            }
+        }
+    }
+
+    /// 只在真要发的时候才算：一次要扫最近 600 条日志。
+    private var receiptSummary: String {
+        let plan = plans.plan ?? PlanGenerator.makePlan(profile: profile)
+        return TrainingReceiptBuilder.build(logs: setLogs.recentLogs(limit: 600), plan: plan).summary
+    }
+
     private var profile: UserProfile {
         profiles.profile ?? UserProfile()
     }
@@ -180,6 +224,7 @@ struct AIGenerateCard: View {
 
     private func generate(brief: PlanBrief) {
         guard isGenerating == false else { return }
+        let summary = includesReceipt ? receiptSummary : nil
         isGenerating = true
         errorText = nil
         needsKeyFix = false
@@ -190,7 +235,8 @@ struct AIGenerateCard: View {
                     profile: profile,
                     brief: brief,
                     memory: memory,
-                    exercises: exercises
+                    exercises: exercises,
+                    receiptSummary: summary
                 )
                 onGenerated(draft)
             } catch let error as AIClientError {

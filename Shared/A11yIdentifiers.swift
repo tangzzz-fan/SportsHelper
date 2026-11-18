@@ -61,6 +61,8 @@ enum A11y {
         static let save = "import.save"
         static let aiSentence = "import.ai.sentence"
         static let aiGenerate = "import.ai.generate"
+        static let aiReceiptToggle = "import.ai.receipt.toggle"
+        static let aiReceiptPreview = "import.ai.receipt.preview"
         static let briefConfirm = "import.brief.confirm"
         static let briefCancel = "import.brief.cancel"
         static let voiceStart = "import.voice.start"

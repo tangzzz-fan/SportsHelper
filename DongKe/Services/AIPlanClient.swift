@@ -15,7 +15,8 @@ final class AIPlanClient: AIPlanGenerating {
         profile: UserProfile,
         brief: PlanBrief,
         memory: AliasMemory,
-        exercises: UserExerciseCatalog
+        exercises: UserExerciseCatalog,
+        receiptSummary: String?
     ) async throws -> ParsedPlanDraft {
         #if DEBUG
         if ProcessInfo.processInfo.environment["DK_AI_FAKE"] == "1" {
@@ -33,7 +34,11 @@ final class AIPlanClient: AIPlanGenerating {
             url: try AIEndpoint.completionsURL(baseURL: configuration.trimmedBaseURL).get(),
             key: key,
             model: configuration.resolvedModel,
-            messages: AIPromptBuilder.makeMessages(profile: profile, brief: brief)
+            messages: AIPromptBuilder.makeMessages(
+                profile: profile,
+                brief: brief,
+                receiptSummary: receiptSummary
+            )
         )
         let result = try await transport.generate(request)
         return try AIPlanInterpreter.interpret(result.text, memory: memory, exercises: exercises).get()

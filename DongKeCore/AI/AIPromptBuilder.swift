@@ -1,23 +1,42 @@
 import Foundation
 
 public enum AIPromptBuilder {
-    public static func makeMessages(profile: UserProfile, extraNote: String = "") -> [ChatMessage] {
-        makeMessages(profile: profile, brief: PlanBrief(sentence: extraNote))
+    public static func makeMessages(
+        profile: UserProfile,
+        extraNote: String = "",
+        receiptSummary: String? = nil
+    ) -> [ChatMessage] {
+        makeMessages(profile: profile, brief: PlanBrief(sentence: extraNote), receiptSummary: receiptSummary)
     }
 
-    public static func makeMessages(profile: UserProfile, brief: PlanBrief) -> [ChatMessage] {
+    public static func makeMessages(
+        profile: UserProfile,
+        brief: PlanBrief,
+        receiptSummary: String? = nil
+    ) -> [ChatMessage] {
         [
             ChatMessage(role: .system, content: systemPrompt()),
-            ChatMessage(role: .user, content: userBrief(profile: profile, brief: brief))
+            ChatMessage(
+                role: .user,
+                content: userBrief(profile: profile, brief: brief, receiptSummary: receiptSummary)
+            )
         ]
     }
 
-    public static func copyablePrompt(profile: UserProfile, extraNote: String = "") -> String {
-        copyablePrompt(profile: profile, brief: PlanBrief(sentence: extraNote))
+    public static func copyablePrompt(
+        profile: UserProfile,
+        extraNote: String = "",
+        receiptSummary: String? = nil
+    ) -> String {
+        copyablePrompt(profile: profile, brief: PlanBrief(sentence: extraNote), receiptSummary: receiptSummary)
     }
 
-    public static func copyablePrompt(profile: UserProfile, brief: PlanBrief) -> String {
-        makeMessages(profile: profile, brief: brief)
+    public static func copyablePrompt(
+        profile: UserProfile,
+        brief: PlanBrief,
+        receiptSummary: String? = nil
+    ) -> String {
+        makeMessages(profile: profile, brief: brief, receiptSummary: receiptSummary)
             .map(\.content)
             .joined(separator: "\n\n")
     }
@@ -45,7 +64,11 @@ public enum AIPromptBuilder {
         userBrief(profile: profile, brief: PlanBrief(sentence: extraNote))
     }
 
-    public static func userBrief(profile: UserProfile, brief: PlanBrief) -> String {
+    public static func userBrief(
+        profile: UserProfile,
+        brief: PlanBrief,
+        receiptSummary: String? = nil
+    ) -> String {
         let effective = brief.resolved(against: profile)
         var lines: [String] = []
         let weight = weightText(profile.weightKg)
@@ -77,6 +100,10 @@ public enum AIPromptBuilder {
         lines.append("硬约束：每天动作数不超过 \(effective.maxExercises) 个，总组数不超过 \(effective.maxSets) 组，估算时长落在 \(effective.sessionMinutes) 分钟的 ±15% 内；meta.daysPerWeek 必须等于 \(effective.daysPerWeek)。")
         if sentence.isEmpty == false {
             lines.append("用户原话：\(sentence)。")
+        }
+        if let summary = receiptSummary?.trimmingCharacters(in: .whitespacesAndNewlines), summary.isEmpty == false {
+            lines.append("最近 4 周的实际执行记录（用户自己的记录，用它修正上面档案里不准的地方）：")
+            lines.append(summary)
         }
         lines.append("请按以上条件生成一周计划。")
         return lines.joined(separator: "\n")

@@ -97,4 +97,29 @@ struct TrainingReceiptTests {
         let receipt = TrainingReceiptBuilder.build(logs: old, plan: plan, now: day0)
         #expect(receipt.actions.isEmpty)
     }
+
+    @Test func shortReceiptSummarizesToItsBody() {
+        let receipt = TrainingReceiptBuilder.build(logs: [log(12)], plan: plan, now: day0)
+        #expect(receipt.summary == receipt.body)
+    }
+
+    @Test func longReceiptIsCappedAndSaysHowManyLinesWereDropped() {
+        let actions = (0..<120).map { index in
+            TrainingReceipt.ActionLine(
+                name: "动作\(index)",
+                planText: "4 组 × 12 次",
+                actualText: "10kg · 12 次",
+                downgraded: 1,
+                skipped: 0,
+                skipReasons: [],
+                best: 13
+            )
+        }
+        let receipt = TrainingReceipt(weeks: 4, effectiveSets: 480, actions: actions, painActions: [])
+        #expect(receipt.body.count > TrainingReceipt.summaryLimit)
+        #expect(receipt.summary.count <= TrainingReceipt.summaryLimit)
+        #expect(receipt.summary.contains("行未列出"))
+        #expect(receipt.summary.contains("动作 | 计划"))
+        #expect(receipt.summary.contains("DongKeWorkoutPlan") == false)
+    }
 }
