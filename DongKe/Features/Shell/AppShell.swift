@@ -14,6 +14,7 @@ struct AppShell: View {
     @Environment(SetLogStore.self) private var setLogs
     @Environment(ProfileStore.self) private var profileStore
     @Environment(PlanStore.self) private var planStore
+    @Bindable private var deload = DeloadStore.shared
     @State private var resumeCandidate: WorkoutCheckpoint?
     private let checkpoints = WorkoutCheckpointStore()
     @Environment(\.modelContext) private var modelContext
@@ -99,10 +100,11 @@ struct AppShell: View {
                         onStartShort: startShort,
                         resumeHint: resumeHint,
                         onResume: resumeWorkout,
-                        onEraseAll: handleEraseAll
+                        onEraseAll: handleEraseAll,
+                        deloadNote: deloadNote
                     )
                 case .plan:
-                    PlanView(plan: activePlan)
+                    PlanView(plan: activePlan, isDeloadWeek: deloadNote != nil)
                 case .history:
                     HistoryView(weeklyTarget: weeklyTarget)
                 }
@@ -177,8 +179,20 @@ struct AppShell: View {
         .onAppear(perform: refreshResumeCandidate)
     }
 
-    private var activePlan: WorkoutPlan {
+    /// 计划本来的样子。减载周只改显示与当次训练，不改它。
+    private var rawPlan: WorkoutPlan {
         planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
+    }
+
+    /// 第 4 周目标值 ×0.6。不写回计划、不改 revision，第 5 周自动恢复。
+    private var activePlan: WorkoutPlan {
+        DeloadWeek.applied(to: rawPlan, on: Date(), enabled: deload.isEnabled)
+    }
+
+    private var deloadNote: String? {
+        guard let startedAt = rawPlan.createdAt else { return nil }
+        let week = DeloadWeek.weekIndex(on: Date(), startedAt: startedAt)
+        return DeloadWeek.note(enabled: deload.isEnabled, weekIndex: week)
     }
 
     private var weeklyTarget: Int {

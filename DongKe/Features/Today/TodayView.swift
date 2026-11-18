@@ -10,6 +10,8 @@ struct TodayView: View {
     var resumeHint: String?
     var onResume: () -> Void
     var onEraseAll: () -> Void
+    /// 减载周时的一句话。nil 不占位。
+    var deloadNote: String?
 
     @State private var showSettings: Bool
     @State var showSkipConfirm = false
@@ -25,7 +27,8 @@ struct TodayView: View {
         onStartShort: @escaping (Int) -> Void = { _ in },
         resumeHint: String? = nil,
         onResume: @escaping () -> Void = {},
-        onEraseAll: @escaping () -> Void = {}
+        onEraseAll: @escaping () -> Void = {},
+        deloadNote: String? = nil
     ) {
         self.plan = plan
         self.onStart = onStart
@@ -33,6 +36,7 @@ struct TodayView: View {
         self.resumeHint = resumeHint
         self.onResume = onResume
         self.onEraseAll = onEraseAll
+        self.deloadNote = deloadNote
         var initial = false
         var microDoseInitial = false
         #if DEBUG

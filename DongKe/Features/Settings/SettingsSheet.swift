@@ -15,6 +15,7 @@ struct SettingsSheet: View {
 
     @Bindable private var voice = VoiceSettingsStore.shared
     @Bindable private var largeText = LargeTextStore.shared
+    @Bindable private var deload = DeloadStore.shared
 
     @State private var showEraseConfirm = false
     @State private var showHealthNotice = false
@@ -30,6 +31,7 @@ struct SettingsSheet: View {
                         statusCard
                         voiceCard
                         largeTextCard
+                        deloadCard
                         healthCard
                         AISettingsCard()
                         aboutCard
@@ -248,6 +250,29 @@ struct SettingsSheet: View {
                     .tint(Theme.accent(for: colorScheme))
                     .accessibilityIdentifier(A11y.Settings.largeTextToggle)
                     .accessibilityLabel("大字模式")
+            }
+            .padding(16)
+        }
+        .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var deloadCard: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("减载周")
+                        .font(Typography.rowTitle)
+                    Text("每 4 周的第 4 周目标降到六成，重量和组数不动；第 5 周自动恢复")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Toggle("", isOn: $deload.isEnabled)
+                    .labelsHidden()
+                    .tint(Theme.accent(for: colorScheme))
+                    .accessibilityIdentifier(A11y.Settings.deloadToggle)
+                    .accessibilityLabel("减载周")
             }
             .padding(16)
         }

@@ -16,6 +16,7 @@ enum A11y {
         static let undoSkipToday = "today.undoSkipToday"
         static let alreadyDone = "today.alreadyDone"
         static let microDose = "today.microDose"
+        static let deloadNote = "today.deloadNote"
         static func shortSession(_ minutes: Int) -> String { "today.short.\(minutes)" }
     }
 
@@ -83,6 +84,7 @@ enum A11y {
         static let safetyNotice = "plan.safety.notice"
         static let originNotice = "plan.origin.notice"
         static let originBadge = "plan.origin.badge"
+        static let deloadBadge = "plan.deload.badge"
         static let adjustEntry = "plan.adjust.entry"
         static let adjustApply = "plan.adjust.apply"
         static let adjustConfirm = "plan.adjust.confirm"
@@ -100,6 +102,7 @@ enum A11y {
         static let scheduledCount = "settings.scheduledCount"
         static let voiceToggle = "settings.voiceToggle"
         static let largeTextToggle = "settings.largeTextToggle"
+        static let deloadToggle = "settings.deloadToggle"
         static let healthNotice = "settings.healthNotice"
         static let healthNoticeEntry = "settings.healthNotice.entry"
         static let countersEntry = "settings.counters.entry"

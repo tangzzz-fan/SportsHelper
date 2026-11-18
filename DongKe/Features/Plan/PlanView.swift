@@ -3,6 +3,8 @@ import DongKeCore
 
 struct PlanView: View {
     let plan: WorkoutPlan
+    /// 第 4 周：目标值已按 0.6 倍显示，页头标一下免得用户以为计划变轻了。
+    var isDeloadWeek: Bool = false
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(PlanStore.self) private var planStore
@@ -18,8 +20,9 @@ struct PlanView: View {
     @State private var proposal: PlanProposal?
     @State private var askedForAdvice = false
 
-    init(plan: WorkoutPlan) {
+    init(plan: WorkoutPlan, isDeloadWeek: Bool = false) {
         self.plan = plan
+        self.isDeloadWeek = isDeloadWeek
         #if DEBUG
         let preview = ProcessInfo.processInfo.environment["DK_PREVIEW"] ?? ""
         _showLibrary = State(initialValue: preview == "library" || preview == "detail" || preview == "myexercise")
@@ -64,6 +67,11 @@ struct PlanView: View {
                         if plan.revision > 1 {
                             Text("第 \(plan.revision) 版")
                                 .foregroundStyle(.tertiary)
+                        }
+                        if isDeloadWeek {
+                            Text("减载周")
+                                .foregroundStyle(Theme.accent(for: colorScheme))
+                                .accessibilityIdentifier(A11y.Plan.deloadBadge)
                         }
                     }
                     .font(.footnote)

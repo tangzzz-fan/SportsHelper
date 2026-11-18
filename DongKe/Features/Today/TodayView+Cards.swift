@@ -92,6 +92,14 @@ extension TodayView {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
+            if let deloadNote, resting == false {
+                Text(deloadNote)
+                    .font(Typography.meta)
+                    .foregroundStyle(Theme.accent(for: colorScheme))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(A11y.Today.deloadNote)
+            }
+
             VStack(spacing: 8) {
                 HStack {
                     Text("本周")
