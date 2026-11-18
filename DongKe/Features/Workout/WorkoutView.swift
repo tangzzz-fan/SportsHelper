@@ -18,6 +18,7 @@ struct WorkoutView: View {
     @State private var restSheetHeight: CGFloat = 0
     /// 「上次 10 · 最好 12」。进入本组时算一次，训练中途不跟着变。
     @State private var recordLine: String?
+    @State private var showLoadSheet = false
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -27,10 +28,7 @@ struct WorkoutView: View {
     }
 
     private var doseText: String {
-        guard let prescription else { return "" }
-        let target = prescription.target
-        let perSide = target.perSide ? " / 侧" : ""
-        return "\(target.doseText)\(perSide) × \(prescription.sets) 组"
+        prescription?.workoutDoseLine(load: session.currentLoad) ?? ""
     }
 
     private var figureSize: CGSize {
@@ -104,10 +102,23 @@ struct WorkoutView: View {
                                     VStack(spacing: 2) {
                                         Text(prescription.name)
                                             .font(Typography.buttonLabel)
-                                        Text(doseText)
+                                        Button {
+                                            showLoadSheet = true
+                                        } label: {
+                                            HStack(spacing: 4) {
+                                                Text(doseText)
+                                                if session.currentLoad != nil {
+                                                    Image(systemName: "chevron.up.chevron.down")
+                                                        .font(.system(size: 10, weight: .semibold))
+                                                }
+                                            }
                                             .font(Typography.body)
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(session.currentLoad == nil)
+                                        .accessibilityIdentifier(A11y.Workout.loadAdjust)
                                         if let recordLine {
                                             Text(recordLine)
                                                 .font(Typography.secondary)
@@ -193,6 +204,9 @@ struct WorkoutView: View {
             effort = nil
         }
         .onAppear(perform: startVoiceIfNeeded)
+        .sheet(isPresented: $showLoadSheet) {
+            LoadAdjustSheet(session: session)
+        }
         .onDisappear(perform: scheduleVoiceTeardown)
         .onChange(of: scenePhase) { _, phase in
             VoiceService.shared.refreshPolicy(isForeground: phase != .background)

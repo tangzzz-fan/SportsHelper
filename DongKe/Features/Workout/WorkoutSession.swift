@@ -20,6 +20,9 @@ final class WorkoutSession: Identifiable {
 
     var stepIndex = 0
     var logs: [SetLog] = []
+    /// 用户临时改的重量，按 `itemId` 记忆：同一动作的下一组沿用，换动作回到它自己的处方。
+    /// 只在本次会话里有效，不进计划、不写版本。
+    var loadOverrides: [String: Double] = [:]
     var rest: RestState = .idle
     var restKicker = "组间休息"
     var finishedAt: Date?
@@ -96,6 +99,32 @@ final class WorkoutSession: Identifiable {
     var currentTarget: SetTarget? {
         guard case let .set(_, _, target, _)? = currentStep else { return nil }
         return target
+    }
+
+    /// 当前组该显示的重量。自重且 0kg 返回 nil，训练页不显示重量。
+    var currentLoad: Load? {
+        guard let item = currentPrescription else { return nil }
+        let base = item.load
+        guard base.type != .bodyweight || base.value > 0 else { return nil }
+        return Load(type: base.type, value: loadOverrides[item.itemId] ?? base.value)
+    }
+
+    /// 落库用。只有用户真的改过才有值：没改记 nil，读的人按处方重量处理。
+    var recordedLoad: Load? {
+        guard let item = currentPrescription, let value = loadOverrides[item.itemId] else { return nil }
+        return Load(type: item.load.type, value: value)
+    }
+
+    func adjustLoad(by delta: Double) {
+        guard let item = currentPrescription, currentLoad != nil else { return }
+        let base = loadOverrides[item.itemId] ?? item.load.value
+        let next = max(0, base + delta)
+        loadOverrides[item.itemId] = next == item.load.value ? nil : next
+    }
+
+    func resetLoad() {
+        guard let item = currentPrescription else { return }
+        loadOverrides[item.itemId] = nil
     }
 
     var acceptsBonusReps: Bool {

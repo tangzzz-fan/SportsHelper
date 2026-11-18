@@ -24,6 +24,7 @@ extension WorkoutSession {
             status: .done,
             plannedValue: target.value,
             actualValue: actual,
+            actualLoad: recordedLoad,
             predictedValue: predicted,
             rpe: rpe,
             completedAt: now,
@@ -46,6 +47,7 @@ extension WorkoutSession {
             status: .downgraded,
             plannedValue: target.value,
             actualValue: max(1, target.value / 2),
+            actualLoad: recordedLoad,
             skipReason: .tooHard,
             completedAt: now,
             origin: isExtraCurrentSet ? .extra : .prescribed

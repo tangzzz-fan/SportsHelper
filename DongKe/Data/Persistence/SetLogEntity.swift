@@ -12,6 +12,8 @@ final class SetLogEntity {
     var statusRaw: String
     var plannedValue: Int
     var actualValue: Int
+    var actualLoadValue: Double?
+    var actualLoadTypeRaw: String?
     var predictedValue: Int?
     var skipReasonRaw: String?
     var completedAt: Date
@@ -28,6 +30,8 @@ final class SetLogEntity {
         statusRaw: String,
         plannedValue: Int,
         actualValue: Int,
+        actualLoadValue: Double? = nil,
+        actualLoadTypeRaw: String? = nil,
         predictedValue: Int? = nil,
         skipReasonRaw: String?,
         completedAt: Date,
@@ -43,6 +47,8 @@ final class SetLogEntity {
         self.statusRaw = statusRaw
         self.plannedValue = plannedValue
         self.actualValue = actualValue
+        self.actualLoadValue = actualLoadValue
+        self.actualLoadTypeRaw = actualLoadTypeRaw
         self.predictedValue = predictedValue
         self.skipReasonRaw = skipReasonRaw
         self.completedAt = completedAt

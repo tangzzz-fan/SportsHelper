@@ -37,6 +37,7 @@ enum A11y {
         static let extraQueued = "workout.extra.queued"
         static let recordCelebration = "workout.record.celebration"
         static let summaryTitle = "workout.summary.title"
+        static let loadAdjust = "workout.load.adjust"
     }
 
     enum Summary {

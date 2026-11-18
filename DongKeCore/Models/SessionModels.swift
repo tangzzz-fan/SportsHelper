@@ -39,6 +39,9 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
     public var status: SetStatus
     public var plannedValue: Int
     public var actualValue: Int
+    /// 这一组实际用的重量。nil 表示「按处方」，与 `planDate` 的回落同构：
+    /// 旧日志没有这个字段时，读的人按处方重量处理，而不是当成 0kg。
+    public var actualLoad: Load?
     public var predictedValue: Int?
     public var skipReason: SkipReason?
     public var rpe: Int?
@@ -55,6 +58,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         status: SetStatus,
         plannedValue: Int,
         actualValue: Int,
+        actualLoad: Load? = nil,
         predictedValue: Int? = nil,
         skipReason: SkipReason? = nil,
         rpe: Int? = nil,
@@ -70,6 +74,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         self.status = status
         self.plannedValue = plannedValue
         self.actualValue = actualValue
+        self.actualLoad = actualLoad
         self.predictedValue = predictedValue
         self.skipReason = skipReason
         self.rpe = rpe
@@ -87,6 +92,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         case status
         case plannedValue
         case actualValue
+        case actualLoad
         case predictedValue
         case skipReason
         case rpe
@@ -105,6 +111,7 @@ public struct SetLog: Codable, Equatable, Identifiable, Sendable {
         status = try container.decode(SetStatus.self, forKey: .status)
         plannedValue = try container.decode(Int.self, forKey: .plannedValue)
         actualValue = try container.decode(Int.self, forKey: .actualValue)
+        actualLoad = (try? container.decodeIfPresent(Load.self, forKey: .actualLoad)) ?? nil
         predictedValue = try container.decodeIfPresent(Int.self, forKey: .predictedValue)
         skipReason = try container.decodeIfPresent(SkipReason.self, forKey: .skipReason)
         rpe = try container.decodeIfPresent(Int.self, forKey: .rpe)
