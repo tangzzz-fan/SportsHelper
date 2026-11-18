@@ -21,6 +21,8 @@ struct WorkoutView: View {
     @State private var recordLine: String?
     @State private var showLoadSheet = false
     @State private var showReceipt = false
+    @State private var showRackSheet = false
+    @Bindable private var rackStore = LoadRackStore.shared
     @State private var showSwapSheet: Bool = {
         #if DEBUG
         return ProcessInfo.processInfo.environment["DK_PREVIEW"] == "swap"
@@ -69,6 +71,12 @@ struct WorkoutView: View {
 
     private var halfTargetTitle: String {
         prescription?.target.type == .durationSec ? "减一半时间" : "减一半次数"
+    }
+
+    /// 第一次遇到负重动作时问一次。问过之后不再自动弹，设置页能改。
+    private func askRackIfNeeded() {
+        guard rackStore.hasAnswered == false, session.currentLoad != nil else { return }
+        showRackSheet = true
     }
 
     private func refreshRecordLine() {
@@ -247,6 +255,10 @@ struct WorkoutView: View {
             effort = nil
         }
         .onAppear(perform: startVoiceIfNeeded)
+        .onAppear(perform: askRackIfNeeded)
+        .sheet(isPresented: $showRackSheet) {
+            LoadRackSheet { rackStore.save($0) }
+        }
         .sheet(isPresented: $showLoadSheet) {
             LoadAdjustSheet(session: session)
         }

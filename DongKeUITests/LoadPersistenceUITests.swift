@@ -15,6 +15,8 @@ final class LoadPersistenceUITests: XCTestCase {
         app.launchEnvironment["DK_PREVIEW"] = "workout"
         app.launchEnvironment["DK_SKIP_ONBOARDING"] = "1"
         app.launchEnvironment["DK_WORKOUT_LOAD"] = "1"
+        // 重量档位已经在设置里选过：不让首次提问的面板挡住训练页。
+        app.launchArguments += ["-dk.load.rackAsked", "YES"]
         app.launch()
         return app
     }

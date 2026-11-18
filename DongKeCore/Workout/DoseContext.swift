@@ -8,6 +8,8 @@ public struct DoseContext: Sendable {
     public var asked: Bool
     public var now: Date
     public var calendar: Calendar
+    /// 家里的重量档位。加量提案只落在买得到的重量上。
+    public var rack: LoadRack
 
     public init(
         plan: WorkoutPlan,
@@ -16,7 +18,8 @@ public struct DoseContext: Sendable {
         sessionStarts: [Date] = [],
         asked: Bool = false,
         now: Date = Date(),
-        calendar: Calendar = Calendar(identifier: .gregorian)
+        calendar: Calendar = Calendar(identifier: .gregorian),
+        rack: LoadRack = .step25
     ) {
         self.plan = plan
         self.logs = logs
@@ -25,5 +28,6 @@ public struct DoseContext: Sendable {
         self.asked = asked
         self.now = now
         self.calendar = calendar
+        self.rack = rack
     }
 }

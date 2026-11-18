@@ -34,6 +34,8 @@ public enum DoseAdjustment {
         if let rebuild = rebuildProposal(context) { return rebuild }
         if let swap = swapProposal(context, sessions: sessions) ?? repeatedSwapProposal(context, sessions: sessions),
            context.memory.hasRejected(swap) == false { return swap }
+        if let selfLoaded = selfLoadedProposal(context, sessions: sessions),
+           context.memory.hasRejected(selfLoaded) == false { return selfLoaded }
         if let reduction = reductionProposal(context, sessions: sessions),
            context.memory.hasRejected(reduction) == false { return reduction }
         if let deload = deloadProposal(context) { return deload }

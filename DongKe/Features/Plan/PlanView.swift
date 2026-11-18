@@ -218,7 +218,8 @@ struct PlanView: View {
             logs: setLogStore.recentLogs(),
             memory: ProposalMemo.shared.memory,
             sessionStarts: sessionStore.sessions.map(\.date),
-            asked: askedForAdvice
+            asked: askedForAdvice,
+            rack: LoadRackStore.shared.rack
         )
         guard let found = DoseAdjustment.propose(context) else {
             proposal = nil

@@ -16,6 +16,8 @@ struct SettingsSheet: View {
     @Bindable private var voice = VoiceSettingsStore.shared
     @Bindable private var largeText = LargeTextStore.shared
     @Bindable private var deload = DeloadStore.shared
+    @Bindable private var rack = LoadRackStore.shared
+    @State private var showRackSheet = false
 
     @State private var showEraseConfirm = false
     @State private var showHealthNotice = false
@@ -31,6 +33,7 @@ struct SettingsSheet: View {
                         statusCard
                         voiceCard
                         largeTextCard
+                        rackCard
                         deloadCard
                         healthCard
                         AISettingsCard()
@@ -254,6 +257,35 @@ struct SettingsSheet: View {
             .padding(16)
         }
         .glassSurface(radius: Theme.Radius.card)
+    }
+
+    private var rackCard: some View {
+        Button {
+            showRackSheet = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("重量档位")
+                        .font(Typography.rowTitle)
+                        .foregroundStyle(.primary)
+                    Text(rack.rack.title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableGlassStyle())
+        .glassSurface(radius: Theme.Radius.card)
+        .accessibilityIdentifier(A11y.Settings.rackRow)
+        .sheet(isPresented: $showRackSheet) {
+            LoadRackSheet(initial: rack.rack) { rack.save($0) }
+        }
     }
 
     private var deloadCard: some View {

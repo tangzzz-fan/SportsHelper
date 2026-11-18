@@ -93,12 +93,12 @@ func repsComeFirst() throws {
     #expect(proposal.changes[0].toValue == 14)
 }
 
-@Test("次数到顶、有重量，就加重 2.5%")
+@Test("次数到顶、有重量，就加到下一个买得到的档位")
 func loadComesSecond() throws {
     let plan = plan(items: [item(value: 14, load: 20, loadType: .dumbbell)])
     let proposal = try #require(DoseAdjustment.propose(plan: plan, logs: twoClearedSessions(planned: 14)))
     #expect(proposal.changes[0].field == .load)
-    #expect(proposal.changes[0].toValue == 20.5)
+    #expect(proposal.changes[0].toValue == 22.5)
 }
 
 @Test("次数到顶、没重量，就加一组")
@@ -338,29 +338,30 @@ private func loadPlan() -> WorkoutPlan {
     plan(items: [item(value: 14, load: 20, loadType: .dumbbell, catalog: "goblet_squat")])
 }
 
-@Test("连着两次都在第一次训练就崩，幅度减半")
+@Test("连着两次都在第一次训练就崩，只加一档")
 func toleranceShrinksAmplitude() throws {
     let memory = ProposalMemory(recentSetbacks: [1, 1])
     let context = DoseContext(plan: loadPlan(), logs: twoClearedSessions(planned: 14), memory: memory, now: base)
     let proposal = try #require(DoseAdjustment.propose(context))
     #expect(proposal.changes[0].field == .load)
-    #expect(proposal.changes[0].toValue == 20.3)
+    // 档位是物理的：耐受差也只能落在下一档，不给出 20.3kg 这种买不到的数字。
+    #expect(proposal.changes[0].toValue == 22.5)
 }
 
-@Test("连着两次都撑过第三次，幅度用上限")
+@Test("连着两次都撑过第三次，一次跳两档")
 func toleranceRaisesAmplitude() throws {
     let memory = ProposalMemory(recentSetbacks: [4, 3])
     let context = DoseContext(plan: loadPlan(), logs: twoClearedSessions(planned: 14), memory: memory, now: base)
     let proposal = try #require(DoseAdjustment.propose(context))
-    #expect(proposal.changes[0].toValue == 21)
+    #expect(proposal.changes[0].toValue == 25)
 }
 
-@Test("一次早崩一次撑住，就用默认幅度")
+@Test("一次早崩一次撑住，就走一档")
 func toleranceStaysDefault() throws {
     let memory = ProposalMemory(recentSetbacks: [2, 1])
     let context = DoseContext(plan: loadPlan(), logs: twoClearedSessions(planned: 14), memory: memory, now: base)
     let proposal = try #require(DoseAdjustment.propose(context))
-    #expect(proposal.changes[0].toValue == 20.5)
+    #expect(proposal.changes[0].toValue == 22.5)
 }
 
 @Test("只崩过一次，还看不出耐受，用默认幅度")

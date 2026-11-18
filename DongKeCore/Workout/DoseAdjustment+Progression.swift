@@ -46,7 +46,7 @@ extension DoseAdjustment {
             let recent = history.suffix(minimumSessions)
 
             if recent.allSatisfy({ clearedEverySet(of: item, in: $0.logs) }) {
-                guard let lever = lever(for: item) else { continue }
+                guard let lever = lever(for: item, rack: context.rack) else { continue }
                 cleared.append((item, lever))
                 continue
             }
@@ -65,7 +65,8 @@ extension DoseAdjustment {
     ) -> PlanProposal? {
         guard let level = cleared.map(\.lever).min() else { return nil }
         let chosen = cleared.filter { $0.lever == level }.map(\.item)
-        let changes = chosen.compactMap { change(for: $0, lever: level, amplitude: context.memory.loadAmplitude) }
+        let steps = stepCount(for: context.memory.loadAmplitude)
+        let changes = chosen.compactMap { change(for: $0, lever: level, rack: context.rack, steps: steps) }
         guard changes.isEmpty == false else { return nil }
         return PlanProposal(
             kind: .dose,
@@ -91,7 +92,7 @@ extension DoseAdjustment {
         }
         let changes = chosen.compactMap { item in
             axis == .reps
-                ? change(for: item, lever: .reps, amplitude: context.memory.loadAmplitude)
+                ? change(for: item, lever: .reps, rack: context.rack, steps: 1)
                 : holdChange(for: item)
         }
         guard changes.isEmpty == false else { return nil }
@@ -121,10 +122,13 @@ extension DoseAdjustment {
         return rpe <= comfortableReserve
     }
 
-    static func lever(for item: ExercisePrescription) -> Lever? {
+    /// 次数到顶之后：有更重的档位就加重，买不到更重的就加组——不给出买不到的数字。
+    static func lever(for item: ExercisePrescription, rack: LoadRack) -> Lever? {
         guard item.target.type == .reps else { return nil }
         if item.target.value + repStep <= repCeiling { return .reps }
-        if item.load.type != .bodyweight, item.load.value > 0 { return .load }
+        if item.load.type != .bodyweight, item.load.value > 0, rack.next(after: item.load.value) != nil {
+            return .load
+        }
         if item.sets < setCeiling { return .sets }
         return nil
     }
@@ -141,7 +145,26 @@ extension DoseAdjustment {
         )
     }
 
-    static func change(for item: ExercisePrescription, lever: Lever, amplitude: Double) -> PlanProposal.Change? {
+    /// 档位是物理的，幅度只能落在整数档上：耐受好就一次跳两档，其余一档。
+    static func stepCount(for amplitude: Double) -> Int {
+        amplitude >= ProposalMemory.boldAmplitude ? 2 : 1
+    }
+
+    static func nextLoad(after current: Double, rack: LoadRack, steps: Int) -> Double? {
+        var value = current
+        for _ in 0..<max(1, steps) {
+            guard let next = rack.next(after: value) else { break }
+            value = next
+        }
+        return value > current ? value : nil
+    }
+
+    static func change(
+        for item: ExercisePrescription,
+        lever: Lever,
+        rack: LoadRack,
+        steps: Int
+    ) -> PlanProposal.Change? {
         switch lever {
         case .reps:
             return PlanProposal.Change(
@@ -152,8 +175,7 @@ extension DoseAdjustment {
                 toValue: Double(item.target.value + repStep)
             )
         case .load:
-            let target = (item.load.value * amplitude * 10).rounded() / 10
-            guard target > item.load.value else { return nil }
+            guard let target = nextLoad(after: item.load.value, rack: rack, steps: steps) else { return nil }
             return PlanProposal.Change(
                 itemId: item.itemId,
                 name: item.name,

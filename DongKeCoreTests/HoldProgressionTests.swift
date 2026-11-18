@@ -63,7 +63,7 @@ struct HoldProgressionTests {
     @Test("保持时间到 60 秒后没有下一档")
     func holdCeilingHasNoNextStep() {
         let item = makeItem(value: 60, targetType: .durationSec)
-        #expect(DoseAdjustment.lever(for: item) == nil)
+        #expect(DoseAdjustment.lever(for: item, rack: .step25) == nil)
         #expect(ProgressionAxis(item.target)?.raised(60) == nil)
     }
 
@@ -204,7 +204,7 @@ struct HoldProgressionTests {
     func distanceHasNoAxis() {
         let item = makeItem(value: 1000, targetType: .distanceM)
         #expect(ProgressionAxis(item.target) == nil)
-        #expect(DoseAdjustment.lever(for: item) == nil)
+        #expect(DoseAdjustment.lever(for: item, rack: .step25) == nil)
     }
 
     @Test("一次提案只出一种字段：次数优先级高于保持时间")
