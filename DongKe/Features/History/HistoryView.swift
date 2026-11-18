@@ -7,12 +7,22 @@ struct HistoryView: View {
 
     @Environment(SessionStore.self) private var store
     @Environment(SetLogStore.self) private var setLogStore
+    @Environment(PlanStore.self) private var planStore
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var report = DoseReport()
     @State private var highlights = WeekHighlights()
     @State private var calibration = PredictionCalibration(unit: .reps, weeks: [])
     @State private var acceptedThisWeek = 0
+    @State private var showReceipt = false
+
+    private var receiptText: String {
+        guard let plan = planStore.plan else { return "" }
+        return TrainingReceiptBuilder.build(
+            logs: setLogStore.recentLogs(limit: 600),
+            plan: plan
+        ).text
+    }
 
     private var formatter: DateFormatter {
         let formatter = DateFormatter()
@@ -33,10 +43,19 @@ struct HistoryView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("记录")
-                        .font(Typography.pageTitle)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("记录")
+                            .font(Typography.pageTitle)
+                        Spacer()
+                        if planStore.plan != nil {
+                            Button("复制回执") { showReceipt = true }
+                                .font(Typography.secondary)
+                                .foregroundStyle(Theme.accent(for: colorScheme))
+                                .accessibilityIdentifier(A11y.Summary.copyReceipt)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
                     doseCard
                         .padding(.horizontal, 16)
@@ -82,6 +101,9 @@ struct HistoryView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .contentMargins(.bottom, 96, for: .scrollContent)
+        }
+        .sheet(isPresented: $showReceipt) {
+            ReceiptSheet(text: receiptText)
         }
         .task(id: store.sessions.count) {
             reload()

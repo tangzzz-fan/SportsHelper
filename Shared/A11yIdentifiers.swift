@@ -47,6 +47,8 @@ enum A11y {
         static let done = "summary.done"
         static let completion = "summary.completion"
         static let narrative = "summary.narrative"
+        static let copyReceipt = "summary.receipt.copy"
+        static let receiptCopy = "summary.receipt.confirm"
     }
 
     enum Import {

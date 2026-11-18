@@ -6,6 +6,7 @@ struct WorkoutSummaryView: View {
     let recap: SessionRecap
     /// 结束页那一句判断。nil 时不占位——没值得说的就不说。
     var narrative: String? = nil
+    var onCopyReceipt: (() -> Void)? = nil
     var onDone: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
@@ -58,6 +59,14 @@ struct WorkoutSummaryView: View {
                         statCard
                             .padding(.horizontal, 16)
                             .padding(.top, typeSize.isAccessibilitySize ? 16 : 28)
+
+                        if let onCopyReceipt {
+                            Button("复制训练回执") { onCopyReceipt() }
+                                .font(Typography.secondary)
+                                .foregroundStyle(Theme.accent(for: colorScheme))
+                                .padding(.top, 12)
+                                .accessibilityIdentifier(A11y.Summary.copyReceipt)
+                        }
 
                         Text("降阶的组计入完成率；未做与跳过的组不计。")
                             .font(.caption)

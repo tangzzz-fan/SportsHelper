@@ -19,6 +19,7 @@ struct WorkoutView: View {
     /// 「上次 10 · 最好 12」。进入本组时算一次，训练中途不跟着变。
     @State private var recordLine: String?
     @State private var showLoadSheet = false
+    @State private var showReceipt = false
     @Bindable private var voiceSettings = VoiceSettingsStore.shared
 
     private var prescription: ExercisePrescription? { session.currentPrescription }
@@ -29,6 +30,14 @@ struct WorkoutView: View {
 
     private var doseText: String {
         prescription?.workoutDoseLine(load: session.currentLoad) ?? ""
+    }
+
+    /// 结束页打开回执时才算一次，不在每次 body 刷新里扫日志。
+    private var receiptText: String {
+        TrainingReceiptBuilder.build(
+            logs: setLogs.recentLogs(limit: 600),
+            plan: session.plan
+        ).text
     }
 
     private var figureSize: CGSize {
@@ -91,8 +100,12 @@ struct WorkoutView: View {
                 title: session.sessionTitle,
                 recap: session.recap,
                 narrative: session.narrative,
+                onCopyReceipt: { showReceipt = true },
                 onDone: close
             )
+            .sheet(isPresented: $showReceipt) {
+                ReceiptSheet(text: receiptText)
+            }
         } else {
             workoutBody
         }
