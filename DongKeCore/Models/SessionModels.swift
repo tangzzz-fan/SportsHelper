@@ -11,6 +11,12 @@ public enum SetOrigin: String, Codable, Sendable {
     case extra
 }
 
+/// 这一次会话是完整版还是当天压缩出来的短版。短版算「练过」，只在记录标题上标出来。
+public enum SessionKind: String, Codable, Sendable {
+    case full
+    case short
+}
+
 public enum SkipReason: String, Codable, Sendable, CaseIterable {
     case noTime
     case tooHard

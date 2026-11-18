@@ -5,6 +5,8 @@ import DongKeCore
 struct TodayView: View {
     let plan: WorkoutPlan
     var onStart: () -> Void
+    /// 今天只剩 N 分钟：参数是 10 / 15 / 20。只影响这次会话，不改计划。
+    var onStartShort: (Int) -> Void
     var resumeHint: String?
     var onResume: () -> Void
     var onEraseAll: () -> Void
@@ -20,12 +22,14 @@ struct TodayView: View {
     init(
         plan: WorkoutPlan,
         onStart: @escaping () -> Void,
+        onStartShort: @escaping (Int) -> Void = { _ in },
         resumeHint: String? = nil,
         onResume: @escaping () -> Void = {},
         onEraseAll: @escaping () -> Void = {}
     ) {
         self.plan = plan
         self.onStart = onStart
+        self.onStartShort = onStartShort
         self.resumeHint = resumeHint
         self.onResume = onResume
         self.onEraseAll = onEraseAll

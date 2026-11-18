@@ -132,6 +132,25 @@ extension TodayView {
             .accessibilityIdentifier(A11y.Today.start)
             .padding(.top, 12)
 
+            if done == false && skipped == false {
+                HStack(spacing: 10) {
+                    Text("只剩")
+                        .font(Typography.secondary)
+                        .foregroundStyle(.secondary)
+                    ForEach([10, 15, 20], id: \.self) { minutes in
+                        Button("\(minutes) 分钟") {
+                            onStartShort(minutes)
+                        }
+                        .font(Typography.secondary)
+                        .foregroundStyle(Theme.accent(for: colorScheme))
+                        .frame(minHeight: 36)
+                        .accessibilityIdentifier(A11y.Today.shortSession(minutes))
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 4)
+            }
+
             if done == false {
                 if skipped {
                     Button {

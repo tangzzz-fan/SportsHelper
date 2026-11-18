@@ -72,7 +72,9 @@ extension WorkoutSession {
             targetType: target.type,
             setIndex: setIndex,
             plannedValue: target.value,
-            reason: reason,
+            // 短版里的「没时间」是当天的情况，不写进 reason——
+            // 否则连续三次会触发减量规则，把一次性状况当成计划本身的问题。
+            reason: kind == .short && reason == .noTime ? nil : reason,
             at: now
         ), now: now)
         advance(silent: true)

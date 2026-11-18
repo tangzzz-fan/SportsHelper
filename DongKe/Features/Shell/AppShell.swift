@@ -96,6 +96,7 @@ struct AppShell: View {
                     TodayView(
                         plan: activePlan,
                         onStart: startWorkout,
+                        onStartShort: startShort,
                         resumeHint: resumeHint,
                         onResume: resumeWorkout,
                         onEraseAll: handleEraseAll
@@ -205,8 +206,23 @@ struct AppShell: View {
         start(dayIndex: occurrence.dayIndex, on: occurrence.date, in: plan)
     }
 
-    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan) {
-        let active = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: planDate)
+    /// 今天只剩 N 分钟：把这一节压短，只影响这次会话，不改计划、不改 revision。
+    private func startShort(minutes: Int) {
+        let plan = activePlan
+        guard let occurrence = PlanCalendar.occurrence(on: Date(), in: plan),
+              let day = plan.days.first(where: { $0.dayIndex == occurrence.dayIndex })
+        else { return }
+
+        var shortPlan = plan
+        if let index = shortPlan.days.firstIndex(where: { $0.dayIndex == day.dayIndex }) {
+            shortPlan.days[index] = SessionCompressor.compress(day, toMinutes: minutes)
+        }
+        LocalCounters.shared.increment(.shortSessionStarted)
+        start(dayIndex: day.dayIndex, on: occurrence.date, in: shortPlan, kind: .short)
+    }
+
+    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan, kind: SessionKind = .full) {
+        let active = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: planDate, kind: kind)
         active.store = store
         active.setLogStore = setLogs
         active.checkpointStore = checkpoints

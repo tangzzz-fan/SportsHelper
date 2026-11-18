@@ -55,7 +55,7 @@ extension WorkoutSession {
     func persist(finishedAt: Date? = nil) {
         store?.upsert(
             id: id,
-            title: sessionTitle,
+            title: kind == .short ? "\(sessionTitle) · 短版" : sessionTitle,
             plannedSets: plannedSets,
             completedSets: completedSets,
             startedAt: startedAt,

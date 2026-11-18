@@ -67,7 +67,7 @@ extension SetLog {
         targetType: SetTargetType? = nil,
         setIndex: Int,
         plannedValue: Int,
-        reason: SkipReason,
+        reason: SkipReason?,
         at date: Date
     ) -> SetLog {
         SetLog(

@@ -10,6 +10,7 @@ final class WorkoutSession: Identifiable {
     let plan: WorkoutPlan
     let dayIndex: Int
     let planDate: Date?
+    let kind: SessionKind
     let flow: WorkoutFlowModel
     var script: [FlowStep]
     let startedAt: Date
@@ -41,6 +42,7 @@ final class WorkoutSession: Identifiable {
         plan: WorkoutPlan,
         dayIndex: Int,
         planDate: Date? = nil,
+        kind: SessionKind = .full,
         store: SessionStore? = nil,
         startedAt: Date = Date(),
         id: UUID = UUID(),
@@ -51,6 +53,7 @@ final class WorkoutSession: Identifiable {
         self.plan = plan
         self.dayIndex = dayIndex
         self.planDate = planDate
+        self.kind = kind
         self.store = store
         self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)

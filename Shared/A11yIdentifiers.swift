@@ -16,6 +16,7 @@ enum A11y {
         static let undoSkipToday = "today.undoSkipToday"
         static let alreadyDone = "today.alreadyDone"
         static let microDose = "today.microDose"
+        static func shortSession(_ minutes: Int) -> String { "today.short.\(minutes)" }
     }
 
     enum Workout {
