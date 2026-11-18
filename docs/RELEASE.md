@@ -13,6 +13,20 @@
 | 签名 | 自动签名下**不要**写 `CODE_SIGN_IDENTITY`。Xcode 按用途自己挑（debug → Apple Development，Archive → Apple Distribution）。手动指定会报 `conflicting provisioning settings` |
 | 真机 / 归档 | 真机 build、模拟器 build、`ARCHIVE SUCCEEDED` 均通过；archive 内 `DongKeCore.framework` 版本号已是 `1.0.0 / 1` |
 
+## 0.1 本轮（1.1.0 / build 2）发布前
+
+版本号已升：`project.yml` 的 `MARKETING_VERSION: 1.1.0`、`CURRENT_PROJECT_VERSION: 2`（已 `xcodegen generate`）。
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| 内置 API Key | ⚠️ **待你决定** | 现在 `ai-defaults.json` 的 `apiKey` 是空串（本地文件，gitignore）。要么按 §1.1 填一把新的并设额度上限，要么确认走「用户自填」——后者要在描述里把「已内置 DeepSeek」改掉 |
+| SwiftData 新增列 | ⚠️ 必须覆盖安装验证 | 本轮加了 `ZACTUALLOADVALUE` / `ZACTUALLOADTYPERAW` / `ZSWAPPEDFROMCATALOGID` 三列，都是可选、automatic migration。模拟器上已走过三次；真机首次安装 1.1.0 前建议再用 1.0.0 包覆盖测一次 |
+| 更新说明 | ✅ | `docs/APPSTORE.md` §2.6，直接粘进 ASC |
+| 隐私政策 / 支持页 | ❌ 仍未托管 | 与 1.0.0 时同一状态，见 §3 |
+| 音条 | ✅ | `VoiceClips/` 里只剩 `README.md`，没有 `.wav`（`say` 产物不能上架，仍在 gitignore） |
+
+AI 入口在空 Key 下的表现：`AIGenerateCard` 显示「先填接口地址与 API Key」，粘贴与本地规则两条路不受影响——所以空 Key 也能过审，只是文案不能再说「已内置」。
+
 ## 1. 阻断项
 
 ### 1.1 内置 API Key 是明文，且在包里
