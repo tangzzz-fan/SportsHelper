@@ -29,6 +29,8 @@ final class WorkoutSession: Identifiable {
     var rest: RestState = .idle
     var restKicker = "组间休息"
     var finishedAt: Date?
+    /// 结束页那一句判断。`finish` 时算一次，之后不跟着视图刷新重算。
+    var narrative: String?
     var restFinishedToken = 0
     var recordCelebration: String?
     var celebratedActions: Set<String> = []

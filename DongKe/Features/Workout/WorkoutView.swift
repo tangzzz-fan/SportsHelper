@@ -87,7 +87,12 @@ struct WorkoutView: View {
 
     var body: some View {
         if session.showsSummary {
-            WorkoutSummaryView(title: session.sessionTitle, recap: session.recap, onDone: close)
+            WorkoutSummaryView(
+                title: session.sessionTitle,
+                recap: session.recap,
+                narrative: session.narrative,
+                onDone: close
+            )
         } else {
             workoutBody
         }

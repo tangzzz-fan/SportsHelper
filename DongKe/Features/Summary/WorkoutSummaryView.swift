@@ -4,6 +4,8 @@ import DongKeCore
 struct WorkoutSummaryView: View {
     let title: String
     let recap: SessionRecap
+    /// 结束页那一句判断。nil 时不占位——没值得说的就不说。
+    var narrative: String? = nil
     var onDone: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
@@ -37,6 +39,17 @@ struct WorkoutSummaryView: View {
                             Text("\(title) · \(recap.durationText)")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
+                        }
+
+                        if let narrative {
+                            Text(narrative)
+                                .font(Typography.body)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal, 24)
+                                .padding(.top, 14)
+                                .accessibilityIdentifier(A11y.Summary.narrative)
                         }
 
                         ring

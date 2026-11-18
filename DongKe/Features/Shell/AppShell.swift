@@ -59,6 +59,8 @@ struct AppShell: View {
             active.downgradeSet()
             active.skipRest()
             active.endWorkout()
+            // 预览里没有日志库，破纪录算不出来；给一句固定文案，用来校对结束页的排版。
+            active.narrative = "深蹲 10kg 做了 12 个，比上次多 2 个"
             _session = State(initialValue: active)
         case "rest":
             let active = WorkoutSession(plan: SampleData.plan, dayIndex: dayIndex)

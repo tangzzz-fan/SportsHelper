@@ -5,9 +5,17 @@ extension WorkoutSession {
     func finish(now: Date) {
         guard finishedAt == nil else { return }
         finishedAt = now
+        narrative = buildNarrative()
         persist(finishedAt: now)
         saveCheckpoint(now: now)
         voice?.finished(completedSets: completedSets, extraSets: ledger.extraSets)
+    }
+
+    private func buildNarrative() -> String? {
+        guard let day, let setLogStore else { return nil }
+        let ids = Array(Set(day.blocks.flatMap(\.items).map(\.catalogId)))
+        let history = setLogStore.logs(forCatalogIds: ids, before: startedAt)
+        return SessionNarrative.headline(logs: logs, history: history, recap: recap)
     }
 
     func appendLog(_ log: SetLog, now: Date) {
