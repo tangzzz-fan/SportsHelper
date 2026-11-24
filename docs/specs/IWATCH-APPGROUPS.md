@@ -16,7 +16,7 @@
 | 本地持久化 | App Group 容器（本文件） | 每台设备自己的会话快照 + 待发日志（outbox） |
 | 跨设备传输 | WatchConnectivity（`WCSession.transferUserInfo` / `updateApplicationContext`） | 把快照发给 Watch、把组日志发回 iPhone |
 
-所以：**iPhone 写进 App Group 的 checkpoint，Watch 读不到**，必须由传输层发过去。`AppGroupsStore` 只碰本机文件，不要把跨设备逻辑塞进来。W2.3 的「同步」实现时以这个边界为准。
+所以：**iPhone 写进 App Group 的 checkpoint，Watch 读不到**，必须由传输层发过去。`AppGroupsStore` 只碰本机文件，不要把跨设备逻辑塞进来。W2.3 / W2.4 已按这个边界实现（`WatchSyncService` + `WatchLogSender`）。
 
 ---
 
@@ -31,7 +31,7 @@ group.com.dongke.shared/workouts/
 容器 ID：`group.com.dongke.shared`（`AppGroupsStore.containerID`）。  
 入口：`DongKeCore/Data/AppGroupsStore.swift`；会话快照便利层：`DongKeCore/Services/CheckpointStore.swift`。
 
-**前置条件**：App Group 必须在开发者后台注册，并在 target 的 entitlements 里声明。iPhone target 已加 `DongKe/DongKe.entitlements`；Watch target 建好后要加同一个 group。
+**前置条件**：App Group 必须在开发者后台注册，并在 target 的 entitlements 里声明。iPhone target 已加 `DongKe/DongKe.entitlements`；Watch target 也已加 `DongKeWatch/DongKeWatch.entitlements`（同一个 group）。后台注册尚未做，真机签名会失败。
 
 ---
 
@@ -98,7 +98,7 @@ let ledger = SessionLedger.merge(
 `WorkoutCheckpoint.matchesRevision(_:)` 是唯一的比对入口。Watch 侧在每次推进前检查：
 
 - 相等 → 允许继续记日志；
-- 不等 → 停止写新日志，提示「计划已更新，请返回 iPhone」（W2.5，UI 待 Watch target）。
+- 不等 → 停止写新日志，提示「计划已更新，请返回 iPhone」（W2.5；Watch 阻断页已做，真机待验）。
 
 不要在 Watch 侧用 `plan.revision` 之外的字段（如 `updatedAt`）当版本判据——提醒时间的偏移不改 `revision`，训练中的计划才改。
 
@@ -111,9 +111,20 @@ let ledger = SessionLedger.merge(
 - `AppGroupsStoreTests`：快照往返、无容器降级、JSONL 来源与顺序、坏行跳过、条件删除、整份替换/清空、20 路并发追加。
 - `WorkoutCheckpointTests`：新字段往返、老断点兜默认值、revision 比对。
 - `SessionLedgerMergeTests`：两端不重叠合并、跨设备同组只计一次、同设备重复丢弃、混合状态不丢。
+- `WatchContextTests`：展示字段派生、当前步骤、往返编码、缓存读写。
+- `PendingLogSyncTests`：5/10/30 退避、部分失败、退避期新增、24h 告警。
+- `CheckpointValidatorTests`：可续/改版/已结束/过期与优先级。
 
-未完成：
+已完成：
 
-- Watch target 尚未创建（Phase 1 W1.1–W1.5 未开工），本文件所有「Watch 侧」行为只有 Core 逻辑与测试，没有 UI。
-- WatchConnectivity 传输层未实现；`AppGroupsStore` 与 `CheckpointStore` 只覆盖本机文件。
-- 开发者后台的 App Group 注册未验证（真机签名需要）。
+- Watch target（W1.1）与 Watch 侧 UI（训练页、倒计时、阻断页）。
+- WCSession 双向传输：`updateApplicationContext` 下发上下文与 planRevision，`transferUserInfo` 回传日志。
+- iPhone 写入门禁：日志落 SwiftData 后才清 outbox（W2.4）。
+
+未完成 / 未验证：
+
+- **两端配对后的真实收发一次都没跑过**（本机无 watchOS runtime / 证书）。
+- 后台定时 flush（`BGProcessingTask` / watchOS 后台刷新）。
+- `didFinishUserInfoTransfer` 失败回调没有把条目重新入队。
+- Watch 续练的「继续上一组 / 从头开始」选择页。
+- 开发者后台的 App Group 与 Time Sensitive capability 注册。

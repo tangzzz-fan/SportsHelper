@@ -1,5 +1,9 @@
 # iWatch 实现 Tickets
 
+> **当前状态（2026-11-24）**：代码可做的部分已完成 W1.1 / W1.2a / W1.3 / W1.4 与 W2.1–W2.6。
+> 剩余：W1.2 通知深链、W2.2 的 Watch 续练选择 UI、后台 flush、W1.5 / W2.7 真机验收。
+> 真机前置、最新度量与剩余任务清单见 `PHASE2-PROGRESS.md`；本文件保留每张票的原始验收口径。
+
 ## Phase 1：通知 + 倒计时（MVP 验证）
 
 ---
@@ -136,6 +140,9 @@ Watch 侧倒计时显示与状态管理，复用 iPhone 侧的 `RestTimerStateMa
 **2026-11-24 落地**：Watch 端只做展示与本地计时；「完成本组」目前只结束休息，不落日志——
 落日志与回传归 W2.3/W2.6。`DK_WATCH_DEMO_REST=1` 可在 DEBUG 下直接起 90 秒休息，供截图/走查。
 
+**未做（与 IWATCH.md 交付清单的偏差）**：`IWATCH.md` §13 写「倒计时环形进度」，
+当前是文本倒计时；§4 的界面草图本身没有环。要么补环，要么改交付清单，别两边都挂着。
+
 ---
 
 ### 📋 TICKET-W1.4：训练页基础布局
@@ -163,8 +170,8 @@ Watch 侧简化训练页，仅显示动作名、组号、目标值。
 - [ ] 文本不截断（已用 `lineLimit` + `minimumScaleFactor`，实际屏幕待 runtime 检查）
 - [x] 无障碍标签正确（组合标签 + VoiceOver 播报）
 
-**2026-11-24 落地**：Phase 1 的 Watch 只展示，不落日志；「完成本组」禁用并说明在 iPhone 记录，
-W2.6 再打开并接 `PendingSetLog`。
+**2026-11-24 落地**：Phase 1 的 Watch 只展示，不落日志；「完成本组」当时禁用并说明在 iPhone 记录。
+W2.6 已接线：按钮打开，点击后建 `PendingSetLog` 入队回传。
 
 ---
 
@@ -179,6 +186,9 @@ Walk through 五条人工验证场景，全部必须绿。
 **测试环境**：
 - 真机：Apple Watch Series 9 或更新
 - iPhone 与 Watch 配对、App 已安装
+
+**阻塞（2026-11-24）**：本机无开发证书，开发者后台未注册 App Group / Time Sensitive；
+没有 watchOS runtime，也没有配对真机。以下场景全部未验。
 
 **验收清单**：
 
@@ -240,7 +250,7 @@ Walk through 五条人工验证场景，全部必须绿。
   - 写入顺序与读取流程
 
 **验收**：
-- [x] 单测通过（16 条，覆盖并发追加与坏行容错；20+ 条随 W2.3 队列/重试补齐）
+- [x] 单测通过（本票 8 条，覆盖并发追加与坏行容错；W2.3 又补 15 条队列/退避用例）
 - [x] 离线场景：先记再读，无数据丢失（临时目录注入验证；真机待 entitlement 注册）
 
 ---
@@ -274,14 +284,14 @@ Walk through 五条人工验证场景，全部必须绿。
   - 清理：`remove(sessionId:)` 训练结束时调用
   - iPhone 侧：`WorkoutSession.saveCheckpoint` 双写 UserDefaults + App Group
 
-- [ ] Watch 侧使用（阻塞：Watch target 未创建）
-  - App 冷启动时：尝试 `CheckpointStore.load()`
-  - 若成功：显示「继续上一组」或「从头开始」
-  - 若失败或无：进入新建会话流程
+- [ ] Watch 侧使用（Watch target 已建；路径改为 WatchContext 缓存）
+  - 冷启动先读 `WatchContextStore`（内含 checkpoint），当前直接显示当前组
+  - **未做**：ticket 要求的「继续上一组 / 从头开始」选择页
+  - 无法判断旧上下文时：`CheckpointValidator` 区分已结束 / 改版 / 过期
 
 **验收**：
 - [x] 单测：序列化往返完整性、老格式兜底、revision 比对
-- [ ] 真机：App 被杀后重启，能恢复到断点（阻塞：Watch target）
+- [ ] 真机：App 被杀后重启，能恢复到断点（阻塞：证书 / 配对设备）
 
 ---
 
@@ -291,7 +301,10 @@ Walk through 五条人工验证场景，全部必须绿。
 **相关**：SPEC §5、§7
 
 **描述**：
-Watch 侧记完日志后，通过 AppGroups 追加到 iPhone，失败时本地队列化。
+Watch 侧记完日志后，经 WCSession 回传到 iPhone；App Group 只做本机 outbox，失败时队列化重试。
+
+> **修正（2026-11-24）**：App Group 不能跨设备，原描述的「通过 AppGroups 追加到 iPhone」不成立；
+> 现在 Watch 写本机 outbox → `transferUserInfo` → iPhone 写本机 outbox → `WatchLogInbox` 落库。
 
 **交付物**：
 - [x] `PendingLogSync.swift`（实际落在 DongKeCore/Watch，Core 可单测）
@@ -422,6 +435,10 @@ Watch 侧点「完成本组」时，记录 SetLog、更新 UI、尝试同步。
 **描述**：
 Walk through 十条人工验证场景（Phase 1 的 5 条 + Phase 2 新增 5 条）。
 
+**阻塞（2026-11-24）**：同 W1.5（证书 / 后台 capability / 配对设备）。
+6–10 条的代码路径均已落地（离线 outbox、断点、账本去重、planRevision 阻断、退避重试），
+但一次真机都没跑过，不能算通过。
+
 **新增 5 条**：
 
 6. ✅ **离线记录 + 同步**
@@ -512,13 +529,13 @@ Walk through 十条人工验证场景（Phase 1 的 5 条 + Phase 2 新增 5 条
 
 ## 总体进度表
 
-| Phase | 周期 | Tickets | 工时 | 验收点 |
-|---|---|---|---|---|
-| 1 | W1–W5 | W1.1–W1.5 | 6 人日 | 5 条人工验证 ✓ |
-| 2 | W6–W10 | W2.1–W2.7 | 7 人日 | 10 条人工验证 ✓ |
-| 3 | W11+ | W3.0–W3.1 | 2 人日 | 决策 + 可选 |
+| Phase | Tickets | 工时 | 状态（2026-11-24） |
+|---|---|---|---|
+| 1 | W1.1–W1.5 + W1.2a | 7.5 人日 | 代码完成 W1.1/W1.2a/W1.3/W1.4；W1.2/W1.5 未完成 |
+| 2 | W2.1–W2.7 | 7 人日 | 代码完成 W2.1–W2.6；W2.7 真机未跑 |
+| 3 | W3.0–W3.1 | 2 人日 | 未开始（前置：日留存 ≥50%） |
 
-**总计**（Phase 1–2）：**13 人日** ≈ **3–4 周**（1.5–2 人编码）
+**总计**（Phase 1–2）：**14.5 人日**（原估 13，W1.2a 新增 1.5）≈ **3–4 周**（1.5–2 人编码）
 
 ---
 
@@ -526,6 +543,9 @@ Walk through 十条人工验证场景（Phase 1 的 5 条 + Phase 2 新增 5 条
 
 - [ ] Phase 1 全部 Tickets 完成 + 5 条人工验证全绿
 - [ ] Phase 2 全部 Tickets 完成 + 10 条人工验证全绿
-- [ ] 无 Core 侧代码改动被破坏（单测必须 100% 通过）
+- [x] 无 Core 侧代码改动被破坏（2026-11-24：962 条单测全绿）
 - [ ] 架构 §4 的四大约束全部满足（见第一步自审）
+
+**2026-11-24 核对**：第 3 条已满足；第 1/2 条被 W1.2 / W1.5 / W2.7 阻塞；
+第 4 条需要重新跑一次门禁再勾，不沿用旧结论。
 

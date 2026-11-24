@@ -9,7 +9,7 @@
 | 方案门 | 已放行（用户「方案通过」） |
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework（iOS + watchOS 多 destination）+ DongKe app + DongKeWatch（watchOS 11，嵌入 iOS app 的 `Watch/`）+ DongKeCoreTests。UI 测试目标已删除（§6.21），`Shared/A11yIdentifiers.swift` 仍编进 App，供 VoiceOver 与将来任何自动化使用 |
-| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 13 页清单**全部落地**：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成 + 一句话语音 / 文字）、理解确认、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空）+ 训练播报（ticket 07–09）与语音输入（ticket 06）。工程侧补上了 `Assets.xcassets`（AppIcon，`Tools/IconRender` 可重渲）与 `PrivacyInfo.xcprivacy`（见 §6.24） |
+| 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 13 页清单**全部落地**：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成 + 一句话语音 / 文字）、理解确认、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空）+ 训练播报（ticket 07–09）与语音输入（ticket 06）。工程侧补上了 `Assets.xcassets`（AppIcon，`Tools/IconRender` 可重渲）与 `PrivacyInfo.xcprivacy`（见 §6.24）；**Watch 伴生 App 代码完成**（target / 上下文同步 / 训练页 / 倒计时 / 日志回传 / 版本阻断），端到端待真机（§6.34） |
 | 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData，**库固定在 App 容器**（`ModelConfiguration(groupContainer: .none)`，见 §6.33）；断点存在 UserDefaults `dk.workout.checkpoint`（当天有效），同时镜像到 App Group `workouts/checkpoint-{id}.json` 供 Watch 续练；WatchContext 经 WCSession 下发并缓存为 `workouts/watch-context.json`；Watch 回传的组日志先落 `workouts/pending-logs.jsonl`，再经 `WatchLogInbox` 进 SwiftData；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
 | 测试 | **单测全绿**（`-only-testing:DongKeCoreTests`，条数看日志，不在此处维护——写死的数字必然过期）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条、语音输入 42 条、主肌群覆盖 8 条、组余力 6 条。**无 UI 测试**（§6.21） |
 | Gate 2 | 已放行并全部转绿 |
@@ -904,3 +904,40 @@ xcrun simctl get_app_container <UDID> app.dongke.ios group.com.dongke.shared
 另外，`catch` 里的内存库兜底现在会在 DEBUG 打一行 `ModelContainer failed:` —— 以后排查「数据不见了」先搜这行。
 
 App Group 里的三件东西与本机 SwiftData 的分工见 `docs/specs/IWATCH-APPGROUPS.md`；**不要**让 App Group 存 SwiftData 主库。
+
+## 6.34 Watch 伴生 App 的当前边界（2026-11-24）
+
+**目标**：`DongKeWatch`（watchOS 11），bundle id `app.dongke.ios.watchkitapp`——必须是 iOS app bundle id 的子前缀，否则 `simctl install` 直接拒绝。XcodeGen 会把 Watch app 嵌进 iOS app 的 `Watch/`。
+
+**Core 是同一份源码**：`DongKeCore` 用 `platform: auto` + `supportedDestinations: [iOS, watchOS]`。新增 Core 文件后必须 `xcodegen generate`；框架的 `WATCHOS_DEPLOYMENT_TARGET` 已在 `project.yml` 显式写死，否则会落到 SDK 版本、Watch app 链接不上。
+
+**传输边界**（详见 `docs/specs/IWATCH-APPGROUPS.md`）：
+
+| 方向 | 机制 | 入口 |
+|---|---|---|
+| iPhone → Watch 上下文 + planRevision | `WCSession.updateApplicationContext` | `DongKe/Services/WatchSyncService.swift` |
+| Watch → iPhone 组日志 | `WCSession.transferUserInfo` | `DongKeWatch/WatchLogSender.swift` |
+| 每台设备的 outbox / 快照 | App Group `workouts/`（JSONL + flock） | `DongKeCore/Data/AppGroupsStore.swift` |
+| iPhone 落库门禁 | outbox → 会话 / `SetLogStore.addIfAbsent` → 清条目 | `DongKe/Services/WatchLogInbox.swift` |
+| 版本冲突 | `CheckpointValidator`：notInProgress > planChanged > expired | `DongKeCore/Workout/CheckpointValidator.swift` |
+
+**Watch 侧文件**：`WatchApp.swift`（入口）、`RootView.swift`（路由与 0.25s tick）、`WatchWorkoutView` / `WatchRestView`（训练页与倒计时）、`WatchWorkoutSession`（本地推进 + 日志队列）、`WatchSyncService`（收上下文 + planRevision）。
+
+**两个必须记住的坑**：
+
+1. SwiftData 的 `ModelConfiguration()` 默认 `groupContainer: .automatic`，一加 App Group 就把整库搬走；必须 `.none`（§6.33）。
+2. Watch 的本地休息只在上下文 `updatedAt` 变化时被覆盖，否则「+15 秒」会被旧上下文抹掉。
+
+**编译验证**：
+
+```bash
+xcodegen generate
+xcodebuild -project DongKe.xcodeproj -scheme DongKeWatch \
+  -destination 'generic/platform=watchOS Simulator' build
+xcodebuild -project DongKe.xcodeproj -scheme DongKeWatch \
+  -destination 'generic/platform=watchOS' CODE_SIGNING_ALLOWED=NO build
+```
+
+**调试钩子**：`DK_WATCH_DEMO_REST=1`（Watch 启动环境变量）直接起 90 秒休息，用于截图/走查。
+
+**未验证**：两端配对后的真实收发、后台定时 flush、W1.2 通知深链。真机前置：开发者后台注册 App Group 与 Time Sensitive、本机开发证书、配对 Apple Watch（或安装 watchOS simulator runtime）。任务清单与真机验收项见 `.scratch/iwatch-tickets/PHASE2-PROGRESS.md`。

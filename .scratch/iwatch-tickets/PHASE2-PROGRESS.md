@@ -1,8 +1,8 @@
-# Phase 2 进展 - 2026-11-24 检查点
+# iWatch Phase 1–2 进展 - 2026-11-24 检查点
 
 **Branch**: `feat/w2-appgroups-sync`  
-**阶段**：W1.1/W1.2a/W1.3/W1.4 + W2.1/W2.2/W2.3 代码完成；W2.4 只到 iPhone outbox；
-端到端均待配对设备（本机无 watchOS runtime / 开发证书）
+**阶段**：代码可做的部分基本完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6）；
+剩余是 W1.2 通知深链、后台 flush、真机验收。本机无 watchOS runtime / 开发证书。
 
 ## 先修正上一份检查点
 
@@ -103,30 +103,61 @@
 `IWATCH.md` 写的「Watch 通过 AppGroups 追加到 iPhone」在技术上不成立：
 App Group 只在同一台设备内共享，iPhone 与 Watch 的文件系统互不可见。
 
-现在的边界：
+现在的边界（已按此实现）：
 
-| 层 | 机制 |
-|---|---|
-| 每台设备的快照 / outbox | App Group（本分支已做） |
-| iPhone ↔ Watch 传输 | WatchConnectivity（WCSession），**未实现** |
-
-W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `AppGroupsStore` 里加跨设备逻辑。详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
-
-## 🔄 待办
-
-| Ticket | 内容 | 阻塞点 |
+| 层 | 机制 | 状态 |
 |---|---|---|
-| W1.1 | Watch target + 入口 + 路由 | ✓ 已完成（2026-11-24） |
-| W1.2a | WatchContext 传输与本地快照 | ✓ 代码完成；端到端待配对设备 |
-| W1.2 | 通知处理与深链 | 载荷无 `sessionId`，改用 dayIndex + context revision |
-| W1.3 | Watch 倒计时 UI 与状态机 | 代码完成；待 runtime/真机走查 |
-| W1.4 | Watch 训练页基础布局 | 代码完成；待 runtime 检查截断 |
-| W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
-| W2.3 | Watch 日志队列与指数退避重试 | ✓ Core + WCSession 交棒；后天刷新与真机验收待做 |
-| W2.4 | iPhone 侧日志合并写入门禁 | ✓ 写入门禁 + 模拟器端到端验证；真机两端一致待验 |
-| W2.5 | 计划更新冲突检测 | ✓ Core + iPhone 下发 + Watch 阻断 UI；真机待验 |
-| W2.6 | Watch 完成组 UI | ✓ 代码完成；真机验收待做 |
-| W2.7 | 真机验收 | 依赖 W2.3–W2.6 |
+| 每台设备的快照 / outbox | App Group `workouts/` | ✓ W2.1/W2.2 |
+| iPhone → Watch 上下文 / planRevision | `WCSession.updateApplicationContext` | ✓ W1.2a/W2.5 |
+| Watch → iPhone 组日志 | `WCSession.transferUserInfo` | ✓ W2.3/W2.4 |
+| 两端配对收发 | WCSession 真实链路 | 未验（无 runtime / 证书） |
+
+详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
+
+## ✅ 已完成
+
+| Ticket | 内容 | 状态 |
+|---|---|---|
+| W1.1 | Watch target + 入口 + 路由 | ✓ 编译通过 |
+| W1.2a | WatchContext 传输与本地快照 | ✓ 代码完成 |
+| W1.3 | Watch 倒计时 UI 与状态机 | ✓ 代码完成 |
+| W1.4 | Watch 训练页基础布局 | ✓ 代码完成 |
+| W2.1 | App Group 本地存储与文件锁 | ✓ Core + 测试 |
+| W2.2 | Checkpoint 序列化与恢复 | ✓ Core + iPhone 双写 |
+| W2.3 | 日志队列 / 退避 / WCSession 交棒 | ✓ 代码完成 |
+| W2.4 | iPhone 写入门禁 | ✓ 模拟器端到端 |
+| W2.5 | 计划版本冲突检测 | ✓ 代码完成 |
+| W2.6 | Watch 完成本组 | ✓ 代码完成 |
+
+## 🔄 剩余任务
+
+| 项 | 状态 | 说明 |
+|---|---|---|
+| W1.2 通知处理与深链 | 未开工 | 排程时没有 `sessionId`，载荷改 dayIndex + planRevision；`WatchRoute` 已留好 |
+| W1.5 Phase 1 真机清单 | 阻塞 | 需开发证书 + 配对设备 |
+| W2.2 Watch 续练选择 UI | 未做 | 当前直接按缓存显示当前组；ticket 要求的「继续上一组 / 从头开始」选择页没有 |
+| W1.3 环形进度（可选） | 待定 | `IWATCH.md` 交付清单写「环形进度」，当前 Watch 是文本倒计时；草图本身没画环 |
+| W2.7 Phase 2 真机清单 | 阻塞 | 10 条场景，依赖 W1.5 的前置 |
+| 后台定时 flush | 未做 | 当前只有入队立即 flush + 进前台重试 |
+| `transferUserInfo` 失败回滚 | 未做 | `didFinishUserInfoTransfer` 错误没有重新入队 |
+| Watch-only 日志无活跃会话 | 边缘 | 落 `SetLogStore`，不更新 `SessionEntity`；历史页的「训练天/会话列表」可能少一次 |
+| App Group / 签名注册 | 未验证 | 开发者后台未注册 capability |
+
+## 📱 真机验收前置（W1.5 / W2.7 共用）
+
+1. Apple Developer 后台为 `app.dongke.ios` 与 `app.dongke.ios.watchkitapp` 注册 App Group `group.com.dongke.shared`。
+2. Watch App ID 开启 Time Sensitive Notifications capability。
+3. 本机安装开发证书（当前无证书），或配置自动签名可用的 Apple ID。
+4. 配对 Apple Watch Series 9+（或安装 watchOS 27.2 simulator runtime）。
+5. 编译/安装：
+
+```bash
+xcodegen generate
+xcodebuild -project DongKe.xcodeproj -scheme DongKeWatch \
+  -destination 'generic/platform=watchOS' build
+# 无开发证书时先验编译：加 CODE_SIGNING_ALLOWED=NO
+scripts/ui-test.sh   # iOS 侧一条 UI 测试，发布前跑
+```
 
 ## 📊 度量
 
@@ -144,4 +175,5 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W2.5 | CheckpointValidator / planRevision 下发 / Watch 阻断 | 9 | 代码 ✓，真机待验 |
 
 **全量单测**：962 / 962 通过  
-**已知偏差**：W2.1 验收写「20+ 用例」，当前 16 条；先覆盖已实现的风险点，剩余随 W2.3 的队列/重试一起补。
+**已知偏差**：W2.1 验收写「20+ 用例」，当前 W2.1 本身 8 条；W2.3 又补了 15 条队列/退避用例。
+按风险点覆盖，不追数字。W1.5 / W2.7 的真机项全部未验。

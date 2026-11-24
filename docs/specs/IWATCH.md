@@ -352,6 +352,11 @@ DongKeCoreTests/
       └── RestTimerStateMachineTests.swift    ← 复用 iPhone 侧测试
 ```
 
+> **2026-11-24 实际落点**：没有另建 `WatchIntegration/` 子目录，测试直接放在
+> `DongKeCoreTests/`：`AppGroupsStoreTests` / `WorkoutCheckpointTests` / `SessionLedgerMergeTests` /
+> `WatchContextTests` / `PendingLogSyncTests` / `CheckpointValidatorTests`。
+> Watch target 本身没有独立测试目标；Core 逻辑由 iPhone 测试目标覆盖。
+
 ### 集成测试
 
 ```
@@ -407,19 +412,19 @@ DongKeWatchTests/（Watch target 中）
 ### Phase 1（2–3 周）
 
 - [x] `DongKeWatch` target 新建（2026-11-24；模拟器/设备 SDK 编译通过，真机签名待注册能力）
-- [ ] 通知处理 + Deep link
-- [ ] 倒计时环形进度显示
-- [ ] 真机验证清单 5 条全绿
-- [ ] `WatchContext` 数据流打通
+- [ ] 通知处理 + Deep link（W1.2 未开工；载荷改用 dayIndex + planRevision）
+- [ ] 倒计时环形进度显示（当前是文本倒计时；环形未做，见 TICKETS W1.3 偏差）
+- [ ] 真机验证清单 5 条全绿（阻塞：证书 / 后台 capability / 配对设备）
+- [x] `WatchContext` 数据流打通（W1.2a 代码完成；真实配对收发待真机）
 
 ### Phase 2（1–2 周）
 
-- [ ] AppGroups 容器设计 + 文件锁
-- [ ] `WorkoutCheckpoint` 序列化
-- [ ] 断点续练 UI + 逻辑
-- [ ] 日志同步与冲突处理
-- [ ] 离线队列化与重试
-- [ ] 真机验证清单 5 条 + 新增 5 条全绿
+- [x] AppGroups 容器设计 + 文件锁（修正：只做本机存储，跨设备走 WCSession）
+- [x] `WorkoutCheckpoint` 序列化
+- [ ] 断点续练 UI + 逻辑（缓存续练与版本校验已做；「继续 / 从头」选择页未做）
+- [x] 日志同步与冲突处理
+- [x] 离线队列化与重试（后台定时 flush 未做）
+- [ ] 真机验证清单 5 条 + 新增 5 条全绿（阻塞：同 Phase 1）
 
 ### Phase 3（Post-MVP）
 
