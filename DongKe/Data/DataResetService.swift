@@ -24,6 +24,9 @@ enum DataResetService {
         }
         try? secrets.store(nil, for: "ai.apiKey")
 
+        // App Group 里可能留着给 Watch 的会话快照与待发日志，重置后不能还挂着。
+        try? AppGroupsStore.live.clearAll()
+
         await NotificationService.shared.removeAllOwned()
     }
 }

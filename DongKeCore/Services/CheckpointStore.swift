@@ -1,26 +1,32 @@
 import Foundation
-import DongKeCore
 
-public class CheckpointStore {
-    private static let store = AppGroupsStore.shared
+/// 会话快照的跨进程入口。iPhone 写、Watch 读（经 WatchConnectivity 传输后落到各自容器）。
+///
+/// 与 `DongKe/Data/WorkoutCheckpointStore` 的分工：
+/// - 那个存 UserDefaults，是 iPhone 自己的断点续练，杀进程就靠它；
+/// - 这个存 App Group，是给另一台设备的「交接单」，取不到容器时静默降级。
+public struct CheckpointStore: Sendable {
+    public static let shared = CheckpointStore(store: .live)
 
-    /// 在 iPhone 侧保存当前会话快照
-    public static func save(_ checkpoint: WorkoutCheckpoint) throws {
-        try store.saveCheckpoint(checkpoint, sessionId: checkpoint.sessionId)
+    private let store: AppGroupsStore
+
+    public init(store: AppGroupsStore) {
+        self.store = store
     }
 
-    /// Watch 侧加载会话快照
-    public static func load(sessionId: UUID) throws -> WorkoutCheckpoint? {
-        return try store.loadCheckpoint(sessionId: sessionId)
+    public var isAvailable: Bool {
+        store.isAvailable
     }
 
-    /// 训练结束后清理快照
-    public static func remove(sessionId: UUID) throws {
+    public func save(_ checkpoint: WorkoutCheckpoint) throws {
+        try store.saveCheckpoint(checkpoint)
+    }
+
+    public func load(sessionId: UUID) throws -> WorkoutCheckpoint? {
+        try store.loadCheckpoint(sessionId: sessionId)
+    }
+
+    public func remove(sessionId: UUID) throws {
         try store.removeCheckpoint(sessionId: sessionId)
-    }
-
-    /// 验证快照版本是否与当前计划匹配
-    public static func isRevisionValid(_ checkpoint: WorkoutCheckpoint, currentPlanRevision: Int) -> Bool {
-        return checkpoint.revision == currentPlanRevision
     }
 }

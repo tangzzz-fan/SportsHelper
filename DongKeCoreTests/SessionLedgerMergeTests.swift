@@ -1,63 +1,107 @@
-import XCTest
-import DongKeCore
+import Foundation
+import Testing
+@testable import DongKeCore
 
-class SessionLedgerMergeTests: XCTestCase {
-    func testMergeWithoutDuplicate() {
-        let sessionId = UUID()
+private let mergeSession = UUID()
+private let mergeStart = Date(timeIntervalSince1970: 1_770_000_000)
 
-        let local = [
-            SetLog(sessionId: sessionId, setIndex: 1, reps: 10, unit: .reps, rpe: 7),
-            SetLog(sessionId: sessionId, setIndex: 2, reps: 10, unit: .reps, rpe: 7),
-        ]
+private func mergeLog(
+    setIndex: Int,
+    sessionId: UUID = mergeSession,
+    prescriptionId: String? = nil,
+    status: SetStatus = .done,
+    completedAt: Date = mergeStart
+) -> SetLog {
+    SetLog(
+        sessionId: sessionId,
+        prescriptionId: prescriptionId ?? "i\(setIndex)",
+        catalogId: "squat",
+        setIndex: setIndex,
+        status: status,
+        plannedValue: 12,
+        actualValue: status == .skipped ? 0 : 12,
+        completedAt: completedAt
+    )
+}
 
-        let remote = [
-            SetLog(sessionId: sessionId, setIndex: 3, reps: 12, unit: .reps, rpe: 8),
-            SetLog(sessionId: sessionId, setIndex: 4, reps: 12, unit: .reps, rpe: 8),
-        ]
+private func watchEntry(
+    _ log: SetLog,
+    at offset: TimeInterval = 0
+) -> PendingSetLog {
+    PendingSetLog(
+        log: log,
+        sourceDevice: .watch,
+        timestamp: mergeStart.addingTimeInterval(offset)
+    )
+}
 
-        let merged = SessionLedger.merge(local: local, remote: remote)
+@Suite("会话日志合并")
+struct SessionLedgerMergeTests {
 
-        XCTAssertEqual(merged.count, 4)
-        XCTAssertEqual(merged[0].setIndex, 1)
-        XCTAssertEqual(merged[3].setIndex, 4)
+    @Test("两端各记不同组，账本合计为全部组")
+    func disjointLogsMerge() {
+        let local = [mergeLog(setIndex: 1), mergeLog(setIndex: 2)]
+        let remote = [watchEntry(mergeLog(setIndex: 3)), watchEntry(mergeLog(setIndex: 4))]
+
+        let ledger = SessionLedger.merge(prescribedSets: 4, local: local, remote: remote)
+
+        #expect(ledger.completedSets == 4)
+        #expect(ledger.isComplete)
     }
 
-    func testMergeDifferentSources() {
-        let sessionId = UUID()
+    @Test("两台设备记了同一组：存储层各留一条，账本只计一次")
+    func crossDeviceDuplicateCountsOnce() {
+        let local = [mergeLog(setIndex: 1), mergeLog(setIndex: 2)]
+        let remote = [watchEntry(mergeLog(setIndex: 2)), watchEntry(mergeLog(setIndex: 3))]
 
-        // iPhone 记了组 2
-        let local = [
-            SetLog(sessionId: sessionId, setIndex: 2, reps: 10, unit: .reps, rpe: 7),
-        ]
+        let merged = SessionLedger.mergedLogs(local: local, remote: remote)
+        // 三元组带 sourceDevice，不同设备的两条都保留。
+        #expect(merged.count == 4)
 
-        // Watch 也记了组 2（不同来源，应该都保留）
-        let remote = [
-            SetLog(sessionId: sessionId, setIndex: 2, reps: 11, unit: .reps, rpe: 7),
-        ]
-
-        let merged = SessionLedger.merge(local: local, remote: remote)
-
-        XCTAssertEqual(merged.count, 2, "不同来源的相同 setIndex 应该都保留")
+        let ledger = SessionLedger.merge(prescribedSets: 3, local: local, remote: remote)
+        // 账本按 prescriptionId + setIndex + origin 折叠，组 2 只计一次。
+        #expect(ledger.completedSets == 3)
+        #expect(ledger.completionRate == 1)
     }
 
-    func testMergeSorting() {
-        let sessionId = UUID()
+    @Test("同一台设备重复写同一组只留第一条")
+    func sameDeviceDuplicateIsDropped() {
+        let first = mergeLog(setIndex: 1)
+        let rewritten = mergeLog(setIndex: 1)
+        let remote = [watchEntry(first), watchEntry(rewritten, at: 5)]
 
+        let merged = SessionLedger.mergedLogs(local: [], remote: remote)
+
+        #expect(merged.count == 1)
+        #expect(merged[0].id == first.id)
+    }
+
+    @Test("本地重复日志同样只留一条")
+    func localDuplicateIsDropped() {
+        let first = mergeLog(setIndex: 1)
+        let rewritten = mergeLog(setIndex: 1)
+
+        let merged = SessionLedger.mergedLogs(local: [first, rewritten], remote: [])
+
+        #expect(merged.count == 1)
+        #expect(merged[0].id == first.id)
+    }
+
+    @Test("两端的跳过与降阶都进同一次账，不会被合并丢掉")
+    func mixedStatusesSurviveMerge() {
         let local = [
-            SetLog(sessionId: sessionId, setIndex: 3, reps: 10, unit: .reps, rpe: 7),
-            SetLog(sessionId: sessionId, setIndex: 1, reps: 10, unit: .reps, rpe: 7),
+            mergeLog(setIndex: 1, status: .done),
+            mergeLog(setIndex: 2, status: .downgraded),
         ]
-
         let remote = [
-            SetLog(sessionId: sessionId, setIndex: 4, reps: 12, unit: .reps, rpe: 8),
-            SetLog(sessionId: sessionId, setIndex: 2, reps: 12, unit: .reps, rpe: 8),
+            watchEntry(mergeLog(setIndex: 3, status: .skipped)),
         ]
 
-        let merged = SessionLedger.merge(local: local, remote: remote)
+        let ledger = SessionLedger.merge(prescribedSets: 3, local: local, remote: remote)
 
-        XCTAssertEqual(merged[0].setIndex, 1)
-        XCTAssertEqual(merged[1].setIndex, 2)
-        XCTAssertEqual(merged[2].setIndex, 3)
-        XCTAssertEqual(merged[3].setIndex, 4)
+        #expect(ledger.doneSets == 1)
+        #expect(ledger.downgradedSets == 1)
+        #expect(ledger.skippedSets == 1)
+        #expect(ledger.completedSets == 2)
     }
 }

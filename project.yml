@@ -47,6 +47,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios
+        # App Group：会话快照与待发日志放在 group.com.dongke.shared。
+        # 开发者后台必须先注册这个 App Group，否则真机自动签名会失败；模拟器不受影响。
+        CODE_SIGN_ENTITLEMENTS: DongKe/DongKe.entitlements
         # Info.plist 全交给 Xcode 生成（GENERATE_INFOPLIST_FILE），不维护自己的 plist。
         #
         # 启动屏要上色，只能走 storyboard：`UILaunchScreen` 是嵌套字典，

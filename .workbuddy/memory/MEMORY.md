@@ -27,4 +27,5 @@
 - 不用 AI 也能开始（ADR-0001）；计划只因用户点的「采纳」而变（ADR-0004）；完成率与剂量分账（ADR-0006）；播报一拍一句、封闭词表（ADR-0007）。
 - 素材是 bryllim/workout-guide（衍生自 Everkinetic，CC BY-SA 4.0），上架前 share-alike 与署名要处理；`VoiceClips/*.wav` 是 macOS `say` 产物，**不能随包上架**。
 - 内置 Key 走 `DongKe/Resources/ai-defaults.json`（已 gitignore），**上架前必须摘掉**。
+- **App Group 不是跨设备共享盘**：iPhone ↔ Watch 只能走 WatchConnectivity；App Group 只放每台设备自己的快照 / 待发队列。详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
 - 界面里贴底面板的布局约束（不写死高度、`onCardHeightChange`/`restingInset`、别把超宽视图放进 ZStack、`clipped()` 会裁覆盖层）只在 `.workbuddy/memory/2026-10-25.md` 记过，改那块先读它。

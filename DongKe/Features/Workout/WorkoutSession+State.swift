@@ -30,6 +30,7 @@ extension WorkoutSession {
         guard let checkpointStore else { return }
         guard finishedAt == nil else {
             checkpointStore.clear()
+            try? CheckpointStore.shared.remove(sessionId: id)
             return
         }
         var restEndsAt: Date?
@@ -38,7 +39,7 @@ extension WorkoutSession {
             restEndsAt = endAt
             restTotal = total
         }
-        checkpointStore.save(WorkoutCheckpoint(
+        let checkpoint = WorkoutCheckpoint(
             sessionId: id,
             dayIndex: dayIndex,
             stepIndex: stepIndex,
@@ -48,8 +49,13 @@ extension WorkoutSession {
             restEndsAt: restEndsAt,
             restTotalSeconds: restTotal,
             logs: logs,
-            steps: script
-        ))
+            steps: script,
+            revision: plan.revision
+        )
+        checkpointStore.save(checkpoint)
+        // App Group 里的副本给另一台设备续练用。没有 entitlement 或不在 App 进程里时
+        // 取不到容器，这里静默降级——本地断点续练不受影响。
+        try? CheckpointStore.shared.save(checkpoint)
     }
 
     func persist(finishedAt: Date? = nil) {

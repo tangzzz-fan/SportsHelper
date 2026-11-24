@@ -173,23 +173,22 @@ Walk through 五条人工验证场景，全部必须绿。
 设计 iPhone ↔ Watch 双向数据同步的容器结构与冲突解决规则。
 
 **交付物**：
-- [ ] `AppGroupsStore.swift`（DongKe/Data）
+- [x] `AppGroupsStore.swift`（实际落在 `DongKeCore/Data`，容器 URL 可注入）
   - 路径：`group.com.dongke.shared/workouts/`
-  - 创建方法：`checkpoint(for:)` 、`readPendingLogs()`、`appendLog(_:)`
-  - 文件锁：JSON Lines 追加模式（每行一条记录）
-
-- [ ] 冲突处理规则单测
+  - 创建方法：`saveCheckpoint`、`readPendingLogs()`、`appendPendingLog(_:sourceDevice:)`
+  - 文件锁：JSON Lines 追加模式（每行一条记录），`O_APPEND` + `flock`
+  - 修正：App Group 只在本机共享，跨设备传输见 IWATCH-APPGROUPS.md §0
+- [x] 冲突处理规则单测
   - 场景：iPhone 与 Watch 同时记组 3
   - 验证：去重使用 `(sessionId, setIndex, sourceDevice)` 三元组
   - 验证：重复日志在 `SessionLedger.merge` 时合并，不在存储层
-
-- [ ] 文档：`docs/specs/IWATCH-APPGROUPS.md`
+- [x] 文档：`docs/specs/IWATCH-APPGROUPS.md`
   - JSON Lines 格式说明
   - 写入顺序与读取流程
 
 **验收**：
-- [ ] 单测通过（20+ 用例）
-- [ ] 离线场景：先记再读，无数据丢失
+- [x] 单测通过（16 条，覆盖并发追加与坏行容错；20+ 条随 W2.3 队列/重试补齐）
+- [x] 离线场景：先记再读，无数据丢失（临时目录注入验证；真机待 entitlement 注册）
 
 ---
 
@@ -202,33 +201,34 @@ Walk through 五条人工验证场景，全部必须绿。
 定义 `WorkoutCheckpoint` 的序列化格式，实现 Watch 侧的「断点续练」。
 
 **交付物**：
-- [ ] `WorkoutCheckpoint: Codable`（DongKeCore/Models）
+- [x] `WorkoutCheckpoint: Codable`（并入 `DongKeCore/Workout/WorkoutCheckpoint.swift`，不新建同名类型）
   ```swift
   struct WorkoutCheckpoint {
       let sessionId: UUID
-      let script: [FlowStep]
+      let steps: [FlowStep]?         // 执行序列（原 ticket 的 script）
       let stepIndex: Int
       let logs: [SetLog]
       let revision: Int              // 计划版本号
-      let status: WorkoutStatus
+      let status: WorkoutStatus      // 新增；老断点缺省 .inProgress
       let startedAt: Date
-      let lastUpdatedAt: Date
+      let updatedAt: Date            // 原 ticket 的 lastUpdatedAt
   }
   ```
 
-- [ ] `CheckpointStore.swift`（DongKe/Data）
-  - 写入：`save(checkpoint:to:)` → JSON 文件
-  - 读取：`load(sessionId:from:)` → `WorkoutCheckpoint?`
-  - 清理：`remove(sessionId:)` 仅在训练结束时调用
+- [x] `CheckpointStore.swift`（`DongKeCore/Services`，实例 + 注入）
+  - 写入：`save(_:)` → JSON 文件（App Group）
+  - 读取：`load(sessionId:)` → `WorkoutCheckpoint?`
+  - 清理：`remove(sessionId:)` 训练结束时调用
+  - iPhone 侧：`WorkoutSession.saveCheckpoint` 双写 UserDefaults + App Group
 
-- [ ] Watch 侧使用
+- [ ] Watch 侧使用（阻塞：Watch target 未创建）
   - App 冷启动时：尝试 `CheckpointStore.load()`
   - 若成功：显示「继续上一组」或「从头开始」
   - 若失败或无：进入新建会话流程
 
 **验收**：
-- [ ] 单测：序列化往返完整性
-- [ ] 真机：App 被杀后重启，能恢复到断点
+- [x] 单测：序列化往返完整性、老格式兜底、revision 比对
+- [ ] 真机：App 被杀后重启，能恢复到断点（阻塞：Watch target）
 
 ---
 

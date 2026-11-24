@@ -95,10 +95,12 @@ struct WorkoutCheckpoint: Codable {
 
 ### 共享容器路径（Phase 2）
 
+> **实现修正（2026-11-24）**：App Group 只在**同一台设备**的 App 与扩展之间共享，iPhone 与 Watch 是两个设备，不能直接读写同一个容器。跨设备传输走 WatchConnectivity；App Group 只承担每台设备自己的 checkpoint 与待发队列（outbox）。详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
+
 ```
-AppGroup 路径：group.com.dongke.shared/workouts/
-  ├── checkpoint-{sessionId}.json         // 当前会话快照（iPhone 写）
-  ├── pending-logs.jsonl                  // Watch 待同步日志队列
+本机 App Group 路径：group.com.dongke.shared/workouts/
+  ├── checkpoint-{sessionId}.json         // 当前会话快照（本机写，经传输层发给另一设备）
+  ├── pending-logs.jsonl                  // 待发组日志队列（本机 outbox）
   └── sync-status.json                    // {sessionId, lastSyncAt, pendingCount}
 ```
 
