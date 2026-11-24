@@ -114,26 +114,27 @@ W1.2–W1.4 都假设 Watch 知道「当前第几组、目标多少、下一个�
 Watch 侧倒计时显示与状态管理，复用 iPhone 侧的 `RestTimerStateMachine`。
 
 **交付物**：
-- [ ] `WatchRestView.swift`
-  - 显示：「第 X 组，共 Y 组」
-  - 显示：88pt 大字号倒计时秒数
+- [x] `WatchRestView.swift`
+  - 显示：「第 X 组，共 Y 组」（动作名 + 当前组/总组）
+  - 显示：88pt 大字号倒计时（`monospacedDigit` + `minimumScaleFactor`）
   - 按钮：「+15 秒」「完成本组」
-  - 无障碍：每 10 秒更新 VoiceOver 播报
-
-- [ ] `WatchWorkoutSession.swift`（Watch App 层）
-  - `@State var restState: RestState`
-  - 每 0.25s 调一次 `RestTimerStateMachine.reduce(...)`
-  - 处理 `scenePhase` 变化
-
-- [ ] DongKeCore 补充
-  - 验证 `RestTimerStateMachine` 在 Watch 侧也能用
-  - 增加一条单测：「时间跨越 10 分钟（进后台）后，tick 一次直接到 finished」
+  - 无障碍：`spokenRemaining` 按 10 秒取整；VoiceOver 开启时每 10 秒 `AccessibilityNotification.Announcement`
+- [x] `WatchWorkoutSession.swift`（Watch App 层）
+  - `@Observable` + `restState: RestState`
+  - 视图每 0.25s 调 `tick → RestTimerStateMachine.reduce`
+  - `sync(with:)` 只在上下文 `updatedAt` 变化时重算，避免抹掉本地「+15 秒」
+  - `scenePhase == .active` 时立刻 tick，按绝对时间重算
+- [x] DongKeCore 补充
+  - `RestTimerStateMachineTests.backgroundJumpFinishesInSingleTick` 已覆盖「跨 10 分钟后一次 tick 到 finished」
 
 **验收**：
 - [ ] 倒计时准确度 ±2s（真机锁屏 90s）
-- [ ] 进后台不更新，回前台按绝对时间重算
-- [ ] 点「+15 秒」能延长倒计时
-- [ ] 点「完成本组」让倒计时回到 idle 态
+- [ ] 进后台不更新，回前台按绝对时间重算（逻辑已实现，待 runtime/真机走查）
+- [ ] 点「+15 秒」能延长倒计时（逻辑已实现，待 runtime/真机走查）
+- [ ] 点「完成本组」让倒计时回到 idle 态（逻辑已实现，待 runtime/真机走查）
+
+**2026-11-24 落地**：Watch 端只做展示与本地计时；「完成本组」目前只结束休息，不落日志——
+落日志与回传归 W2.3/W2.6。`DK_WATCH_DEMO_REST=1` 可在 DEBUG 下直接起 90 秒休息，供截图/走查。
 
 ---
 
@@ -146,21 +147,24 @@ Watch 侧倒计时显示与状态管理，复用 iPhone 侧的 `RestTimerStateMa
 Watch 侧简化训练页，仅显示动作名、组号、目标值。
 
 **交付物**：
-- [ ] `WatchWorkoutView.swift`
-  - 显示当前动作名（从 `FlowStep` 解析）
+- [x] `WatchWorkoutView.swift`
+  - 显示当前动作名（从 `FlowStep` + `WatchContext.exercises` 解析）
   - 显示「第 X 组，共 Y 组」
   - 显示目标值（12 次 / 30 秒 / 每侧 10 次）
   - **不显示**骨架、要点、常见错误
-  - 按钮：「完成这组」
-
-- [ ] 状态显示
-  - 动作中：显示文本说明
-  - 休息中：显示倒计时（复用 `WatchRestView`）
+  - 按钮：「完成本组」（Phase 1 禁用，标注「本组在 iPhone 上记录」；W2.6 接线）
+- [x] 状态显示
+  - 动作中：显示当天标题、动作、组号、目标
+  - 休息中：切到 `WatchRestView`
+- [x] 无障碍：整页合并为一个元素，标签「深蹲，第 1 组，共 3 组，目标 12 次」
 
 **验收**：
-- [ ] 能正确显示 3 个动作日的全部组合
-- [ ] 文本不截断（Watch 屏幕尺寸检查）
-- [ ] 无障碍标签正确
+- [ ] 能正确显示 3 个动作日的全部组合（需 runtime/真机）
+- [ ] 文本不截断（已用 `lineLimit` + `minimumScaleFactor`，实际屏幕待 runtime 检查）
+- [x] 无障碍标签正确（组合标签 + VoiceOver 播报）
+
+**2026-11-24 落地**：Phase 1 的 Watch 只展示，不落日志；「完成本组」禁用并说明在 iPhone 记录，
+W2.6 再打开并接 `PendingSetLog`。
 
 ---
 

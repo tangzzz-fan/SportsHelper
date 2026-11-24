@@ -121,6 +121,7 @@
 		551177AA2EC1C86E88B26BA2 /* VoiceInputStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7165AE427C0B18EEE0AEBE14 /* VoiceInputStubs.swift */; };
 		5573A013CE4C497B849C47D8 /* DongKeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1D5E7846C62FA7C826B00BE1 /* DongKeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55AD7E694468247E4C2D83C6 /* LocalCountersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4B34C0184A2AF71978349 /* LocalCountersView.swift */; };
+		55BBE7B570F0BE2D1567A839 /* WatchRestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B3BC423B013C46588A86E1F /* WatchRestView.swift */; };
 		55C2AF0871494FDAA225F256 /* ExerciseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63534BDE9AD284C5DA36A07D /* ExerciseCatalog.swift */; };
 		56829F213D1334F106996678 /* AudioSessionArbiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457C1C756D8EED78172AEDC4 /* AudioSessionArbiter.swift */; };
 		589670919FEB504EAD6FA33A /* DongKeCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */; };
@@ -192,6 +193,7 @@
 		8D0E76C33D2CA8AE33944213 /* CorrectionMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5384184DD43618F20C44B74C /* CorrectionMemoryTests.swift */; };
 		8D8A4269BFC8D49B5CE2E988 /* CheckpointStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 305BA604D47F54544BEB1110 /* CheckpointStore.swift */; };
 		8FD2050517175859BF05CE25 /* PlanValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F544178736E999F2C7729B36 /* PlanValidatorTests.swift */; };
+		9078CA4C52234DD0D57A2FB1 /* WatchWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF4E08405D0F4861AC8774CD /* WatchWorkoutView.swift */; };
 		90C0EC3DE29C24B987F5F7FE /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392808FC1F4B0FBB1BBD1E4C /* KeychainService.swift */; };
 		90CAFC365D7E731872493020 /* DoseReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B43784FEA6139D875499793 /* DoseReport.swift */; };
 		90FA08A2FA556D28AC5B253A /* SpeechRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = C983DE13561BB70960AEC7A1 /* SpeechRendering.swift */; };
@@ -269,6 +271,7 @@
 		CFC73D0F91C49C695638809C /* LoadRackStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10AABF92886A67380D8FC30 /* LoadRackStore.swift */; };
 		D0841328A0F70DC128905E38 /* DongKeCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */; };
 		D1C1539D5E1CA91D96101F0D /* SamplePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E649B2E20E08FB5F5151D81 /* SamplePlan.swift */; };
+		D1FC834ED3C0A0CC46924FD3 /* WatchWorkoutSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB2F7631B6963062CE53235 /* WatchWorkoutSession.swift */; };
 		D310BE0BA51D6392CAB44E2B /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B21C4BC2ADAFA626F299FF /* SettingsSheet.swift */; };
 		D39E139CAA137A1E7DFCFB17 /* PlanImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BCB2C0F02EB6C9B9D8B1A7 /* PlanImportService.swift */; };
 		D3ADE744CEBC9EC1596AC1F4 /* AIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 942E3F6B487D7BC3DCCACC68 /* AIConfiguration.swift */; };
@@ -426,6 +429,7 @@
 		0A1235595513A4C67691C071 /* ReminderTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderTrigger.swift; sourceTree = "<group>"; };
 		0A51AD56555B70B4EB0DFEB1 /* DoseAdjustment+SelfLoad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DoseAdjustment+SelfLoad.swift"; sourceTree = "<group>"; };
 		0AA6CA5CB6CD21D139B644B0 /* WorkoutCheckpointStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCheckpointStore.swift; sourceTree = "<group>"; };
+		0B3BC423B013C46588A86E1F /* WatchRestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRestView.swift; sourceTree = "<group>"; };
 		0C0F46EE238A881885CB15A1 /* PlanNamingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanNamingTests.swift; sourceTree = "<group>"; };
 		0E768556C34D46182E21898D /* JSONPayloadEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPayloadEdgeCaseTests.swift; sourceTree = "<group>"; };
 		0F112ABB0764F60FB6BE2EBF /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
@@ -635,6 +639,7 @@
 		AC9C34082A0EA92A681D1A4E /* PredictionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictionTests.swift; sourceTree = "<group>"; };
 		ACA2DFBE1DD4F51BB07F99EA /* UserExercise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserExercise.swift; sourceTree = "<group>"; };
 		ACBB4A398AFB211439617B18 /* PlanEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEditSheet.swift; sourceTree = "<group>"; };
+		AEB2F7631B6963062CE53235 /* WatchWorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutSession.swift; sourceTree = "<group>"; };
 		AEBFA19A1BC52C87ACFDAE30 /* SpeechCueCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechCueCoordinatorTests.swift; sourceTree = "<group>"; };
 		AEE4D84B72E75ED4CFD5D951 /* DongKeCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DongKeCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0075EAFC8339B31914BBCDE /* ExerciseCatalogCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogCore.swift; sourceTree = "<group>"; };
@@ -711,6 +716,7 @@
 		ED52CF4CC8350CA8DE9A1F60 /* PlanBriefParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanBriefParserTests.swift; sourceTree = "<group>"; };
 		ED716AD86759961ED4734D96 /* MicroDose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicroDose.swift; sourceTree = "<group>"; };
 		EE2260E621CC664E965E6996 /* DongKe.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DongKe.entitlements; sourceTree = "<group>"; };
+		EF4E08405D0F4861AC8774CD /* WatchWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutView.swift; sourceTree = "<group>"; };
 		F10AABF92886A67380D8FC30 /* LoadRackStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadRackStore.swift; sourceTree = "<group>"; };
 		F2ACD50F3628A38522F9F738 /* WorkoutPromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutPromptTests.swift; sourceTree = "<group>"; };
 		F3C2A8EFCBCE9FBA6E77CABA /* PlanJSONExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanJSONExtractor.swift; sourceTree = "<group>"; };
@@ -1020,7 +1026,10 @@
 				77F68BEF1BC704870290426E /* DongKeWatch.entitlements */,
 				67FE319793E09ACBCB7BA527 /* RootView.swift */,
 				04E00B033DD77DD85A1F7546 /* WatchApp.swift */,
+				0B3BC423B013C46588A86E1F /* WatchRestView.swift */,
 				65C3B2EB18DAE7CC22409BAB /* WatchSyncService.swift */,
+				AEB2F7631B6963062CE53235 /* WatchWorkoutSession.swift */,
+				EF4E08405D0F4861AC8774CD /* WatchWorkoutView.swift */,
 			);
 			path = DongKeWatch;
 			sourceTree = "<group>";
@@ -1762,7 +1771,10 @@
 			files = (
 				52940F425E8E47520A29B2A6 /* RootView.swift in Sources */,
 				0E6105C64E0DB0B0219AF40C /* WatchApp.swift in Sources */,
+				55BBE7B570F0BE2D1567A839 /* WatchRestView.swift in Sources */,
 				CCEFF1F8651906A938BC196D /* WatchSyncService.swift in Sources */,
+				D1FC834ED3C0A0CC46924FD3 /* WatchWorkoutSession.swift in Sources */,
+				9078CA4C52234DD0D57A2FB1 /* WatchWorkoutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

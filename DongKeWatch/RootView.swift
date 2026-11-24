@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import DongKeCore
 
@@ -6,56 +7,62 @@ enum WatchRoute: Hashable {
 }
 
 struct WatchRootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var path: [WatchRoute] = []
     @State private var model = WatchContextModel.shared
+    @State private var session = WatchWorkoutSession()
 
     var body: some View {
         NavigationStack(path: $path) {
-            WatchHomeView(context: model.context)
-                .navigationDestination(for: WatchRoute.self) { route in
-                    switch route {
-                    case let .workout(sessionId):
-                        WatchWorkoutPlaceholderView(sessionId: sessionId)
-                    }
+            Group {
+                if let context = model.context {
+                    WatchWorkoutView(session: session, context: context)
+                } else {
+                    WatchEmptyView()
                 }
+            }
+            .navigationDestination(for: WatchRoute.self) { route in
+                switch route {
+                case let .workout(sessionId):
+                    WatchWorkoutPlaceholderView(sessionId: sessionId)
+                }
+            }
+        }
+        .onReceive(Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()) { date in
+            session.tick(now: date)
+        }
+        .onChange(of: model.context) { _, context in
+            guard let context else { return }
+            session.sync(with: context)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            session.tick(now: Date())
+        }
+        .task {
+            WatchContextModel.shared.loadFromCache()
+            WatchSyncService.shared.activate()
+            if let context = model.context {
+                session.sync(with: context)
+            }
+            #if DEBUG
+            if ProcessInfo.processInfo.environment["DK_WATCH_DEMO_REST"] == "1" {
+                session.startRest(seconds: 90)
+            }
+            #endif
         }
     }
 }
 
-private struct WatchHomeView: View {
-    let context: WatchContext?
-
+private struct WatchEmptyView: View {
     var body: some View {
         VStack(spacing: 6) {
-            if let context {
-                Text(context.dayTitle)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-
-                if let step = context.currentStep,
-                   case let .set(prescriptionId, setIndex, target, _) = step,
-                   let exercise = context.exercise(for: prescriptionId) {
-                    Text(exercise.name)
-                        .font(.footnote)
-                    Text("第 \(setIndex) 组，共 \(exercise.setCount) 组")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Text(target.doseText)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("休息或组间调整")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Text("动刻")
-                    .font(.headline)
-                Text("请在 iPhone 上开始训练")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            Text("动刻")
+                .font(.headline)
+            Text("请在 iPhone 上开始训练")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding()
     }

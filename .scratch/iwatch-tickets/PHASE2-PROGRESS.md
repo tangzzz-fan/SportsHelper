@@ -55,6 +55,20 @@
 - 坑一：Watch bundle id 必须是 iOS bundle id 的子前缀，已改为 `app.dongke.ios.watchkitapp`。
 - 坑二：训练开始时原本不存 checkpoint，第一组记完前 Watch 收不到；`WorkoutView.onAppear` 补一次。
 
+### W1.3：Watch 倒计时 UI 与状态机
+- `WatchWorkoutSession`：`RestTimerStateMachine` 驱动，视图每 0.25s tick；
+  回到前台按绝对时间重算；上下文只在新 `updatedAt` 时覆盖本地休息状态。
+- `WatchRestView`：动作名 + 第 N 组 / 共 M 组、88pt 倒计时、+15 秒、完成本组；
+  VoiceOver 值按 10 秒取整并主动播报。
+- `RootView` 在休息时切到倒计时页；`DK_WATCH_DEMO_REST=1` 供 DEBUG 截图。
+- 已有 Core 用例 `backgroundJumpFinishesInSingleTick` 覆盖跨 10 分钟回前台。
+
+### W1.4：Watch 训练页基础布局
+- `WatchWorkoutView`：当天标题 / 动作名 / 第 N 组共 M 组 / 目标（含「每侧」）/ 完成按钮；
+  休息中自动切换 `WatchRestView`；无骨架、要点、常见错误。
+- 整页合并为一个无障碍元素：「动作，第 N 组，共 M 组，目标 X」。
+- Phase 1 的「完成本组」禁用，页面注明「本组在 iPhone 上记录」；W2.6 打开并接日志回传。
+
 ### 测试
 - 新增 21 条（W2.1/W2.2 16 条 + W1.2a 5 条），`DongKeCoreTests` 全量 **936 条通过**（2026-11-24）。
 - 覆盖：快照往返、老格式兜底、无容器降级、来源设备保留、坏行跳过、
@@ -81,6 +95,8 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W1.1 | Watch target + 入口 + 路由 | ✓ 已完成（2026-11-24） |
 | W1.2a | WatchContext 传输与本地快照 | ✓ 代码完成；端到端待配对设备 |
 | W1.2 | 通知处理与深链 | 载荷无 `sessionId`，改用 dayIndex + context revision |
+| W1.3 | Watch 倒计时 UI 与状态机 | 代码完成；待 runtime/真机走查 |
+| W1.4 | Watch 训练页基础布局 | 代码完成；待 runtime 检查截断 |
 | W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
 | W2.3 | Watch 日志队列与指数退避重试 | 需要 WCSession 传输层；Watch target 已就绪 |
 | W2.4 | iPhone 侧日志合并写入门禁 | Core 合并已就绪；SwiftData 接线待 WCSession 有数据来源 |
@@ -94,6 +110,8 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 |---|---|---|---|
 | W1.1 | DongKeWatch target + 路由 + entitlements | — | ✓ 编译通过 |
 | W1.2a | WatchContext + 两端 WCSession + 缓存 | 5 | 代码 ✓，端到端待配对 |
+| W1.3 | 倒计时 UI + WatchWorkoutSession | 0（复用 Core 用例） | 代码 ✓，待 runtime 走查 |
+| W1.4 | Watch 训练页布局 | 0 | 代码 ✓，待 runtime 检查截断 |
 | W2.1 | AppGroupsStore（本机存储） | 8 | Core ✓ |
 | W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 | 8（3 + 5） | Core ✓ |
 | W2.3–W2.7 | — | — | 待 W1.2–W1.5 / 日志回传 |
