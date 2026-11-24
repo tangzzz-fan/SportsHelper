@@ -9,6 +9,8 @@ struct ReminderTriggerTests {
         ReminderSpec(
             id: "dk.plan.test.\(weekday.rawValue)",
             weekday: weekday,
+            dayIndex: weekday.rawValue,
+            planRevision: 1,
             triggerTime: TimeOfDay(hour: hour, minute: minute),
             workoutTime: TimeOfDay(hour: hour, minute: minute),
             title: "该练了",

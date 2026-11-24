@@ -23,6 +23,7 @@ final class NotificationService: RestNotificationScheduling {
 
     private init() {
         center.delegate = router
+        center.setNotificationCategories(NotificationCategoryRegistry.all())
     }
 
     var statusText: String {
@@ -80,7 +81,12 @@ final class NotificationService: RestNotificationScheduling {
             content.title = spec.title
             content.body = spec.body
             content.sound = settings.soundEnabled ? .default : nil
-            content.userInfo = ReminderPayload.userInfo(weekday: spec.weekday)
+            content.categoryIdentifier = NotificationCategory.workout
+            content.userInfo = ReminderPayload.userInfo(
+                weekday: spec.weekday,
+                dayIndex: spec.dayIndex,
+                planRevision: spec.planRevision
+            )
 
             let trigger = ReminderTrigger.from(spec)
             let components = DateComponents(hour: trigger.hour, minute: trigger.minute, weekday: trigger.weekday)

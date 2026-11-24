@@ -1,8 +1,8 @@
 # iWatch 实现 Tickets
 
-> **当前状态（2026-11-25）**：代码可做的部分已完成 W1.1 / W1.2a / W1.3 / W1.4 与 W2.1–W2.6，
-> 外加 `transferUserInfo` 失败回滚（W2.3 遗留的静默丢日志口子，已补）。
-> 剩余：W1.2 通知深链、W2.2 的 Watch 续练选择 UI、W1.5 / W2.7 真机验收。
+> **当前状态（2026-11-25）**：代码可做的部分已完成 W1.1 / W1.2 / W1.2a / W1.3 / W1.4 与 W2.1–W2.6，
+> 外加 `transferUserInfo` 失败回滚（W2.3 遗留的静默丢日志口子）。
+> 剩余：W2.2 的 Watch 续练选择 UI、`startedFrom: .watch`、W1.5 / W2.7 真机验收。
 > 真机前置、最新度量与剩余任务清单见 `PHASE2-PROGRESS.md`；本文件保留每张票的原始验收口径。
 
 ## Phase 1：通知 + 倒计时（MVP 验证）
@@ -94,19 +94,30 @@ W1.2–W1.4 都假设 Watch 知道「当前第几组、目标多少、下一个�
 > **前置修正（2026-11-24）**：先做 W1.2a。提醒是提前排程的，排程时没有 `sessionId`，`userInfo["sessionId"]` 这条不成立；改为 `dayIndex` + `WatchContext` 的 `revision`，会话内的 `sessionId` 由上下文快照携带。
 
 **交付物**：
-- [ ] `WatchNotificationHandler.swift`
-  - 处理 `userInfo["sessionId"]` 与 `userInfo["planDayIndex"]`
-  - 触发 `navigationStack.append(.workout(sessionId:))`
-  - 注册 `UNNotificationAction("start_training")`
-  
-- [ ] `NotificationPayloadBuilder.swift`（DongKeCore 新增）
-  - 生成 `userInfo` 的序列化格式
-  - 单测：`userInfo` 能被 Watch 端正确解码
+- [x] `NotificationCategoryRegistry`（DongKeCore/Scheduling/NotificationCategories.swift）
+  - 分类 + 「已开始」动作的唯一定义，两端注册同一份
+- [x] `ReminderPayload.userInfo(weekday:dayIndex:planRevision:)`
+  - 三个键一起带：`weekday` 给升级前的包、`dayIndex` 是新落点、`planRevision` 判改版
+- [x] `WatchNotificationHandler.swift`
+  - `didReceive` 记下 dayIndex；delegate 在 `App.init` 就位，早于任何回调
+- [x] iPhone `NotificationService` 写 `categoryIdentifier` 与新载荷
+
+**2026-11-25 落地说明**：
+- 复查后确认「点通知进训练页」**不需要新路由**：Watch 只要有 `WatchContext` 快照，
+  App 一打开就是训练页。`WatchRoute.workout` 至今仍是占位页，W1.2 用不上它。
+- 真正缺的是**载荷里没有 dayIndex**。跨午夜提前的提醒，`weekday` 会被挪到前一天
+  （见 `leadTimeAcrossMidnightMovesWeekdayBack`），Watch 侧靠 weekday 反推会把
+  「周一那节」推成「周日训练」。现在 spec 直接带 `day.dayIndex`。
+- `planRevision` 对不上时的阻断由 W2.5 的 `CheckpointValidator` 兜，这里不重复实现。
+
+**未做（单独一票）**：`startedFrom: .watch`。「已开始」按钮现在只负责打开 App，
+不告诉 iPhone「这次是 Watch 上确认的」。要落这个语义得给 `SessionEntity` 加字段、
+改 `WorkoutSession` 的创建路径，且 iPhone 不在前台时的行为需要另定。
 
 **验收**：
-- [ ] 真机验证：通知点开后进入训练页
-- [ ] 通知正文包含「深蹲 4 组」等内容
-- [ ] 点「已开始」能触发 `startFromNotification` 事件
+- [x] 载荷往返 / NSNumber 装箱 / 跨午夜 dayIndex / revision 透传 —— 4 条单测
+- [ ] 真机：通知点开后进训练页（依赖 W1.5 前置）
+- [ ] 真机：「已开始」按钮出现在通知上
 
 ---
 

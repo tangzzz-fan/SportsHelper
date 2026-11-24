@@ -73,6 +73,23 @@ struct WeeklyScheduleGeneratorTests {
 
         #expect(specs.first?.triggerTime == TimeOfDay(hour: 23, minute: 35))
         #expect(specs.first?.weekday == .sunday)
+        // 提醒挪到周日了，但训的还是周一那节。载荷必须带 dayIndex：
+        // Watch 侧只拿到 weekday 的话，反推出来的会是「周日训练」。
+        #expect(specs.first?.dayIndex == days[0].dayIndex)
+    }
+
+    @Test func specsCarryPlanRevision() {
+        var plan = makePlan(days: makeSevenDays(training: [1, 3, 5], blocks: [makeBlock(items: [makeItem()])]))
+        plan.revision = 4
+
+        let specs = WeeklyScheduleGenerator.makeSpecs(
+            plan: plan,
+            settings: ReminderSettings(leadMinutes: 5),
+            now: now
+        )
+
+        #expect(specs.count == 3)
+        #expect(specs.allSatisfy { $0.planRevision == 4 })
     }
 
     @Test func disabledSettingsProduceNothing() {

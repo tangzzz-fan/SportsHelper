@@ -31,6 +31,8 @@ public enum WeeklyScheduleGenerator {
             return ReminderSpec(
                 id: "dk.plan.\(plan.id.uuidString).\(weekday.rawValue)",
                 weekday: weekday,
+                dayIndex: day.dayIndex,
+                planRevision: plan.revision,
                 triggerTime: triggerTime,
                 workoutTime: workoutTime,
                 title: "该练了 · \(day.title)",

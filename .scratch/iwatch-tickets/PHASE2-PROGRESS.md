@@ -148,7 +148,7 @@ W2.3 上线时 `flush` 写的是「send 没抛错就从 outbox 删」，等于�
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| W1.2 通知处理与深链 | 未开工 | 排程时没有 `sessionId`，载荷改 dayIndex + planRevision；`WatchRoute` 已留好 |
+| W1.2 通知处理与深链 | ✅ 代码完成（2026-11-25） | 载荷带 `dayIndex` + `planRevision`，两端注册同一份通知分类。复查确认不需要新路由：有快照时 App 打开就是训练页。`startedFrom: .watch` 未做，单独一票。真机待验 |
 | W1.5 Phase 1 真机清单 | 阻塞 | 需开发证书 + 配对设备 |
 | W2.2 Watch 续练选择 UI | 未做 | 当前直接按缓存显示当前组；ticket 要求的「继续上一组 / 从头开始」选择页没有 |
 | W1.3 环形进度（可选） | 待定 | `IWATCH.md` 交付清单写「环形进度」，当前 Watch 是文本倒计时；草图本身没画环 |
@@ -179,6 +179,7 @@ scripts/ui-test.sh   # iOS 侧一条 UI 测试，发布前跑
 | Ticket | 代码 | 单测 | 状态 |
 |---|---|---|---|
 | W1.1 | DongKeWatch target + 路由 + entitlements | — | ✓ 编译通过 |
+| W1.2 | 载荷 dayIndex/planRevision + 两端通知分类 + Watch 回调 | 4 | 代码 ✓，真机待验 |
 | W1.2a | WatchContext + 两端 WCSession + 缓存 | 5 | 代码 ✓，端到端待配对 |
 | W1.3 | 倒计时 UI + WatchWorkoutSession | 0（复用 Core 用例） | 代码 ✓，待 runtime 走查 |
 | W1.4 | Watch 训练页布局 | 0 | 代码 ✓，待 runtime 检查截断 |
@@ -189,6 +190,6 @@ scripts/ui-test.sh   # iOS 侧一条 UI 测试，发布前跑
 | W2.6 | Watch 完成本组 | 0 | 代码 ✓，真机待验 |
 | W2.5 | CheckpointValidator / planRevision 下发 / Watch 阻断 | 9 | 代码 ✓，真机待验 |
 
-**全量单测**：962 / 962 通过  
+**全量单测**：968 / 968 通过（2026-11-25）  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 W2.1 本身 8 条；W2.3 又补了 15 条队列/退避用例。
 按风险点覆盖，不追数字。W1.5 / W2.7 的真机项全部未验。

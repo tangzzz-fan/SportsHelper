@@ -193,6 +193,10 @@ public enum ReminderKind: String, Codable, Sendable {
 public struct ReminderSpec: Equatable, Identifiable, Sendable {
     public var id: String
     public var weekday: Weekday
+    /// 这一条提醒对应计划里的第几天。通知点开要靠它找到该进哪一节训练。
+    public var dayIndex: Int
+    /// 排程时计划的 revision。对不上说明计划改过，Watch 侧不该按旧通知直接进训练页。
+    public var planRevision: Int
     public var triggerTime: TimeOfDay
     public var workoutTime: TimeOfDay
     public var title: String
@@ -202,6 +206,8 @@ public struct ReminderSpec: Equatable, Identifiable, Sendable {
     public init(
         id: String,
         weekday: Weekday,
+        dayIndex: Int,
+        planRevision: Int,
         triggerTime: TimeOfDay,
         workoutTime: TimeOfDay,
         title: String,
@@ -210,6 +216,8 @@ public struct ReminderSpec: Equatable, Identifiable, Sendable {
     ) {
         self.id = id
         self.weekday = weekday
+        self.dayIndex = dayIndex
+        self.planRevision = planRevision
         self.triggerTime = triggerTime
         self.workoutTime = workoutTime
         self.title = title

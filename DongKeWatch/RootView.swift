@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
+import os
 import DongKeCore
+
+private let watchLog = Logger(subsystem: "app.dongke.ios", category: "watch")
 
 enum WatchRoute: Hashable {
     case workout(sessionId: UUID)
@@ -11,6 +14,7 @@ struct WatchRootView: View {
     @State private var path: [WatchRoute] = []
     @State private var model = WatchContextModel.shared
     @State private var session = WatchWorkoutSession()
+    @State private var notifications = WatchNotificationHandler.shared
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -38,6 +42,16 @@ struct WatchRootView: View {
         .onChange(of: model.context) { _, context in
             guard let context else { return }
             session.sync(with: context)
+        }
+        .onChange(of: notifications.openedDayIndex) { _, dayIndex in
+            guard let dayIndex else { return }
+            notifications.consumeOpenedDay()
+            // App 有快照时本来就是训练页，所以这里不需要「路由」到别处；
+            // 记下通知说的是哪天、快照是哪天，真机验收靠这条日志确认链路通没通。
+            // 计划改版的阻断由 WatchWorkoutView 里的 CheckpointValidator 兜（W2.5）。
+            watchLog.notice(
+                "notification open day=\(dayIndex, privacy: .public) contextDay=\(model.context?.checkpoint.dayIndex ?? -1, privacy: .public)"
+            )
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
