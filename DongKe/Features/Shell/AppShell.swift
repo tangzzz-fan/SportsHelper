@@ -133,6 +133,32 @@ struct AppShell: View {
             NotificationService.shared.router.onOpenWorkout = { link in
                 openWorkout(link)
             }
+            // 手表发来的意图先走这里：有视图时用户就在 iPhone 上，能直接看到训练页。
+            // App 被后台唤起时这个闭包没人注册，inbox 会自己落盘并广播。
+            WatchIntentInbox.shared.liveLauncher = { intent in
+                let launch = resolve(intent)
+                apply(launch, persistNow: true)
+                return launch
+            }
+            #if DEBUG
+            // 模拟器上没法配对 Watch，用它验证「收到意图 → 裁决 → 落盘」这条链。
+            // 只在状态真的变了的时候有意义：restart 会把断点换成新会话。
+            if let raw = ProcessInfo.processInfo.environment["DK_WATCH_INTENT"] {
+                let stored = checkpoints.load()
+                let dayIndex = stored?.dayIndex
+                    ?? PlanCalendar.occurrence(on: Date(), in: activePlan)?.dayIndex
+                if let dayIndex {
+                    _ = WatchIntentInbox.shared.handle(
+                        WatchIntent(
+                            kind: raw == "restart" ? .restart : .start,
+                            dayIndex: dayIndex,
+                            sessionId: stored?.sessionId,
+                            planRevision: activePlan.revision
+                        )
+                    )
+                }
+            }
+            #endif
             #if DEBUG
             // 通知回调没法在模拟器上点（本地通知没有可注入的 response），
             // 用这个钩子直接走同一个入口，验证「点通知会不会覆盖正在进行的进度」。
@@ -213,12 +239,16 @@ struct AppShell: View {
 
     /// 计划本来的样子。减载周只改显示与当次训练，不改它。
     private var rawPlan: WorkoutPlan {
-        planStore.plan ?? PlanGenerator.makePlan(profile: profileStore.profile ?? UserProfile())
+        ActivePlanProvider.raw(planStore: planStore, profileStore: profileStore)
     }
 
     /// 第 4 周目标值 ×0.6。不写回计划、不改 revision，第 5 周自动恢复。
     private var activePlan: WorkoutPlan {
-        DeloadWeek.applied(to: rawPlan, on: Date(), enabled: deload.isEnabled)
+        ActivePlanProvider.current(
+            planStore: planStore,
+            profileStore: profileStore,
+            deloadEnabled: deload.isEnabled
+        )
     }
 
     private var deloadNote: String? {
@@ -295,7 +325,9 @@ struct AppShell: View {
         )
     }
 
-    private func apply(_ launch: SessionLaunch) {
+    /// `persistNow` 用于手表发起的意图：那边已经开始记组了，断点必须立刻落盘，
+    /// 否则一次都没记的会话在 iPhone 上没有痕迹，日志回来时找不到归属。
+    private func apply(_ launch: SessionLaunch, persistNow: Bool = false) {
         switch launch {
         case .open:
             // 已经是当前会话了，什么都不做。重建一次会把进度条和播报状态清掉，
@@ -305,25 +337,28 @@ struct AppShell: View {
             resumeInto(checkpoint)
         case let .create(dayIndex, _):
             let plan = activePlan
-            start(
+            let created = start(
                 dayIndex: dayIndex,
                 on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
                 in: plan
             )
+            if persistNow { created.saveCheckpoint() }
         case let .abandonAndCreate(abandoned, dayIndex, _):
             discard(abandoned)
             let plan = activePlan
-            start(
+            let created = start(
                 dayIndex: dayIndex,
                 on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
                 in: plan
             )
+            if persistNow { created.saveCheckpoint() }
         case .blocked:
             break
         }
     }
 
-    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan, kind: SessionKind = .full) {
+    @discardableResult
+    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan, kind: SessionKind = .full) -> WorkoutSession {
         let active = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: planDate, kind: kind)
         active.store = store
         active.setLogStore = setLogs
@@ -331,6 +366,7 @@ struct AppShell: View {
         active.restNotifications = NotificationService.shared
         active.preloadLastLoads()
         session = active
+        return active
     }
 
     private func resumeWorkout() {

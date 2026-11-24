@@ -40,9 +40,25 @@ final class WatchNotificationHandler: NSObject, UNUserNotificationCenterDelegate
     ) async {
         let userInfo = response.notification.request.content.userInfo
         guard let dayIndex = ReminderPayload.dayIndex(from: userInfo) else { return }
+        let wantsStart = response.actionIdentifier == NotificationCategory.startTraining
         await MainActor.run {
-            self.openedDayIndex = dayIndex
+            if wantsStart {
+                self.requestStart(dayIndex: dayIndex)
+            } else {
+                self.openedDayIndex = dayIndex
+            }
         }
+    }
+
+    /// 点「已开始」= 想练，不只是想看。手表没有计划，得让 iPhone 裁决出会话，
+    /// 再把上下文发回来——这里发完就等，不等回执也不会卡住界面。
+    private func requestStart(dayIndex: Int) {
+        let revision = WatchContextModel.shared.planRevision
+            ?? WatchContextModel.shared.context?.checkpoint.revision
+            ?? 0
+        WatchIntentSender.shared.send(
+            WatchIntent(kind: .start, dayIndex: dayIndex, planRevision: revision)
+        )
     }
 
     func consumeOpenedDay() -> Int? {

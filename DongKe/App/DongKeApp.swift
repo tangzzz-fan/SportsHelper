@@ -63,6 +63,8 @@ struct DongKeApp: App {
         _profileStore = State(initialValue: profiles)
         let plans = PlanStore(context: container.mainContext)
         _planStore = State(initialValue: plans)
+        // 后台被 WCSession 唤起时 AppShell 还没建，意图得能自己读到计划。
+        WatchIntentInbox.shared.configure(planStore: plans, profileStore: profiles)
 
         #if DEBUG
         // 截图与预览用：在 body 之前就把演示档案写进库。

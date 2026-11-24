@@ -82,6 +82,13 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
         _ session: WCSession,
         didReceiveUserInfo userInfo: [String: Any] = [:]
     ) {
+        if let intent = Self.decodeIntent(userInfo[WatchSyncKey.intent]) {
+            // 排队送达的路径没有回执通道，手表那边靠「上下文变了」或 8 秒超时收场。
+            Task { @MainActor in
+                WatchIntentInbox.shared.handle(intent)
+            }
+            return
+        }
         guard let data = userInfo[WatchSyncKey.log] as? Data,
               let entry = try? JSONDecoder().decode(PendingSetLog.self, from: data)
         else {
@@ -100,6 +107,27 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
         } catch {
             watchLog.error("watch log store failed: \(String(describing: error), privacy: .public)")
         }
+    }
+
+    /// 手表就在附近时走这条：有回执，等待态能立刻结束。
+    nonisolated func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void
+    ) {
+        guard let intent = Self.decodeIntent(message[WatchSyncKey.intent]) else { return }
+        // WCSession 的回调签名没有并发标注，回执要在主 actor 上构造完再发出去。
+        nonisolated(unsafe) let reply = replyHandler
+        Task { @MainActor in
+            let ack = WatchIntentInbox.shared.handle(intent)
+            guard let data = try? JSONEncoder().encode(ack) else { return }
+            reply([WatchSyncKey.intentAck: data])
+        }
+    }
+
+    private nonisolated static func decodeIntent(_ raw: Any?) -> WatchIntent? {
+        guard let data = raw as? Data else { return nil }
+        return try? JSONDecoder().decode(WatchIntent.self, from: data)
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}

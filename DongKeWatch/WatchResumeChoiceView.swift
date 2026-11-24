@@ -3,13 +3,15 @@ import DongKeCore
 
 /// 断点续练的岔路口，只在 `ResumePrompt.shouldAsk` 为真时出现。
 ///
-/// 这里刻意没有「重新开始」：`WatchWorkoutSession.resolvedStepIndex` 取
-/// `max(localStepIndex, checkpoint.stepIndex)`，本地归零会被下一次上下文更新
-/// 立刻拉回原组。要支持它得先有「放弃会话」的协议（iPhone 把旧会话标 abandoned
-/// 再开新 sessionId），见 W2.2 票里拆出去的那一项。
+/// 「重新开始」不是一个本地操作：`WatchWorkoutSession.resolvedStepIndex` 取
+/// `max(localStepIndex, checkpoint.stepIndex)`，本地把进度归零会被下一次上下文
+/// 更新立刻拉回原组。所以它只能请 iPhone 丢掉旧会话、开一个新的，手表拿新
+/// `sessionId` 才能真的从头开始——这段时间显示等待态，期间不能记组。
 struct WatchResumeChoiceView: View {
     let set: WatchSetSummary?
+    var phase: RestartWaitState = .idle
     let onResume: () -> Void
+    let onRestart: () -> Void
     let onDecline: () -> Void
 
     var body: some View {
@@ -22,7 +24,7 @@ struct WatchResumeChoiceView: View {
 
             VStack(spacing: 2) {
                 Text(headline)
-                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                    .font(.system(size: 30, weight: .semibold, design: .rounded))
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 Text(detail)
@@ -35,6 +37,29 @@ struct WatchResumeChoiceView: View {
 
             Spacer(minLength: 0)
 
+            if case .waiting = phase {
+                waitingBody
+            } else {
+                actions
+            }
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private var waitingBody: some View {
+        VStack(spacing: 6) {
+            ProgressView()
+            Text("正在联系 iPhone…")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("正在联系 iPhone，请稍候")
+    }
+
+    private var actions: some View {
+        VStack(spacing: 6) {
             Button(action: onResume) {
                 Text("继续练")
                     .frame(maxWidth: .infinity)
@@ -42,16 +67,29 @@ struct WatchResumeChoiceView: View {
             .buttonStyle(.borderedProminent)
             .tint(WatchTheme.accent)
 
+            Button(action: onRestart) {
+                Text("重新开始")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
+            if case .failed = phase {
+                Text("iPhone 没响应，稍后再试")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+
             Button(action: onDecline) {
                 Text("今天不练了")
                     .font(.footnote)
-                    .frame(maxWidth: .infinity, minHeight: 32)
+                    .frame(maxWidth: .infinity, minHeight: 30)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 4)
     }
 
     private var headline: String {

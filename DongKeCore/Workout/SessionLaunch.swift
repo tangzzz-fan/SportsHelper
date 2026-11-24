@@ -38,7 +38,7 @@ public enum SessionIntent: Equatable, Sendable {
     case watchRestart(dayIndex: Int, sessionId: UUID)
 }
 
-public enum SessionLaunchBlock: String, Equatable, Sendable {
+public enum SessionLaunchBlock: String, Codable, Equatable, Sendable {
     /// 计划里没有这一天，或者那天是休息日。
     case unknownDay
     /// 要放弃的那个不是当前会话（含「什么都没有」）——这条意图之前已经生效过。
@@ -140,5 +140,25 @@ public enum SessionLaunchResolver {
 
     private static func isTrainingDay(_ dayIndex: Int, in plan: WorkoutPlan) -> Bool {
         plan.days.contains { $0.dayIndex == dayIndex && !$0.isRestDay }
+    }
+}
+
+/// 「重新开始」的等待态。
+///
+/// 丢弃会话必须由 iPhone 裁决，手表只能等新上下文。等待期间不能记组——
+/// 日志的 `sessionId` 还是旧的，记了会写进正要放弃的那个会话。
+///
+/// 放 Core 是为了可测：超时判定是逻辑，不是动画。
+public enum RestartWaitState: Equatable, Sendable {
+    case idle
+    case waiting(startedAt: Date)
+    case failed
+
+    public static let timeout: TimeInterval = 8
+
+    /// 到了超时点还没等到新上下文。
+    public func hasTimedOut(at now: Date) -> Bool {
+        guard case let .waiting(startedAt) = self else { return false }
+        return now.timeIntervalSince(startedAt) >= Self.timeout
     }
 }

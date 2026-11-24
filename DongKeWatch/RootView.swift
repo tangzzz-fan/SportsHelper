@@ -21,6 +21,10 @@ struct WatchRootView: View {
     @State private var answeredSessionId: UUID?
     /// 已答「今天不练了」的会话。同一个会话不再显示训练页。
     @State private var declinedSessionId: UUID?
+    /// 「重新开始」的等待态。发起时记下当时那个 `sessionId`，等它变了就是新会话到了。
+    @State private var restartPhase: RestartWaitState = .idle
+    @State private var restartOriginId: UUID?
+    @State private var restartWatchdog: Task<Void, Never>?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -28,7 +32,9 @@ struct WatchRootView: View {
                 if showsResumePrompt, let context = model.context {
                     WatchResumeChoiceView(
                         set: session.currentSet(in: context),
+                        phase: restartPhase,
                         onResume: { answerPrompt(for: context, resume: true) },
+                        onRestart: { requestRestart(for: context) },
                         onDecline: { answerPrompt(for: context, resume: false) }
                     )
                 } else if let context = model.context,
@@ -56,6 +62,7 @@ struct WatchRootView: View {
         }
         .onChange(of: model.context) { _, context in
             guard let context else { return }
+            settleRestartIfNeeded(with: context)
             session.sync(with: context)
             evaluateResumePrompt(context)
         }
@@ -113,6 +120,51 @@ struct WatchRootView: View {
             declinedSessionId = context.checkpoint.sessionId
         }
         showsResumePrompt = false
+    }
+
+    /// 「重新开始」只能在 iPhone 那边成立：手表把进度归零会被下一次上下文更新
+    /// 拉回原组。所以发意图、等新会话的上下文，等到之前不记组。
+    private func requestRestart(for context: WatchContext) {
+        let intent = WatchIntent(
+            kind: .restart,
+            dayIndex: context.checkpoint.dayIndex,
+            sessionId: context.checkpoint.sessionId,
+            planRevision: model.planRevision ?? context.checkpoint.revision
+        )
+        restartOriginId = context.checkpoint.sessionId
+        restartPhase = .waiting(startedAt: Date())
+        restartWatchdog?.cancel()
+        restartWatchdog = Task {
+            try? await Task.sleep(nanoseconds: UInt64(RestartWaitState.timeout * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            if case .waiting = restartPhase {
+                restartPhase = .failed
+            }
+        }
+        WatchIntentSender.shared.send(intent) { ack in
+            guard let ack else { return }
+            switch ack.outcome {
+            case .restarted, .created, .opened, .resumed:
+                // 意图被接受了，但会话内容还没到——等上下文，别提前进训练页。
+                break
+            case .blocked where ack.block == .staleRestart:
+                // 之前那条意图已经生效过，新会话可能就在路上。静默退出等待。
+                restartWatchdog?.cancel()
+                restartPhase = .idle
+            case .blocked, .ignored:
+                restartWatchdog?.cancel()
+                restartPhase = .failed
+            }
+        }
+    }
+
+    /// 新会话的上下文到了：结束等待，让根视图按新 `sessionId` 渲染。
+    private func settleRestartIfNeeded(with context: WatchContext) {
+        guard case .waiting = restartPhase else { return }
+        guard context.checkpoint.sessionId != restartOriginId else { return }
+        restartWatchdog?.cancel()
+        restartPhase = .idle
+        restartOriginId = nil
     }
 }
 

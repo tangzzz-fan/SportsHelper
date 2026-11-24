@@ -220,4 +220,20 @@ struct SessionLaunchTests {
                 == .blocked(.unknownDay)
         )
     }
+
+    // MARK: - 等待态
+
+    @Test("等到 8 秒还没拿到新上下文才算超时")
+    func restartWaitTimesOutAtEightSeconds() {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let waiting = RestartWaitState.waiting(startedAt: start)
+        #expect(waiting.hasTimedOut(at: start.addingTimeInterval(7.9)) == false)
+        #expect(waiting.hasTimedOut(at: start.addingTimeInterval(8.1)) == true)
+    }
+
+    @Test("只有等待态会超时，空闲和失败都不该被时间影响")
+    func onlyWaitingCanTimeOut() {
+        #expect(RestartWaitState.idle.hasTimedOut(at: Date()) == false)
+        #expect(RestartWaitState.failed.hasTimedOut(at: Date()) == false)
+    }
 }
