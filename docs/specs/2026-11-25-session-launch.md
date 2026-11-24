@@ -181,8 +181,7 @@ public enum SessionOrigin: String, Codable, Sendable {
 | `watchStart(d)` | `active` 存在且是今天的 | `.open`（手表点开始 = 续上正在进行的） |
 | `watchStart(d)` | 无 active、resumable | `.resume(stored)` |
 | `watchStart(d)` | 其余，`d` 有值 | `.create(d, .watch)` |
-| `watchStart(nil)` | 今天是训练日 | `.create(今天, .watch)` |
-| `watchStart(nil)` | 今天是休息日 | `.blocked(.unknownDay)` |
+| `watchStart(nil)` | 其余 | `.create(今天或下一节, .watch)`，跟 `startToday` 共用 `PlanCalendar.occurrence` |
 | `watchRestart(d, s)` | `active` 存在且 `active.id == s` | `.abandonAndCreate(s, d, .watch)` |
 | `watchRestart(d, s)` | 无 active、`stored?.sessionId == s` | `.abandonAndCreate(s, d, .watch)` |
 | `watchRestart(d, s)` | `active.id != s` | `.blocked(.staleRestart)`——已经放弃过了 |
@@ -190,6 +189,8 @@ public enum SessionOrigin: String, Codable, Sendable {
 | 任意 | `d` 有值但不是训练日 | `.blocked(.unknownDay)` |
 
 「是今天的」= `calendar.isDate(active.startedAt, inSameDayAs: now)`。不能只看 `dayIndex` 相等：App 在后台挂了一夜，`active` 的 dayIndex 还是昨天那个数字，但计划里的日期已经滚过去了。
+
+`watchStart(nil)` 与 `startToday` 在休息日的行为**必须一致**：都走 `PlanCalendar.occurrence(on:in:)`，开计划里下一节。理由是两者都是「用户想练」，不该因为入口不同给出两种答案。第一版规则表把它们写成了「休息日挡住」，实现时被测试抓出来——`occurrence` 本来就会往后找最近一次训练。
 
 两条隐含规则，要写进注释：
 
@@ -357,7 +358,7 @@ Watch 侧不需要区分「打开 App」和「开始训练」两种点法吗？�
 | `.create` 判定 | 无可续 + startToday；可续但 dayIndex 不同 + openReminder；watchStart 带 nil dayIndex 落今天 |
 | `.abandonAndCreate` | `active.id == 意图里的 sessionId` 时 restart；只有断点且 id 对上时 restart |
 | `.blocked` | 休息日/不存在的一天；`watchRestart` 的 `sessionId` 与当前会话不符（含两者都没有） |
-| 边界 | 断点跨天（不可续）时 openReminder 走 create；断点 `planChanged` 时走 create 而非 resume；`active` 是昨天建的（`startedAt` 跨天）时不 `.open`；`watchStart(nil)` 落在休息日时 blocked |
+| 边界 | 断点跨天（不可续）时 openReminder 走 create；断点 `planChanged` 时走 create 而非 resume；`active` 是昨天建的（`startedAt` 跨天）时不 `.open`；`watchStart(nil)` 在今天休息时与 `startToday` 一样落到下一节 |
 | `saveCheckpoint(persist:)` | `persist == false` 不改变断点内容、但仍会广播（用 `WatchSyncService` 的 mock 断言收到一次 context） |
 
 变异验证（项目惯例，验证用例不是摆设）：

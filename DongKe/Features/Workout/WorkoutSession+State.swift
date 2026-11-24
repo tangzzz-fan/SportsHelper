@@ -25,26 +25,32 @@ extension WorkoutSession {
         saveCheckpoint(now: now)
     }
 
-    func saveCheckpoint(now: Date = Date()) {
+    /// `persist == false` 时只广播、不写断点。
+    ///
+    /// 进训练页时用这个：广播是必须的（Watch 要立刻知道 iPhone 上开练了），
+    /// 但一组都没做的会话不该占住单槽断点——否则用户点「开始」又退出来，
+    /// 今日页会显示「上次训练没做完 · 停在第 1 步」。
+    func saveCheckpoint(now: Date = Date(), persist: Bool = true) {
         syncRestNotification()
-        guard let checkpointStore else { return }
         guard finishedAt == nil else {
-            checkpointStore.clear()
+            checkpointStore?.clear()
             try? CheckpointStore.shared.remove(sessionId: id)
-            broadcastWatchContext(makeCheckpoint(now: now, status: .completed))
+            broadcastWatchContext(snapshot(now: now, status: .completed))
             return
         }
-        let checkpoint = makeCheckpoint(now: now, status: .inProgress)
-        checkpointStore.save(checkpoint)
-        // App Group 里的副本给另一台设备续练用。没有 entitlement 或不在 App 进程里时
-        // 取不到容器，这里静默降级——本地断点续练不受影响。
-        try? CheckpointStore.shared.save(checkpoint)
+        let checkpoint = snapshot(now: now)
+        if persist {
+            checkpointStore?.save(checkpoint)
+            // App Group 里的副本给另一台设备续练用。没有 entitlement 或不在 App 进程里时
+            // 取不到容器，这里静默降级——本地断点续练不受影响。
+            try? CheckpointStore.shared.save(checkpoint)
+        }
         broadcastWatchContext(checkpoint)
     }
 
-    private func makeCheckpoint(
-        now: Date,
-        status: WorkoutCheckpoint.WorkoutStatus
+    func snapshot(
+        now: Date = Date(),
+        status: WorkoutCheckpoint.WorkoutStatus = .inProgress
     ) -> WorkoutCheckpoint {
         var restEndsAt: Date?
         var restTotal = 0

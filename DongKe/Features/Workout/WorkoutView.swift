@@ -256,7 +256,7 @@ struct WorkoutView: View {
         }
         .onAppear(perform: startVoiceIfNeeded)
         .onAppear(perform: askRackIfNeeded)
-        .onAppear { session.saveCheckpoint() }
+        .onAppear { session.saveCheckpoint(persist: !session.logs.isEmpty) }
         .sheet(isPresented: $showRackSheet) {
             LoadRackSheet { rackStore.save($0) }
         }

@@ -242,29 +242,85 @@ struct AppShell: View {
         }
         guard let dayIndex else { return }
         tab = .today
-        let occurrence = PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)
-        start(dayIndex: dayIndex, on: occurrence?.date, in: plan)
+        apply(resolve(.openReminder(dayIndex: dayIndex)))
     }
 
     private func startWorkout() {
-        let plan = activePlan
-        guard let occurrence = PlanCalendar.occurrence(on: Date(), in: plan) else { return }
-        start(dayIndex: occurrence.dayIndex, on: occurrence.date, in: plan)
+        apply(resolve(.startToday))
     }
 
     /// 今天只剩 N 分钟：把这一节压短，只影响这次会话，不改计划、不改 revision。
     private func startShort(minutes: Int) {
+        let launch = resolve(.startToday)
+        guard case let .create(dayIndex, _) = launch else {
+            apply(launch)
+            return
+        }
         let plan = activePlan
-        guard let occurrence = PlanCalendar.occurrence(on: Date(), in: plan),
-              let day = plan.days.first(where: { $0.dayIndex == occurrence.dayIndex })
-        else { return }
-
+        guard let day = plan.days.first(where: { $0.dayIndex == dayIndex }) else { return }
         var shortPlan = plan
-        if let index = shortPlan.days.firstIndex(where: { $0.dayIndex == day.dayIndex }) {
+        if let index = shortPlan.days.firstIndex(where: { $0.dayIndex == dayIndex }) {
             shortPlan.days[index] = SessionCompressor.compress(day, toMinutes: minutes)
         }
         LocalCounters.shared.increment(.shortSessionStarted)
-        start(dayIndex: day.dayIndex, on: occurrence.date, in: shortPlan, kind: .short)
+        start(
+            dayIndex: dayIndex,
+            on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
+            in: shortPlan,
+            kind: .short
+        )
+    }
+
+    private func resolve(_ intent: SessionIntent) -> SessionLaunch {
+        SessionLaunchResolver.resolve(
+            intent: intent,
+            active: activeSession,
+            stored: checkpoints.load(),
+            plan: activePlan,
+            now: Date()
+        )
+    }
+
+    /// 内存里正在练的那一次。
+    ///
+    /// 还没记过组的会话没有断点，所以单独用 `ActiveSession` 表达；
+    /// 拿 checkpoint 顶替会让裁决器把「已经开始了」当成「什么都没有」，于是再建一个。
+    private var activeSession: ActiveSession? {
+        guard let session else { return nil }
+        return ActiveSession(
+            id: session.id,
+            dayIndex: session.dayIndex,
+            startedAt: session.startedAt,
+            checkpoint: session.snapshot()
+        )
+    }
+
+    private func apply(_ launch: SessionLaunch) {
+        switch launch {
+        case .open:
+            // 已经是当前会话了，什么都不做。重建一次会把进度条和播报状态清掉，
+            // 那正是「点通知进度归零」的表面症状。
+            break
+        case let .resume(checkpoint):
+            resumeInto(checkpoint)
+        case let .create(dayIndex, _):
+            let plan = activePlan
+            start(
+                dayIndex: dayIndex,
+                on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
+                in: plan
+            )
+        case let .abandonAndCreate(abandoned, dayIndex, _):
+            discard(abandoned)
+            let plan = activePlan
+            start(
+                dayIndex: dayIndex,
+                on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
+                in: plan
+            )
+        case .blocked:
+            break
+        }
     }
 
     private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan, kind: SessionKind = .full) {
@@ -279,6 +335,10 @@ struct AppShell: View {
 
     private func resumeWorkout() {
         guard let checkpoint = resumeCandidate else { return }
+        resumeInto(checkpoint)
+    }
+
+    private func resumeInto(_ checkpoint: WorkoutCheckpoint) {
         LocalCounters.shared.increment(.checkpointResumed)
         let plan = activePlan
         let occurrence = PlanCalendar.occurrence(
@@ -301,6 +361,17 @@ struct AppShell: View {
         active.preloadLastLoads()
         resumeCandidate = nil
         session = active
+    }
+
+    /// 放弃一次会话：两处断点都清掉，内存里是它就一起收。
+    /// 已经记过的组留在日志库里不动——那几组确实做了，只是这次没练完。
+    private func discard(_ sessionId: UUID) {
+        checkpoints.clear()
+        try? CheckpointStore.shared.remove(sessionId: sessionId)
+        if session?.id == sessionId {
+            session = nil
+        }
+        resumeCandidate = nil
     }
 
     private func handleEraseAll() {
