@@ -67,6 +67,15 @@ public actor PendingLogQueue {
         try store.readPendingLogs().count
     }
 
+    /// 传输层报错时把日志放回队列。
+    ///
+    /// `transferUserInfo` 只保证「已交给系统排队」，不保证「已送达对端」；
+    /// 真正的结果在 `didFinishUserInfoTransfer` 的 error 里。如果不管它，
+    /// 那条组日志在 flush 时就已经从队列删掉了——用户以为记上了，实际没有。
+    public func requeue(_ entry: PendingSetLog) throws {
+        try store.requeuePendingLog(entry)
+    }
+
     /// 超过 24 小时还没送出去，UI 该提示用户打开 iPhone。
     public func needsUserAlert(now: Date = Date()) throws -> Bool {
         let entries = try store.readPendingLogs()

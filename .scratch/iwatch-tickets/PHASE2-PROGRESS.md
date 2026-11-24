@@ -1,8 +1,8 @@
 # iWatch Phase 1–2 进展 - 2026-11-24 检查点
 
-**Branch**: `feat/w2-appgroups-sync`  
-**阶段**：代码可做的部分基本完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6）；
-剩余是 W1.2 通知深链、后台 flush、真机验收。本机无 watchOS runtime / 开发证书。
+**Branch**: `main`  
+**阶段**：代码可做的部分基本完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6，含传输失败回滚）；
+剩余是 W1.2 通知深链、W2.2 续练选择 UI、真机验收。本机无 watchOS runtime / 开发证书。
 
 ## 先修正上一份检查点
 
@@ -114,6 +114,21 @@ App Group 只在同一台设备内共享，iPhone 与 Watch 的文件系统互�
 
 详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
 
+## ⚠️ 关键结论：transferUserInfo 不等于送达
+
+`WCSession.transferUserInfo` 的返回值只说明「已交给系统排队」，不说明「对端收到了」。
+真正的成败在 `session(_:didFinishUserInfoTransfer:error:)` 的 error 里。
+
+W2.3 上线时 `flush` 写的是「send 没抛错就从 outbox 删」，等于把排队当成了送达：
+任何一次传输失败，那组日志在 Watch 侧已经删掉、UI 显示「已同步」，iPhone 上却什么都没有，
+用户完全无从察觉。2026-11-25 修好，按账本键回滚。
+
+| 层 | 语义 | 现在的处理 |
+|---|---|---|
+| `transferUserInfo` 返回 | 已入系统队列 | 从 outbox 移除 |
+| `didFinish(error: nil)` | 已送达对端 | 不做——iPhone 侧 `addIfAbsent` 已经落库 |
+| `didFinish(error: ≠ nil)` | 系统最终没送出去 | 回滚到 outbox，立即重试一次；仍失败则等下次激活/进前台 |
+
 ## ✅ 已完成
 
 | Ticket | 内容 | 状态 |
@@ -138,8 +153,8 @@ App Group 只在同一台设备内共享，iPhone 与 Watch 的文件系统互�
 | W2.2 Watch 续练选择 UI | 未做 | 当前直接按缓存显示当前组；ticket 要求的「继续上一组 / 从头开始」选择页没有 |
 | W1.3 环形进度（可选） | 待定 | `IWATCH.md` 交付清单写「环形进度」，当前 Watch 是文本倒计时；草图本身没画环 |
 | W2.7 Phase 2 真机清单 | 阻塞 | 10 条场景，依赖 W1.5 的前置 |
-| 后台定时 flush | 未做 | 当前只有入队立即 flush + 进前台重试 |
-| `transferUserInfo` 失败回滚 | 未做 | `didFinishUserInfoTransfer` 错误没有重新入队 |
+| 后台定时 flush | 按平台约束不做 | `transferUserInfo` 本身就是系统级后台传输，交给系统后 App 被挂起也会继续传，排定时器没有收益。真正补的是「冷启动激活时补发积压」：`activationDidCompleteWith` 里调一次 flush |
+| `transferUserInfo` 失败回滚 | ✅ 已完成（2026-11-25） | `didFinishUserInfoTransfer` 带回 error 时按账本键把 payload 放回 outbox 再重发；同一条重投多次只留一行。964 条单测（+2 条，含变异验证），真机待验 |
 | Watch-only 日志无活跃会话 | 边缘 | 落 `SetLogStore`，不更新 `SessionEntity`；历史页的「训练天/会话列表」可能少一次 |
 | App Group / 签名注册 | 未验证 | 开发者后台未注册 capability |
 

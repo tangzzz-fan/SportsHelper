@@ -282,4 +282,38 @@ struct PendingLogQueueTests {
 
         #expect(try await queue.needsUserAlert(now: queueStart.addingTimeInterval(48 * 3600)) == false)
     }
+
+    @Test("传输失败回滚：同一条日志重投多次也只留一行")
+    func requeueIsIdempotent() async throws {
+        let container = try TemporaryAppGroup()
+        defer { container.remove() }
+        let queue = PendingLogQueue(store: container.store)
+        let sender = RecordingSender()
+        _ = try await queue.enqueue(queueLog(setIndex: 1), at: queueStart)
+        let entry = try #require(try await queue.pending().first)
+
+        #expect(await queue.flush(using: sender, now: queueStart) == .sent(1))
+        #expect(try await queue.pendingCount() == 0)
+
+        try await queue.requeue(entry)
+        try await queue.requeue(entry)
+        #expect(try await queue.pendingCount() == 1)
+    }
+
+    @Test("回滚的日志能在下一次 flush 重新发出")
+    func requeuedLogIsSentAgain() async throws {
+        let container = try TemporaryAppGroup()
+        defer { container.remove() }
+        let queue = PendingLogQueue(store: container.store)
+        let sender = RecordingSender()
+        _ = try await queue.enqueue(queueLog(setIndex: 1), at: queueStart)
+        let entry = try #require(try await queue.pending().first)
+
+        #expect(await queue.flush(using: sender, now: queueStart) == .sent(1))
+        try await queue.requeue(entry)
+
+        #expect(await queue.flush(using: sender, now: queueStart) == .sent(1))
+        #expect(await sender.sentCount() == 2)
+        #expect(try await queue.pendingCount() == 0)
+    }
 }

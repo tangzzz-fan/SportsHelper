@@ -127,6 +127,23 @@ public struct AppGroupsStore: Sendable {
         }
     }
 
+    /// 把一条「已交给 WCSession、但最终没送出去」的日志放回队列。
+    ///
+    /// 判重按账本键（会话 + 处方 + 组号 + 来源）：同一条被重投多次也只留一行，
+    /// 否则每次传输失败都会在文件里多写一份，下次 flush 一起发出去，
+    /// iPhone 侧虽然幂等，但 Watch 这边会一直显示「待同步 2 组」吓人。
+    public func requeuePendingLog(_ entry: PendingSetLog) throws {
+        let url = try pendingLogsURL(createDirectory: true)
+        let key = SetLogKey(entry.log)
+        try withLockedFile(at: url, flags: O_RDWR | O_CREAT, lock: LOCK_EX) { fd in
+            let existing = Self.decodeLines(try Self.readAll(fd))
+            guard !existing.contains(where: { SetLogKey($0.log) == key }) else { return }
+            var payload = try Self.makeEncoder().encode(entry)
+            payload.append(0x0A)
+            try Self.writeAll(fd, payload)
+        }
+    }
+
     public func clearPendingLogs() throws {
         let url = try pendingLogsURL(createDirectory: false)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
