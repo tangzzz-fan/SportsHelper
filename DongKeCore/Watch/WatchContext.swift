@@ -32,6 +32,7 @@ public struct WatchContext: Codable, Equatable, Sendable {
         for block in day.blocks {
             for item in block.items {
                 exercises[item.itemId] = WatchExerciseInfo(
+                    catalogId: item.catalogId,
                     name: item.name,
                     setCount: flow.setCounts[item.itemId] ?? item.sets,
                     targetText: item.target.doseText,
@@ -55,12 +56,14 @@ public struct WatchContext: Codable, Equatable, Sendable {
 }
 
 public struct WatchExerciseInfo: Codable, Equatable, Sendable {
+    public var catalogId: String
     public var name: String
     public var setCount: Int
     public var targetText: String
     public var restSec: Int
 
-    public init(name: String, setCount: Int, targetText: String, restSec: Int) {
+    public init(catalogId: String, name: String, setCount: Int, targetText: String, restSec: Int) {
+        self.catalogId = catalogId
         self.name = name
         self.setCount = setCount
         self.targetText = targetText
@@ -70,4 +73,5 @@ public struct WatchExerciseInfo: Codable, Equatable, Sendable {
 
 public enum WatchSyncKey {
     public static let context = "dk.watch.context"
+    public static let log = "dk.watch.log"
 }

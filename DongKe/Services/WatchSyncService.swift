@@ -57,6 +57,27 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
         }
     }
 
+    nonisolated func session(
+        _ session: WCSession,
+        didReceiveUserInfo userInfo: [String: Any] = [:]
+    ) {
+        guard let data = userInfo[WatchSyncKey.log] as? Data,
+              let entry = try? JSONDecoder().decode(PendingSetLog.self, from: data)
+        else {
+            return
+        }
+        do {
+            try AppGroupsStore.live.appendPendingLog(
+                entry.log,
+                sourceDevice: entry.sourceDevice,
+                at: entry.timestamp
+            )
+            watchLog.debug("watch log received set=\(entry.log.setIndex)")
+        } catch {
+            watchLog.error("watch log store failed: \(String(describing: error), privacy: .public)")
+        }
+    }
+
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {

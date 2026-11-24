@@ -38,6 +38,8 @@ struct WatchRootView: View {
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             session.tick(now: Date())
+            session.refreshPending()
+            session.flushPending()
         }
         .task {
             WatchContextModel.shared.loadFromCache()
@@ -45,6 +47,7 @@ struct WatchRootView: View {
             if let context = model.context {
                 session.sync(with: context)
             }
+            session.refreshPending()
             #if DEBUG
             if ProcessInfo.processInfo.environment["DK_WATCH_DEMO_REST"] == "1" {
                 session.startRest(seconds: 90)

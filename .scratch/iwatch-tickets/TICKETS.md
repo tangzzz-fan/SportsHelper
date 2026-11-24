@@ -294,26 +294,32 @@ Walk through 五条人工验证场景，全部必须绿。
 Watch 侧记完日志后，通过 AppGroups 追加到 iPhone，失败时本地队列化。
 
 **交付物**：
-- [ ] `WatchLogQueue.swift`（Watch App）
-  - 队列数据结构：`[SetLog]` with `sourceDevice: "watch"`
-  - 提交方法：`append(log:)` → 本地存储 + 尝试同步
-  - 重试逻辑：指数退避（5s → 10s → 30s）
+- [x] `PendingLogSync.swift`（实际落在 DongKeCore/Watch，Core 可单测）
+  - `PendingLogQueue` actor：入队、待发数、24 小时告警判定
+  - `LogRetryScheduler`：5s → 10s → 30s（之后固定 30s），成功清零
+  - `PendingLogSending` 协议：传输层可替换
+- [x] `WatchLogSender.swift`（Watch App）
+  - `WCSession.default.transferUserInfo` 交棒；未激活时抛错，队列保留
+  - 交棒成功即从 outbox 删除；WCSession 自己负责断线重传
+- [x] iPhone `WatchSyncService.didReceiveUserInfo`：解码 `PendingSetLog` → 写入 iPhone 本机 outbox
+- [x] 触发时机：入队立即 flush；Watch 进前台 `refreshPending + flushPending`
+- [x] 失败处理：按退避重试 4 次（5/10/30/30 秒），UI 显示「待同步（N 组）」
 
-- [ ] `PendingLogSync.swift`（DongKe/Services）
-  - 触发时机：
-    1. 写入即刻尝试（若网络可用）
-    2. App 进前台时重试所有未同步日志
-    3. 后台定时任务（`BGProcessingTask`，30 秒间隔）
-  - 失败处理：记录失败原因，轮询重试
+- [ ] 后台定时任务（`BGProcessingTask` / watchOS 后台刷新）：未实现
+- [ ] W2.4：iPhone 把 outbox 合并进 SwiftData / SessionLedger（本轮只落 outbox，不丢日志）
 
-- [ ] 单测
-  - 场景 A：网络可用，日志即刻同步
-  - 场景 B：网络断开，本地队列化，恢复后自动重试
-  - 场景 C：同步超时 24 小时，给用户通知
+**单测（`PendingLogSyncTests`，15 条）**：
+- 调度器：初始可试、5/10/30 序列、边界、成功清零
+- 队列：入队、空队列、全部成功、中途失败只删已成功、退避期跳过、到点重试成功、
+  连续失败序列、成功后重新计时、退避期新增不丢、24h 告警、空队列不告警
 
 **验收**：
-- [ ] 单测通过（15+ 用例）
-- [ ] 真机飞行模式测试：完成 3 组 → 关飞行模式 → 1 秒内同步到 iPhone
+- [x] 单测通过（15 条）
+- [ ] 真机飞行模式测试：完成 3 组 → 关飞行模式 → 1 秒内同步到 iPhone（无 runtime/真机）
+
+**已知限制**：
+- `transferUserInfo` 的 `didFinishUserInfoTransfer` 失败回调没有把条目重新入队；WCSession 自己的传输队列通常能重试，但极端情况下需要补一条回滚路径。
+- 日志到 iPhone 后只进 App Group outbox，尚未进 SwiftData（W2.4）。
 
 ---
 
@@ -378,21 +384,24 @@ iPhone 侧读 Watch 的待同步日志，合并进 `SessionLedger`，处理重�
 Watch 侧点「完成本组」时，记录 SetLog、更新 UI、尝试同步。
 
 **交付物**：
-- [ ] `WatchWorkoutView` 更新
+- [x] `WatchWorkoutView` 更新
   - 按钮「完成本组」可点
   - 点击后：
-    1. 本地创建 `SetLog`（带 `sourceDevice: "watch"`）
+    1. 本地创建 `SetLog`（`catalogId` 来自 `WatchExerciseInfo`）
     2. UI 显示「已记录（同步中）」
-    3. 推进到下一步（下一组或休息）
-    4. 后台尝试同步
-
-- [ ] 同步失败的 UI
-  - 显示「待同步（N 组）」
-  - 给用户通知「检查网络连接」
+    3. `localStepIndex` 推进；本组 `restAfterSec > 0` 时直接进休息倒计时
+    4. 入队 + 立即 flush
+- [x] 同步失败的 UI
+  - 「待同步（N 组）」；超过 24 小时提示「请打开 iPhone」
+  - 本地通知未加（显示层文案先到位）
 
 **验收**：
-- [ ] 真机：点完成 → 秒内进休息倒计时
-- [ ] 真机飞行模式：记完 3 组 → 显示「待同步（3 组）」
+- [ ] 真机：点完成 → 秒内进休息倒计时（需配对设备）
+- [ ] 真机飞行模式：记完 3 组 → 显示「待同步（3 组）」（需配对设备）
+
+**2026-11-24 落地**：本地推进是乐观的，iPhone 收到的下一份 `WatchContext` 仍是权威；
+`sync` 用 `max(localStepIndex, checkpoint.stepIndex)` 防止回退。休息若被 iPhone 的旧上下文
+短暂取消，会由下一份带 `restEndsAt` 的上下文恢复。
 
 ---
 

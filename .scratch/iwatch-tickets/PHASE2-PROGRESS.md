@@ -1,7 +1,8 @@
 # Phase 2 进展 - 2026-11-24 检查点
 
 **Branch**: `feat/w2-appgroups-sync`  
-**阶段**：W2.1 / W2.2 Core 侧完成；W1.1 Watch target + W1.2a 上下文传输完成（端到端待配对设备）
+**阶段**：W1.1/W1.2a/W1.3/W1.4 + W2.1/W2.2/W2.3 代码完成；W2.4 只到 iPhone outbox；
+端到端均待配对设备（本机无 watchOS runtime / 开发证书）
 
 ## 先修正上一份检查点
 
@@ -69,8 +70,16 @@
 - 整页合并为一个无障碍元素：「动作，第 N 组，共 M 组，目标 X」。
 - Phase 1 的「完成本组」禁用，页面注明「本组在 iPhone 上记录」；W2.6 打开并接日志回传。
 
+### W2.3 / W2.6 Core：待发队列与「完成本组」
+- `PendingLogQueue` actor（DongKeCore/Watch）：入队、待发数、24h 告警、flush。
+- `LogRetryScheduler`：5 → 10 → 30 秒，之后固定 30；成功清零。
+- Watch `WatchLogSender`：`WCSession.transferUserInfo` 交棒；未激活抛错、条目保留。
+- iPhone `WatchSyncService.didReceiveUserInfo`：解码后写入 iPhone 本机 outbox（不丢日志）。
+- Watch `完成本组`：创建 `SetLog`（catalogId/target 来自 `WatchContext`）→ 入队 → 本地推进 →
+  有 `restAfterSec` 就进休息；UI 显示「已记录（同步中）」/「待同步（N 组）」。
+
 ### 测试
-- 新增 21 条（W2.1/W2.2 16 条 + W1.2a 5 条），`DongKeCoreTests` 全量 **936 条通过**（2026-11-24）。
+- 新增 36 条（W2.1/W2.2 16 + W1.2a 5 + W2.3 15），`DongKeCoreTests` 全量 **951 条通过**（2026-11-24）。
 - 覆盖：快照往返、老格式兜底、无容器降级、来源设备保留、坏行跳过、
   条件删除、整份替换、20 路并发追加、跨设备同组只计一次、同设备重复丢弃。
 
@@ -98,10 +107,10 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W1.3 | Watch 倒计时 UI 与状态机 | 代码完成；待 runtime/真机走查 |
 | W1.4 | Watch 训练页基础布局 | 代码完成；待 runtime 检查截断 |
 | W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
-| W2.3 | Watch 日志队列与指数退避重试 | 需要 WCSession 传输层；Watch target 已就绪 |
-| W2.4 | iPhone 侧日志合并写入门禁 | Core 合并已就绪；SwiftData 接线待 WCSession 有数据来源 |
+| W2.3 | Watch 日志队列与指数退避重试 | ✓ Core + WCSession 交棒；后天刷新与真机验收待做 |
+| W2.4 | iPhone 侧日志合并写入门禁 | 日志已进 iPhone outbox；**SwiftData / SessionLedger 合并待做** |
 | W2.5 | 计划更新冲突检测 | `matchesRevision` 已就绪；Watch UI 待 W1.3/W1.4 |
-| W2.6 | Watch 完成组 UI | 依赖 W1.4 |
+| W2.6 | Watch 完成组 UI | ✓ 代码完成；真机验收待做 |
 | W2.7 | 真机验收 | 依赖 W2.3–W2.6 |
 
 ## 📊 度量
@@ -114,7 +123,9 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W1.4 | Watch 训练页布局 | 0 | 代码 ✓，待 runtime 检查截断 |
 | W2.1 | AppGroupsStore（本机存储） | 8 | Core ✓ |
 | W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 | 8（3 + 5） | Core ✓ |
-| W2.3–W2.7 | — | — | 待 W1.2–W1.5 / 日志回传 |
+| W2.3 | PendingLogQueue / 退避调度 / WCSession 交棒 | 15 | 代码 ✓，真机待验 |
+| W2.4 | iPhone outbox 接收 | 0 | 部分（SwiftData 合并未做） |
+| W2.6 | Watch 完成本组 | 0 | 代码 ✓，真机待验 |
 
-**全量单测**：936 / 936 通过  
+**全量单测**：951 / 951 通过  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 16 条；先覆盖已实现的风险点，剩余随 W2.3 的队列/重试一起补。

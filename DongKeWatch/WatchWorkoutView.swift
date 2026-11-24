@@ -4,7 +4,6 @@ import DongKeCore
 struct WatchWorkoutView: View {
     @Bindable var session: WatchWorkoutSession
     let context: WatchContext
-    var onCompleteSet: () -> Void = {}
 
     var body: some View {
         if session.isResting {
@@ -21,7 +20,7 @@ struct WatchWorkoutView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            if let display = setDisplay {
+            if let display = session.currentSet(in: context) {
                 Text(display.name)
                     .font(.headline)
                     .multilineTextAlignment(.center)
@@ -40,14 +39,15 @@ struct WatchWorkoutView: View {
                     .minimumScaleFactor(0.7)
 
                 Button("完成本组") {
-                    onCompleteSet()
+                    session.completeSet(in: context)
                 }
-                .disabled(true)
                 .padding(.top, 4)
 
-                Text("本组在 iPhone 上记录")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                if let status = session.logStatusText {
+                    Text(status)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Text("训练已结束")
                     .font(.headline)
@@ -59,34 +59,11 @@ struct WatchWorkoutView: View {
     }
 
     private var accessibilityText: String {
-        guard let display = setDisplay else { return "训练已结束" }
-        return "\(display.name)，第 \(display.setIndex) 组，共 \(display.setCount) 组，目标 \(display.targetText)"
-    }
-
-    private var setDisplay: WatchSetDisplay? {
-        guard let steps = context.checkpoint.steps,
-              steps.indices.contains(context.checkpoint.stepIndex)
-        else {
-            return nil
+        guard let display = session.currentSet(in: context) else { return "训练已结束" }
+        var text = "\(display.name)，第 \(display.setIndex) 组，共 \(display.setCount) 组，目标 \(display.targetText)"
+        if let status = session.logStatusText {
+            text += "，\(status)"
         }
-        for index in context.checkpoint.stepIndex..<steps.count {
-            if case let .set(prescriptionId, setIndex, target, _) = steps[index],
-               let exercise = context.exercise(for: prescriptionId) {
-                return WatchSetDisplay(
-                    name: exercise.name,
-                    setIndex: setIndex,
-                    setCount: exercise.setCount,
-                    targetText: target.perSide ? "每侧 \(target.doseText)" : target.doseText
-                )
-            }
-        }
-        return nil
+        return text
     }
-}
-
-private struct WatchSetDisplay {
-    var name: String
-    var setIndex: Int
-    var setCount: Int
-    var targetText: String
 }
