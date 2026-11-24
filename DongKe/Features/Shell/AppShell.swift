@@ -133,6 +133,14 @@ struct AppShell: View {
             NotificationService.shared.router.onOpenWorkout = { link in
                 openWorkout(link)
             }
+            #if DEBUG
+            // 通知回调没法在模拟器上点（本地通知没有可注入的 response），
+            // 用这个钩子直接走同一个入口，验证「点通知会不会覆盖正在进行的进度」。
+            if let raw = ProcessInfo.processInfo.environment["DK_OPEN_REMINDER"],
+               let day = Int(raw) {
+                openWorkout(.dayIndex(day))
+            }
+            #endif
             if NotificationService.shared.status == .authorized || NotificationService.shared.status == .provisional {
                 await NotificationService.shared.reschedule(
                     plan: activePlan,
