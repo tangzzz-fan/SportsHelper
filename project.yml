@@ -23,9 +23,15 @@ settings:
     MARKETING_VERSION: "1.1.0"
     CURRENT_PROJECT_VERSION: "2"
 targets:
+  # Core 是纯 Foundation 逻辑，iPhone 与 Watch 共用同一份源码；
+  # 用多 destination 出两个平台的 framework，避免维护第二份「Watch 专用 Core」。
   DongKeCore:
     type: framework
-    platform: iOS
+    platform: auto
+    supportedDestinations: [iOS, watchOS]
+    deploymentTarget:
+      iOS: "18.0"
+      watchOS: "11.0"
     sources:
       - path: DongKeCore
     settings:
@@ -33,6 +39,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.core
         GENERATE_INFOPLIST_FILE: YES
         SKIP_INSTALL: YES
+        # SDKROOT=auto 时每个 destination 各取自己的 deployment target；
+        # 不写 WATCHOS_DEPLOYMENT_TARGET 会落到当前 SDK 版本，Watch app 链接不上。
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        WATCHOS_DEPLOYMENT_TARGET: "11.0"
   DongKe:
     type: application
     platform: iOS
@@ -44,6 +54,8 @@ targets:
         buildPhase: resources
     dependencies:
       - target: DongKeCore
+      - target: DongKeWatch
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios
@@ -68,6 +80,24 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_NSMicrophoneUsageDescription: 用语音说出你的训练想法，转成文字填进输入框。录音只在本机转写，不会上传到我们的服务器。
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: 把你说的一句话转成文字，用来生成训练计划。优先在本机完成识别，不保存录音。
+  DongKeWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "11.0"
+    sources:
+      - path: DongKeWatch
+    dependencies:
+      - target: DongKeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.watch
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "4"
+        INFOPLIST_KEY_WKApplication: YES
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: app.dongke.ios
+        INFOPLIST_KEY_CFBundleDisplayName: 动刻
+        # App Group 与 iPhone 同组；Time Sensitive 通知能力见 W1.2。
+        CODE_SIGN_ENTITLEMENTS: DongKeWatch/DongKeWatch.entitlements
   DongKeCoreTests:
     type: bundle.unit-test
     platform: iOS
@@ -106,3 +136,10 @@ schemes:
       targets:
         - DongKeCoreTests
         - DongKeUITests
+  DongKeWatch:
+    build:
+      targets:
+        DongKeWatch: all
+        DongKeCore: all
+    run:
+      config: Debug

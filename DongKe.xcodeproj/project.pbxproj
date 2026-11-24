@@ -21,6 +21,7 @@
 		0B48053DB700C3CA2877A976 /* AIDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9704C745911EB637CE7655A4 /* AIDefaults.swift */; };
 		0BF68397448AA01C7529030A /* PlanValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C2A2581E972C723D503D94E /* PlanValidator.swift */; };
 		0C60C6E3867CA02CE591C94E /* LargeTextFloor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 225F4485C9EF5CE20C0CF53B /* LargeTextFloor.swift */; };
+		0E6105C64E0DB0B0219AF40C /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E00B033DD77DD85A1F7546 /* WatchApp.swift */; };
 		0EEFEEA2A405021CDE6492E4 /* WeekdayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C85C4AD10CD5B680095721 /* WeekdayTests.swift */; };
 		0F1AB71C3EC01F94056275AA /* SwapExerciseSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 723222A588DA45A0C162D582 /* SwapExerciseSheet.swift */; };
 		10A01CF52F485F24C4072A57 /* VoiceInputTranscriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F752D3D2A7A567A04C7C6464 /* VoiceInputTranscriptTests.swift */; };
@@ -111,10 +112,12 @@
 		501CC82A480AF66E8325C279 /* HealthNoticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A4EC3751D4536F29DA3BD6 /* HealthNoticeView.swift */; };
 		51A18F54CA3948AC017479EE /* ExerciseFigureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2163C75A915C2783591E25F8 /* ExerciseFigureView.swift */; };
 		520D13F95364873F5593442B /* DoseContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EFACD7A20E5D2454374AB8 /* DoseContext.swift */; };
+		52940F425E8E47520A29B2A6 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FE319793E09ACBCB7BA527 /* RootView.swift */; };
 		532030CD3B5E87EF57EBD604 /* SessionRecap.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53891C1FFE0EE91BE9ADA57 /* SessionRecap.swift */; };
 		5443E3AE27CB0B81D3A4913A /* BriefConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1CF68D55D6814911F3CCDD /* BriefConfirmView.swift */; };
 		547DEE1117FB6C4AC078D64C /* WeekHighlightsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7BBA1B8067728161DD689D3 /* WeekHighlightsTests.swift */; };
 		551177AA2EC1C86E88B26BA2 /* VoiceInputStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7165AE427C0B18EEE0AEBE14 /* VoiceInputStubs.swift */; };
+		5573A013CE4C497B849C47D8 /* DongKeWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1D5E7846C62FA7C826B00BE1 /* DongKeWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55AD7E694468247E4C2D83C6 /* LocalCountersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66C4B34C0184A2AF71978349 /* LocalCountersView.swift */; };
 		55C2AF0871494FDAA225F256 /* ExerciseCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63534BDE9AD284C5DA36A07D /* ExerciseCatalog.swift */; };
 		56829F213D1334F106996678 /* AudioSessionArbiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457C1C756D8EED78172AEDC4 /* AudioSessionArbiter.swift */; };
@@ -141,6 +144,7 @@
 		66D0AA97E04E8971FFB76630 /* SessionLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948CFD0F19BF0154FBA4E369 /* SessionLedgerTests.swift */; };
 		67C778DCD627C1CDDA97014A /* WeeklyScheduleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E803E2ABEF355F54707C821 /* WeeklyScheduleGenerator.swift */; };
 		686B9EB1164B6A5E77C312F3 /* PlanDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A008C2CD55C7B50D0BFB2BF7 /* PlanDiffTests.swift */; };
+		69AA9F7D1A71ABA32F6124DA /* DongKeCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6A1EBA6691EDB20F4EC7C080 /* VoiceInputPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8198F6F535418F2EAEA684EF /* VoiceInputPhase.swift */; };
 		6A3E39839E419DC9E4EC252B /* ExerciseAliasResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5EABB2150760A258EAD5C5 /* ExerciseAliasResolver.swift */; };
 		6BD733CF2B12E31ABEB85361 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 773AB6EF665D07DFC65D3C55 /* Haptics.swift */; };
@@ -306,6 +310,7 @@
 		FB3F564F3BD3CD9FF43A8310 /* VoiceSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92531CE0BF491411AEF9B75 /* VoiceSettingsStore.swift */; };
 		FCA5C002FD1EDE716A849C7C /* AISettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F6846CFE5A7573B8AA0E7C /* AISettingsSheet.swift */; };
 		FCC22537D503CB426B230A31 /* PlanDayNamingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E436FBB014D91A4C2ACF94 /* PlanDayNamingTests.swift */; };
+		FD43F9B1D8F507A252FF4FFB /* DongKeCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */; };
 		FE2BDD41532638B10CF7F072 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E447D37EBC97053D54AB21 /* SessionStore.swift */; };
 		FEA2152276F6AE13B209917B /* VoiceInputOnlineConsentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA34B782D51D069CCB126C62 /* VoiceInputOnlineConsentTests.swift */; };
 		FF662691F24AB80298C81510 /* PlanSchemaJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEE9131C4D93D2F91008CDD /* PlanSchemaJSON.swift */; };
@@ -313,6 +318,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0F7FBC0A849D408C44FB30B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CA23B9519231E1A218E1A83 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F151BEEF59A26017A462EFCF;
+			remoteInfo = DongKeCore;
+		};
+		6E00745F996F27CBBA0B0D92 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CA23B9519231E1A218E1A83 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F45A0D8D05745B1E08F4E20B;
+			remoteInfo = DongKeWatch;
+		};
 		803BCFC601DBF6DE6D9F4E42 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7CA23B9519231E1A218E1A83 /* Project object */;
@@ -348,6 +367,17 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9006479F6223B2BA7EA64D68 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				69AA9F7D1A71ABA32F6124DA /* DongKeCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		966BAA8017881FF71EB67E15 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -359,6 +389,17 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A9EE951319D234EF0D02F8EE /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				5573A013CE4C497B849C47D8 /* DongKeWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -368,6 +409,7 @@
 		018448243800E9386D12DF7D /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		02B42B1F0F88B24A1DD63EC3 /* AIGenerateCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIGenerateCard.swift; sourceTree = "<group>"; };
 		03643DAA4EC8E11D9610D7E6 /* RestSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestSheetView.swift; sourceTree = "<group>"; };
+		04E00B033DD77DD85A1F7546 /* WatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp.swift; sourceTree = "<group>"; };
 		04E26A133B3A13BA93DBA66D /* ExerciseNounTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseNounTests.swift; sourceTree = "<group>"; };
 		0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DongKeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		066C1D6F10CA0FACB51A0367 /* ExerciseCatalogLower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogLower.swift; sourceTree = "<group>"; };
@@ -401,6 +443,7 @@
 		1B43784FEA6139D875499793 /* DoseReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReport.swift; sourceTree = "<group>"; };
 		1CD0ABA788794879DA1FB21B /* PlanCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanCalendarTests.swift; sourceTree = "<group>"; };
 		1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerStateMachineTests.swift; sourceTree = "<group>"; };
+		1D5E7846C62FA7C826B00BE1 /* DongKeWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DongKeWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1F552ABB5E37AEBE4D0A6355 /* Prediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prediction.swift; sourceTree = "<group>"; };
 		1F82F560AE0C4830053FEC42 /* PlanTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTitleTests.swift; sourceTree = "<group>"; };
 		203F71D1C53C93AEE33B6D4F /* A11yIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11yIdentifiers.swift; sourceTree = "<group>"; };
@@ -490,6 +533,7 @@
 		65BCB2C0F02EB6C9B9D8B1A7 /* PlanImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanImportService.swift; sourceTree = "<group>"; };
 		66C4B34C0184A2AF71978349 /* LocalCountersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCountersView.swift; sourceTree = "<group>"; };
 		6777977A3DE4E258F58418FB /* AIResponseMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIResponseMode.swift; sourceTree = "<group>"; };
+		67FE319793E09ACBCB7BA527 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		68621B8F97685F11DE0DB586 /* SetCountdownBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetCountdownBadge.swift; sourceTree = "<group>"; };
 		68AD01435AC5E1585B434024 /* VoiceInputAuthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputAuthTests.swift; sourceTree = "<group>"; };
 		68ED2335E642982822F66F35 /* DoseAdjustment+Reduction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DoseAdjustment+Reduction.swift"; sourceTree = "<group>"; };
@@ -515,6 +559,7 @@
 		7639FAB5F2D2B1FD70D1BFF2 /* QuickAIPlanSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAIPlanSheet.swift; sourceTree = "<group>"; };
 		763EEB986525785D1137B045 /* LoadPersistenceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadPersistenceUITests.swift; sourceTree = "<group>"; };
 		773AB6EF665D07DFC65D3C55 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		77F68BEF1BC704870290426E /* DongKeWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DongKeWatch.entitlements; sourceTree = "<group>"; };
 		78924005EB823B3946C2AB57 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		7A914C997A43E378CED2EDEE /* SessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummary.swift; sourceTree = "<group>"; };
 		7BEC7D8717F2802AEE6C1B59 /* VoiceInputTimeoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputTimeoutTests.swift; sourceTree = "<group>"; };
@@ -682,6 +727,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				589670919FEB504EAD6FA33A /* DongKeCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7FEF47BCFD59C47AF778BE11 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FD43F9B1D8F507A252FF4FFB /* DongKeCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -942,6 +995,16 @@
 			path = Summary;
 			sourceTree = "<group>";
 		};
+		5A2EABE75317074C9D8EB47F /* DongKeWatch */ = {
+			isa = PBXGroup;
+			children = (
+				77F68BEF1BC704870290426E /* DongKeWatch.entitlements */,
+				67FE319793E09ACBCB7BA527 /* RootView.swift */,
+				04E00B033DD77DD85A1F7546 /* WatchApp.swift */,
+			);
+			path = DongKeWatch;
+			sourceTree = "<group>";
+		};
 		647EA7D1B201A46E7AD429A9 /* Today */ = {
 			isa = PBXGroup;
 			children = (
@@ -1027,6 +1090,7 @@
 				2942F7C69C3A60F67A01D516 /* DongKeCore */,
 				ED17C09AC3F94F576722ED4F /* DongKeCoreTests */,
 				89A2AC2618AF7F095F207A41 /* DongKeUITests */,
+				5A2EABE75317074C9D8EB47F /* DongKeWatch */,
 				6F604DF6ABD9D1A440CCC395 /* Shared */,
 				FD31F01E3064600A0A79188E /* Products */,
 			);
@@ -1274,6 +1338,7 @@
 				90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */,
 				AEE4D84B72E75ED4CFD5D951 /* DongKeCoreTests.xctest */,
 				0562F01C92735C4CA2C52C06 /* DongKeUITests.xctest */,
+				1D5E7846C62FA7C826B00BE1 /* DongKeWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1327,11 +1392,13 @@
 				36E24BF26EE2C9B2195477BE /* Resources */,
 				34F4B022A3FFA60CB96DD365 /* Frameworks */,
 				966BAA8017881FF71EB67E15 /* Embed Frameworks */,
+				A9EE951319D234EF0D02F8EE /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				28ED683FA447DB1E72B83732 /* PBXTargetDependency */,
+				E1A6E4A4043DBF258EF55ADF /* PBXTargetDependency */,
 			);
 			name = DongKe;
 			packageProductDependencies = (
@@ -1356,6 +1423,26 @@
 			productName = DongKeCore;
 			productReference = 90A71C3E0AB55004ED7ECB68 /* DongKeCore.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		F45A0D8D05745B1E08F4E20B /* DongKeWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 07E740CCF93C707325D5690F /* Build configuration list for PBXNativeTarget "DongKeWatch" */;
+			buildPhases = (
+				D750545ACFEAEBD16CCE88AC /* Sources */,
+				7FEF47BCFD59C47AF778BE11 /* Frameworks */,
+				9006479F6223B2BA7EA64D68 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE1F91D35C0528E98C86CB0D /* PBXTargetDependency */,
+			);
+			name = DongKeWatch;
+			packageProductDependencies = (
+			);
+			productName = DongKeWatch;
+			productReference = 1D5E7846C62FA7C826B00BE1 /* DongKeWatch.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
@@ -1383,6 +1470,10 @@
 						DevelopmentTeam = UKXWZ3FS84;
 						ProvisioningStyle = Automatic;
 					};
+					F45A0D8D05745B1E08F4E20B = {
+						DevelopmentTeam = UKXWZ3FS84;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = F1A8BC8B9FFA91F10B3BF5E6 /* Build configuration list for PBXProject "DongKe" */;
@@ -1401,6 +1492,7 @@
 			targets = (
 				F151BEEF59A26017A462EFCF /* DongKeCore */,
 				E3C2F1BFA76FA190F0AFFA80 /* DongKe */,
+				F45A0D8D05745B1E08F4E20B /* DongKeWatch */,
 				8ECD9815B56A9D26B825FD36 /* DongKeCoreTests */,
 				0DDB01FA4600953CEADDB6F2 /* DongKeUITests */,
 			);
@@ -1638,6 +1730,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D750545ACFEAEBD16CCE88AC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52940F425E8E47520A29B2A6 /* RootView.swift in Sources */,
+				0E6105C64E0DB0B0219AF40C /* WatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E060F80D8F20D85863B71CE1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1763,6 +1864,16 @@
 			target = F151BEEF59A26017A462EFCF /* DongKeCore */;
 			targetProxy = BD3543D7493D4371C47D9911 /* PBXContainerItemProxy */;
 		};
+		E1A6E4A4043DBF258EF55ADF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F45A0D8D05745B1E08F4E20B /* DongKeWatch */;
+			targetProxy = 6E00745F996F27CBBA0B0D92 /* PBXContainerItemProxy */;
+		};
+		FE1F91D35C0528E98C86CB0D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F151BEEF59A26017A462EFCF /* DongKeCore */;
+			targetProxy = 0F7FBC0A849D408C44FB30B9 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -1777,15 +1888,21 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.core;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				VERSIONING_SYSTEM = "apple-generic";
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Debug;
 		};
@@ -1861,7 +1978,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -1932,7 +2048,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -1955,6 +2070,23 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
+		};
+		7068BF963F3DB64FADF4B5C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DongKeWatch/DongKeWatch.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.dongke.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
 		};
 		71DBD62DFD2125AFE4A97CDF /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -2019,6 +2151,23 @@
 			};
 			name = Release;
 		};
+		BC0EC4CC7BC6682EFA75A6C3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DongKeWatch/DongKeWatch.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "动刻";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.dongke.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
 		C56266E98000049B4BF807C7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2047,21 +2196,36 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.dongke.core;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,4";
 				VERSIONING_SYSTEM = "apple-generic";
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		07E740CCF93C707325D5690F /* Build configuration list for PBXNativeTarget "DongKeWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC0EC4CC7BC6682EFA75A6C3 /* Debug */,
+				7068BF963F3DB64FADF4B5C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		0D128A6CD14029513B53111D /* Build configuration list for PBXNativeTarget "DongKeCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

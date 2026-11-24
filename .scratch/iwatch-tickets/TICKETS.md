@@ -13,17 +13,23 @@
 创建 `DongKeWatch` target（SwiftOS 应用），建立基础代码结构与依赖关系。
 
 **交付物**：
-- [ ] 新增 `DongKeWatch` target（Xcode 中）
-- [ ] 添加 Entitlements（AppGroups + Time Sensitive Notifications）
-- [ ] `WatchApp.swift` 入口（@main）
-- [ ] `RootView.swift` 路由分发
-- [ ] 确保编译通过（先不跑功能）
+- [x] 新增 `DongKeWatch` target（XcodeGen：`project.yml`）
+- [x] 添加 Entitlements（AppGroups + Time Sensitive Notifications）
+- [x] `WatchApp.swift` 入口（@main）
+- [x] `RootView.swift` 路由分发（`WatchRoute.workout(sessionId:)`）
+- [x] 确保编译通过（先不跑功能）
 
 **验收**：
 ```bash
 xcodebuild -scheme DongKeWatch -destination 'generic/platform=watchos' build
-# ✓ Build succeeded
+# ✓ Build succeeded（需本机签名；无证书时加 CODE_SIGNING_ALLOWED=NO 验编译）
 ```
+
+**2026-11-24 落地说明**：
+- `DongKeCore` 改为 `platform: auto` + `supportedDestinations: [iOS, watchOS]`，一份源码出两个平台；Watch app 嵌入 iOS app 的 `Watch/` 目录（XcodeGen 自动生成 Embed Watch Content）。
+- `watchOS 11.0` / iOS 18.0；Watch 只 import SwiftUI + DongKeCore，不 import SwiftData。
+- 模拟器与设备 SDK（`CODE_SIGNING_ALLOWED=NO`）均编译通过；iOS 931 条单测仍全绿。
+- **真机签名未过**：本机无开发证书，且开发者后台未注册 `group.com.dongke.shared` 与 Time Sensitive 能力。这是 W1.5 真机验收的前置项。
 
 **设计决策**：
 - Watch App 仅 import DongKeCore + SwiftUI，不 import SwiftData

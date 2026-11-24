@@ -1,7 +1,7 @@
 # Phase 2 进展 - 2026-11-24 检查点
 
 **Branch**: `feat/w2-appgroups-sync`  
-**阶段**：W2.1 / W2.2 的 Core 侧完成并通过测试；Watch target 仍未创建
+**阶段**：W2.1 / W2.2 的 Core 侧完成并通过测试；W1.1 Watch target 已创建并编译通过
 
 ## 先修正上一份检查点
 
@@ -33,6 +33,17 @@
 - `SessionLedger.merge(prescribedSets:local:remote:)`：按
   `(sessionId, setIndex, sourceDevice)` 去重，再交给账本按自己的口径折叠
 
+### W1.1：Watch target 与基础路由
+- `DongKeCore` 改为 `platform: auto` + `supportedDestinations: [iOS, watchOS]`：
+  一份 Foundation 源码出两个平台，Watch 不再维护第二份 Core。
+- 新增 `DongKeWatch` target（watchOS 11.0）、`WatchApp.swift`、`RootView.swift`
+  （`WatchRoute.workout(sessionId:)` 路由），只 import SwiftUI + DongKeCore。
+- Watch entitlements：App Group + Time Sensitive Notifications。
+- XcodeGen 自动把 `DongKeWatch.app` 嵌进 iOS app 的 `Watch/`（Embed Watch Content）。
+- 编译验证：watchOS Simulator SDK、watchOS 设备 SDK（`CODE_SIGNING_ALLOWED=NO`）均通过；
+  iOS 构建与 931 条单测不受影响。
+- **未过**：真机签名。本机无开发证书，且开发者后台未注册 App Group / Time Sensitive。
+
 ### 测试
 - 新增 16 条，`DongKeCoreTests` 全量 **931 条通过**（2026-11-24）。
 - 覆盖：快照往返、老格式兜底、无容器降级、来源设备保留、坏行跳过、
@@ -56,20 +67,23 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 
 | Ticket | 内容 | 阻塞点 |
 |---|---|---|
-| W1.1–W1.5 | Watch target、通知、倒计时、执行页、真机清单 | **未开工**，W2.3/W2.6 都依赖它 |
-| W2.3 | Watch 日志队列与指数退避重试 | 需要 Watch target + WCSession 传输层 |
+| W1.1 | Watch target + 入口 + 路由 | ✓ 已完成（2026-11-24） |
+| W1.2 | 通知处理与深链 | 待做；载荷里还没有 `sessionId`（iPhone 排程时会话尚未创建），需先定 payload |
+| W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
+| W2.3 | Watch 日志队列与指数退避重试 | 需要 WCSession 传输层；Watch target 已就绪 |
 | W2.4 | iPhone 侧日志合并写入门禁 | Core 合并已就绪；SwiftData 接线待 WCSession 有数据来源 |
-| W2.5 | 计划更新冲突检测 | `matchesRevision` 已就绪；Watch UI 待 target |
-| W2.6 | Watch 完成组 UI | 依赖 W1.1 |
+| W2.5 | 计划更新冲突检测 | `matchesRevision` 已就绪；Watch UI 待 W1.3/W1.4 |
+| W2.6 | Watch 完成组 UI | 依赖 W1.4 |
 | W2.7 | 真机验收 | 依赖 W2.3–W2.6 |
 
 ## 📊 度量
 
 | Ticket | 代码 | 单测 | 状态 |
 |---|---|---|---|
+| W1.1 | DongKeWatch target + 路由 + entitlements | — | ✓ 编译通过 |
 | W2.1 | AppGroupsStore（本机存储） | 8 | Core ✓ |
 | W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 | 8（3 + 5） | Core ✓ |
-| W2.3–W2.7 | — | — | 待 Watch target |
+| W2.3–W2.7 | — | — | 待 WCSession / W1.2–W1.5 |
 
 **全量单测**：931 / 931 通过  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 16 条；先覆盖已实现的风险点，剩余随 W2.3 的队列/重试一起补。

@@ -406,7 +406,7 @@ DongKeWatchTests/（Watch target 中）
 
 ### Phase 1（2–3 周）
 
-- [ ] `DongKeWatch` target 新建
+- [x] `DongKeWatch` target 新建（2026-11-24；模拟器/设备 SDK 编译通过，真机签名待注册能力）
 - [ ] 通知处理 + Deep link
 - [ ] 倒计时环形进度显示
 - [ ] 真机验证清单 5 条全绿
