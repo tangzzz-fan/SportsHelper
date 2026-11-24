@@ -32,7 +32,10 @@ struct DongKeApp: App {
             Thread.sleep(forTimeInterval: hold / 1000)
         }
         #endif
-        let configuration = ModelConfiguration()
+        // 固定用 App 自己的容器。SwiftData 的默认值是 groupContainer: .automatic——
+        // 一旦 target 声明了 App Group，它会静默把 default.store 搬进共享组，
+        // 老用户升级后本地库就「消失」了。App Group 只放 checkpoint / outbox。
+        let configuration = ModelConfiguration(groupContainer: .none)
         let container: ModelContainer
         do {
             container = try ModelContainer(
@@ -41,6 +44,9 @@ struct DongKeApp: App {
                 configurations: configuration
             )
         } catch {
+            #if DEBUG
+            launchLog.error("ModelContainer failed: \(String(describing: error), privacy: .public)")
+            #endif
             container = try! ModelContainer(
                 for: SessionEntity.self, SetLogEntity.self, ProfileEntity.self,
                 PlanEntity.self, UserExerciseEntity.self, MicroDoseEntity.self,

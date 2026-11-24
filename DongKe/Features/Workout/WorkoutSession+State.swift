@@ -73,6 +73,21 @@ extension WorkoutSession {
         WatchSyncService.shared.send(context)
     }
 
+    /// Watch 回传的一组。已存在同一账本键时视为已消费，避免重复落库。
+    @discardableResult
+    func ingestRemoteLog(_ log: SetLog) -> Bool {
+        guard log.sessionId == id, let setLogStore else { return false }
+        let key = SetLogKey(log)
+        if logs.contains(where: { SetLogKey($0) == key }) {
+            return true
+        }
+        guard setLogStore.addIfAbsent(log) else { return false }
+        logs.append(log)
+        persist()
+        saveCheckpoint()
+        return true
+    }
+
     func persist(finishedAt: Date? = nil) {
         store?.upsert(
             id: id,

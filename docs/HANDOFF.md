@@ -10,7 +10,7 @@
 | 文档 | 已冻结。PRD / ARCHITECTURE / UIUX 只作存档依据，冲突时以 FROZEN + SPEC 为准 |
 | 工程 | `project.yml`（XcodeGen）已可生成 `DongKe.xcodeproj`；DongKeCore framework（iOS + watchOS 多 destination）+ DongKe app + DongKeWatch（watchOS 11，嵌入 iOS app 的 `Watch/`）+ DongKeCoreTests。UI 测试目标已删除（§6.21），`Shared/A11yIdentifiers.swift` 仍编进 App，供 VoiceOver 与将来任何自动化使用 |
 | 代码 | Domain 已实现（JSON 抽取 / 解码 / 校验 / 归一 / 自由文本解析 / 执行流 / 休息状态机 / 周排程 / 完成率 / 计划生成 / 导入编排 / 动作库 / 图示 / AI 契约 / 断点策略 / 通知负载）+ 图示模块（开源素材 / 可换源 / 点按播放）+ 玻璃材质层 + AI 直连（Keychain / 提示词 / 三级降级 / 错误映射）+ 训练执行收尾（组级明细 / 跳过三态 / 30 分钟断点续练 / 前台通知与深链 / 触觉声音）+ 设置页收尾（AI 配置 / 关于 / 清空全部数据）+ 今日页提醒健康条 + 字号令牌 `Typography`（Dynamic Type 到 AX5）+ 训练页要点与「做不动」三选 + 记录页周图改用 Swift Charts。SPEC §7 的 13 页清单**全部落地**：引导 5 屏、今日、训练执行、休息、完成总结、计划、计划导入（粘贴 → 校对 → 保存 / AI 生成 + 一句话语音 / 文字）、理解确认、动作库、动作详情、记录、设置（提醒 + AI + 关于 + 清空）+ 训练播报（ticket 07–09）与语音输入（ticket 06）。工程侧补上了 `Assets.xcassets`（AppIcon，`Tools/IconRender` 可重渲）与 `PrivacyInfo.xcprivacy`（见 §6.24） |
-| 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData；断点存在 UserDefaults `dk.workout.checkpoint`（当天有效），同时镜像到 App Group `workouts/checkpoint-{id}.json` 供 Watch 续练；WatchContext 经 WCSession 下发并缓存为 `workouts/watch-context.json`；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
+| 数据 | 训练记录、组级明细（三态 + 跳过原因）、档案、计划走 SwiftData，**库固定在 App 容器**（`ModelConfiguration(groupContainer: .none)`，见 §6.33）；断点存在 UserDefaults `dk.workout.checkpoint`（当天有效），同时镜像到 App Group `workouts/checkpoint-{id}.json` 供 Watch 续练；WatchContext 经 WCSession 下发并缓存为 `workouts/watch-context.json`；Watch 回传的组日志先落 `workouts/pending-logs.jsonl`，再经 `WatchLogInbox` 进 SwiftData；提醒按计划排程（≤7 条、先清后排）+ 休息计时临时通知；计划由引导档案生成，也可粘贴文本 / JSON 导入，或走用户自填的 AI 端点生成 |
 | 测试 | **单测全绿**（`-only-testing:DongKeCoreTests`，条数看日志，不在此处维护——写死的数字必然过期）；AI 契约 44 条、AI 传输层 15 条、断点续练 9 条、通知负载 6 条、提醒健康度 9 条、导入标题 3 条、距离型目标 6 条、完成口径 13 条、解析边界 86 条、名词覆盖 16 条、一句话意图 36 条、播报文案 25 条、播报闸门 11 条、播报流程 16 条、语音输入 42 条、主肌群覆盖 8 条、组余力 6 条。**无 UI 测试**（§6.21） |
 | Gate 2 | 已放行并全部转绿 |
 | 远端 | `git@github.com:tangzzz-fan/SportsHelper.git`，main |
@@ -875,3 +875,32 @@ do {
 迁移抛错时走 `catch`，App 照常启动、界面照常有空计划，**用户的历史记录全在内存里，杀进程就没了**，而且没有任何提示。
 
 所以：**加表 / 加列之后，必须做一次「装旧包 → 产生数据 → 覆盖装新包 → 看数据还在不在」**。本地没有旧包时，至少把它记成上架前的一项检查（同 `docs/RELEASE.md` 的口径）。别拿「全新安装能跑」当迁移验证。
+
+## 6.33 加 App Group 会让 SwiftData 悄悄换库路径（2026-11-24）
+
+给 target 声明 App Group 之后，`ModelConfiguration()` 的默认值 `groupContainer: .automatic` 会把 **`default.store` 搬进共享组**（iOS 26/27 起的行为），App 自己的 `Library/Application Support` 里新建一个空库都不建。
+
+后果不是崩溃，是**用户数据看起来全丢了**：旧库还在 App 容器里，但 App 去共享组读一个空库，档案/计划/记录全空，没有任何报错。实测路径：
+
+```
+~/Library/Developer/CoreSimulator/Devices/<UDID>/data/Containers/Shared/AppGroup/<group>/Library/Application Support/default.store
+```
+
+修法：显式钉死 App 自己的容器。
+
+```swift
+let configuration = ModelConfiguration(groupContainer: .none)
+```
+
+验证方式（模拟器）：
+
+```bash
+xcrun simctl get_app_container <UDID> app.dongke.ios data
+# 期望：<data>/Library/Application Support/default.store 存在
+xcrun simctl get_app_container <UDID> app.dongke.ios group.com.dongke.shared
+# 期望：只有 workouts/（checkpoint / pending-logs / watch-context），没有 default.store
+```
+
+另外，`catch` 里的内存库兜底现在会在 DEBUG 打一行 `ModelContainer failed:` —— 以后排查「数据不见了」先搜这行。
+
+App Group 里的三件东西与本机 SwiftData 的分工见 `docs/specs/IWATCH-APPGROUPS.md`；**不要**让 App Group 存 SwiftData 主库。

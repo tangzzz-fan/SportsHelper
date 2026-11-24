@@ -332,22 +332,28 @@ Watch 侧记完日志后，通过 AppGroups 追加到 iPhone，失败时本地�
 iPhone 侧读 Watch 的待同步日志，合并进 `SessionLedger`，处理重复。
 
 **交付物**：
-- [ ] `SessionLedger.merge(local:remote:)`（DongKeCore/Workout）
-  - 输入：`[SetLog]`（本地）+ `[SetLog]`（Watch）
-  - 去重主键：`(sessionId, setIndex, sourceDevice)`
-  - 输出：合并后的 `SessionLedger`（计数一致，无重复）
-
-- [ ] 写入门禁
-  - 一旦 `SetLogEntity` 落库，即刻清掉 AppGroups 里对应的日志
-  - 防止重复计两遍
-
-- [ ] 单测
-  - 场景：iPhone 记了组 1–2，Watch 记了组 2–4，来源不同
-  - 验证：最终 `SessionLedger` 有 4 条，组 2 仅计一次
+- [x] `SessionLedger.merge(prescribedSets:local:remote:)`（DongKeCore/Workout）
+  - 存储层按 `(sessionId, setIndex, sourceDevice)` 去重；账本层按 `SetLogKey` 折叠跨设备同组
+  - iPhone 本地日志优先
+- [x] 写入门禁
+  - `WatchLogInbox`：读 outbox → 活跃会话 `ingestRemoteLog`（按 `SetLogKey` 去重）→
+    无活跃会话 `SetLogStore.addIfAbsent` → **落库成功才删条目**
+  - `SetLogStore.add` 返回 Bool；`addIfAbsent` 按账本键判重
+- [x] 单测
+  - 跨设备同组只计一次（`SessionLedgerMergeTests`）
+  - `SetLogKey` 忽略 id/设备、区分 origin（2 条）
 
 **验收**：
-- [ ] 单测通过
-- [ ] 完成率数字两端一致（误差为 0）
+- [x] 单测通过（953 条全绿）
+- [x] 模拟器端到端：outbox 一条日志 → 重启 → `ZSETLOGENTITY` +1、pending 清零；
+      同账本键不同 id 再写一次 → 仍 1 条
+- [ ] 完成率数字两端一致（需配对 Watch 实测）
+
+**2026-11-24 落地补充**：
+- 发现并修掉 **SwiftData 默认 `groupContainer: .automatic` 会把整库搬进 App Group** 的问题
+  （`ModelConfiguration(groupContainer: .none)`），见 HANDOFF §6.33。
+- 无活跃会话时直接落 `SetLogStore`，不会更新 `SessionEntity`；历史页的「训练天/会话列表」
+  在「iPhone 没起训、只有 Watch 日志」这种边缘场景可能少一次。主链路不受影响。
 
 ---
 

@@ -87,6 +87,25 @@ struct SessionLedgerMergeTests {
         #expect(merged[0].id == first.id)
     }
 
+    @Test("账本键忽略日志 id 与设备，只认会话/动作/组/来源")
+    func ledgerKeyMatchesAcrossDevices() {
+        let iPhone = mergeLog(setIndex: 2)
+        let watch = mergeLog(setIndex: 2)
+
+        #expect(iPhone.id != watch.id)
+        #expect(SetLogKey(iPhone) == SetLogKey(watch))
+    }
+
+    @Test("额外组与计划内组是不同的账本键")
+    func ledgerKeySeparatesOrigins() {
+        let prescribed = mergeLog(setIndex: 2)
+        let extra = mergeLog(setIndex: 2) // origin 默认 prescribed
+        var extraLog = extra
+        extraLog.origin = .extra
+
+        #expect(SetLogKey(prescribed) != SetLogKey(extraLog))
+    }
+
     @Test("两端的跳过与降阶都进同一次账，不会被合并丢掉")
     func mixedStatusesSurviveMerge() {
         let local = [

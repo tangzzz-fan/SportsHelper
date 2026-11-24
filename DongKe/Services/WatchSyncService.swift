@@ -73,6 +73,9 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
                 at: entry.timestamp
             )
             watchLog.debug("watch log received set=\(entry.log.setIndex)")
+            Task { @MainActor in
+                WatchLogInbox.shared.drain()
+            }
         } catch {
             watchLog.error("watch log store failed: \(String(describing: error), privacy: .public)")
         }

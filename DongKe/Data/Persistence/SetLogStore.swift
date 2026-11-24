@@ -11,7 +11,9 @@ final class SetLogStore {
         self.context = context
     }
 
-    func add(_ log: SetLog) {
+    /// 返回是否落库成功。失败时调用方必须保留待发条目，不能当已同步清掉。
+    @discardableResult
+    func add(_ log: SetLog) -> Bool {
         let entity = SetLogEntity(
             id: log.id,
             sessionId: log.sessionId,
@@ -32,7 +34,22 @@ final class SetLogStore {
             originRaw: log.origin.rawValue
         )
         context.insert(entity)
-        try? context.save()
+        do {
+            try context.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// 跨设备同步用：同一账本键已存在就不插第二行。
+    @discardableResult
+    func addIfAbsent(_ log: SetLog) -> Bool {
+        let key = SetLogKey(log)
+        if logs(for: log.sessionId).contains(where: { SetLogKey($0) == key }) {
+            return true
+        }
+        return add(log)
     }
 
     func logs(for sessionId: UUID) -> [SetLog] {

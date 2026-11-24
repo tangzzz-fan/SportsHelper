@@ -1,12 +1,13 @@
 import Foundation
 
-struct SetLogKey: Hashable {
-    var sessionId: UUID
-    var prescriptionId: String
-    var setIndex: Int
-    var origin: SetOrigin
+/// 账本的去重键。跨设备同步也按它判重，避免同一组在 SwiftData 里存两份。
+public struct SetLogKey: Hashable, Sendable {
+    public var sessionId: UUID
+    public var prescriptionId: String
+    public var setIndex: Int
+    public var origin: SetOrigin
 
-    init(_ log: SetLog) {
+    public init(_ log: SetLog) {
         sessionId = log.sessionId
         prescriptionId = log.prescriptionId
         setIndex = log.setIndex

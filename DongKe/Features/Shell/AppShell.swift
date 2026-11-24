@@ -18,6 +18,7 @@ struct AppShell: View {
     @State private var resumeCandidate: WorkoutCheckpoint?
     private let checkpoints = WorkoutCheckpointStore()
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         #if DEBUG
@@ -181,7 +182,20 @@ struct AppShell: View {
                 active.preloadLastLoads()
             }
         }
-        .onAppear(perform: refreshResumeCandidate)
+        .onAppear {
+            refreshResumeCandidate()
+            WatchLogInbox.shared.setLogStore = setLogs
+            WatchLogInbox.shared.session = session
+            WatchLogInbox.shared.drain()
+        }
+        .onChange(of: session?.id) { _, _ in
+            WatchLogInbox.shared.session = session
+            WatchLogInbox.shared.drain()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            WatchLogInbox.shared.drain()
+        }
     }
 
     /// 计划本来的样子。减载周只改显示与当次训练，不改它。
