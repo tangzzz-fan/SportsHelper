@@ -1,8 +1,8 @@
 # iWatch 实现 Tickets
 
 > **当前状态（2026-11-25）**：代码可做的部分已完成 W1.1 / W1.2 / W1.2a / W1.3 / W1.4 与 W2.1–W2.6，
-> 外加 `transferUserInfo` 失败回滚（W2.3 遗留的静默丢日志口子）。
-> 剩余：W2.2 的 Watch 续练选择 UI、`startedFrom: .watch`、W1.5 / W2.7 真机验收。
+> 外加 `transferUserInfo` 失败回滚（W2.3 遗留的静默丢日志口子）与 W2.2 的续练选择页。
+> 剩余：`startedFrom: .watch`、会话放弃协议（从 W2.2 拆出）、W1.5 / W2.7 真机验收。
 > 真机前置、最新度量与剩余任务清单见 `PHASE2-PROGRESS.md`；本文件保留每张票的原始验收口径。
 
 ## Phase 1：通知 + 倒计时（MVP 验证）
@@ -296,10 +296,34 @@ Walk through 五条人工验证场景，全部必须绿。
   - 清理：`remove(sessionId:)` 训练结束时调用
   - iPhone 侧：`WorkoutSession.saveCheckpoint` 双写 UserDefaults + App Group
 
-- [ ] Watch 侧使用（Watch target 已建；路径改为 WatchContext 缓存）
-  - 冷启动先读 `WatchContextStore`（内含 checkpoint），当前直接显示当前组
-  - **未做**：ticket 要求的「继续上一组 / 从头开始」选择页
+- [x] Watch 侧使用（路径走 `WatchContextStore` 缓存，内含 checkpoint）
+  - 冷启动先读缓存；没有可续的断点就直接显示当前组
+  - [x] 续练选择页（2026-11-25）：`ResumePrompt` + `WatchResumeChoiceView`
   - 无法判断旧上下文时：`CheckpointValidator` 区分已结束 / 改版 / 过期
+  - [ ] 「从头开始」——拆成独立票，见下
+
+**2026-11-25 落地：续练选择页**
+
+判据在 `DongKeCore/Workout/ResumePrompt.swift`，三条同时成立才问：
+
+| 判据 | 为什么 |
+|---|---|
+| `status == .inProgress` 且当天（`WorkoutResumePolicy`） | 跨天算放弃，昨天的疲劳账不记到今天 |
+| `stepIndex > 0` | 一组都没做就是新会话，没什么好选的 |
+| 距 `updatedAt` ≥ 10 分钟 | 练完一组切出去回条消息就回来，再问一次是打扰 |
+| 组间休息未结束时不问 | 那时回来该看到倒计时，不是问句 |
+
+`planRevision` 未知（还没收到上下文）时按「没改版」处理；改版的阻断由
+`WatchWorkoutView` 里的 `CheckpointValidator` 负责，选择页不能抢在它前面。
+
+**「从头开始」为什么拆出去**
+
+`WatchWorkoutSession.resolvedStepIndex` 取 `max(localStepIndex, checkpoint.stepIndex)`——
+本地只能前进。用户点「重新开始」把 `localStepIndex` 归零，下一次上下文一到就被拉回原组。
+
+要让它站住，只能让 iPhone 侧把旧会话标 `WorkoutStatus.abandoned`、开一个新
+`sessionId` 下发，还要定「iPhone 不在附近时 Watch 单方面重开怎么办」（两边状态会分裂）。
+`WorkoutStatus.abandoned` 这个 case 已经存在，但同步协议没做，所以这是协议票不是 UI 票。
 
 **验收**：
 - [x] 单测：序列化往返完整性、老格式兜底、revision 比对

@@ -2,7 +2,7 @@
 
 **Branch**: `main`  
 **阶段**：代码可做的部分基本完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6，含传输失败回滚）；
-剩余是 W1.2 通知深链、W2.2 续练选择 UI、真机验收。本机无 watchOS runtime / 开发证书。
+剩余是 `startedFrom: .watch`、会话放弃协议、真机验收。本机无 watchOS runtime / 开发证书。
 
 ## 先修正上一份检查点
 
@@ -150,7 +150,7 @@ W2.3 上线时 `flush` 写的是「send 没抛错就从 outbox 删」，等于�
 |---|---|---|
 | W1.2 通知处理与深链 | ✅ 代码完成（2026-11-25） | 载荷带 `dayIndex` + `planRevision`，两端注册同一份通知分类。复查确认不需要新路由：有快照时 App 打开就是训练页。`startedFrom: .watch` 未做，单独一票。真机待验 |
 | W1.5 Phase 1 真机清单 | 阻塞 | 需开发证书 + 配对设备 |
-| W2.2 Watch 续练选择 UI | 未做 | 当前直接按缓存显示当前组；ticket 要求的「继续上一组 / 从头开始」选择页没有 |
+| W2.2 Watch 续练选择 UI | ✅ 完成（2026-11-25） | 「继续练 / 今天不练了」，判据在 `ResumePrompt`（练过一组 + 离开 ≥10 分钟 + 当天可续 + 非休息中）。「从头开始」拆出：`max()` 让本地归零被拉回，需要 abandon 协议 |
 | W1.3 环形进度（可选） | 待定 | `IWATCH.md` 交付清单写「环形进度」，当前 Watch 是文本倒计时；草图本身没画环 |
 | W2.7 Phase 2 真机清单 | 阻塞 | 10 条场景，依赖 W1.5 的前置 |
 | 后台定时 flush | 按平台约束不做 | `transferUserInfo` 本身就是系统级后台传输，交给系统后 App 被挂起也会继续传，排定时器没有收益。真正补的是「冷启动激活时补发积压」：`activationDidCompleteWith` 里调一次 flush |
@@ -184,12 +184,12 @@ scripts/ui-test.sh   # iOS 侧一条 UI 测试，发布前跑
 | W1.3 | 倒计时 UI + WatchWorkoutSession | 0（复用 Core 用例） | 代码 ✓，待 runtime 走查 |
 | W1.4 | Watch 训练页布局 | 0 | 代码 ✓，待 runtime 检查截断 |
 | W2.1 | AppGroupsStore（本机存储） | 8 | Core ✓ |
-| W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 | 8（3 + 5） | Core ✓ |
+| W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 + 续练选择页 | 17（8 + 9） | Core ✓，选择页待 runtime 走查 |
 | W2.3 | PendingLogQueue / 退避调度 / WCSession 交棒 | 15 | 代码 ✓，真机待验 |
 | W2.4 | WatchLogInbox / 写入门禁 / 账本键去重 | 2（+已有合并用例） | ✓ 模拟器端到端 |
 | W2.6 | Watch 完成本组 | 0 | 代码 ✓，真机待验 |
 | W2.5 | CheckpointValidator / planRevision 下发 / Watch 阻断 | 9 | 代码 ✓，真机待验 |
 
-**全量单测**：968 / 968 通过（2026-11-25）  
+**全量单测**：977 / 977 通过（2026-11-25）  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 W2.1 本身 8 条；W2.3 又补了 15 条队列/退避用例。
 按风险点覆盖，不追数字。W1.5 / W2.7 的真机项全部未验。
