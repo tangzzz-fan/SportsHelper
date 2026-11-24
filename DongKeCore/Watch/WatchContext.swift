@@ -74,4 +74,5 @@ public struct WatchExerciseInfo: Codable, Equatable, Sendable {
 public enum WatchSyncKey {
     public static let context = "dk.watch.context"
     public static let log = "dk.watch.log"
+    public static let planRevision = "dk.watch.planRevision"
 }

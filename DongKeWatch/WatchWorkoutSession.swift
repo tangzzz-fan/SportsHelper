@@ -154,7 +154,18 @@ final class WatchWorkoutSession {
         restState = RestTimerStateMachine.reduce(restState, .start(seconds: seconds, now: now), &effects)
     }
 
-    func completeSet(in context: WatchContext, now: Date = Date()) {
+    func completeSet(
+        in context: WatchContext,
+        planRevision: Int? = nil,
+        now: Date = Date()
+    ) {
+        let validation = CheckpointValidator.validate(
+            context.checkpoint,
+            currentPlanRevision: planRevision ?? context.checkpoint.revision,
+            now: now
+        )
+        guard validation == .resumable else { return }
+
         let index = resolvedStepIndex(in: context)
         guard let set = WatchSetSummary.set(at: index, in: context) else { return }
 

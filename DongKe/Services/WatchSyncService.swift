@@ -13,6 +13,7 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
     private let session: WCSession?
     private let lock = NSLock()
     private var latestContext: Data?
+    private var latestPlanRevision: Int?
 
     private override init() {
         session = WCSession.isSupported() ? WCSession.default : nil
@@ -30,16 +31,41 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
         lock.lock()
         latestContext = data
         lock.unlock()
-        push(data)
+        push()
     }
 
-    private nonisolated func push(_ data: Data) {
+    /// 计划 revision 变化时单独下发。applicationContext 只保留 planRevision 也没关系：
+    /// Watch 的上下文在本地磁盘，收不到 context 时继续用缓存。
+    func setPlanRevision(_ revision: Int) {
+        lock.lock()
+        let changed = latestPlanRevision != revision
+        latestPlanRevision = revision
+        lock.unlock()
+        guard changed else { return }
+        push()
+    }
+
+    private nonisolated func push() {
         guard let session, session.activationState == .activated else { return }
+        lock.lock()
+        let context = latestContext
+        let revision = latestPlanRevision
+        lock.unlock()
+
+        var payload: [String: Any] = [:]
+        if let context {
+            payload[WatchSyncKey.context] = context
+        }
+        if let revision {
+            payload[WatchSyncKey.planRevision] = revision
+        }
+        guard !payload.isEmpty else { return }
+
         do {
-            try session.updateApplicationContext([WatchSyncKey.context: data])
-            watchLog.debug("watch context sent bytes=\(data.count)")
+            try session.updateApplicationContext(payload)
+            watchLog.debug("watch sync sent revision=\(revision ?? -1) bytes=\(context?.count ?? 0)")
         } catch {
-            watchLog.error("watch context send failed: \(String(describing: error), privacy: .public)")
+            watchLog.error("watch sync send failed: \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -49,12 +75,7 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
         error: Error?
     ) {
         guard activationState == .activated else { return }
-        lock.lock()
-        let data = latestContext
-        lock.unlock()
-        if let data {
-            push(data)
-        }
+        push()
     }
 
     nonisolated func session(

@@ -366,18 +366,21 @@ iPhone 侧读 Watch 的待同步日志，合并进 `SessionLedger`，处理重�
 当 iPhone 侧计划 revision 变更时，检测 Watch 是否还在旧版本训练。
 
 **交付物**：
-- [ ] `CheckpointValidator.swift`
-  - 检查：`checkpoint.revision == currentPlan.revision`
-  - 若不符：给 Watch 通知「计划已更新，请返回 iPhone」
-  - 阻止：Watch 继续用旧版本执行
-
-- [ ] Watch 侧处理
-  - UI：显示警告与「回到 iPhone」按钮
-  - 逻辑：不允许继续记新日志
+- [x] `CheckpointValidator.swift`（DongKeCore/Workout）
+  - 顺序：`notInProgress` > `planChanged` > `expired` > `resumable`
+  - iPhone 的断点续练也改用同一个校验器；计划改版不再弹出旧计划续练
+- [x] iPhone 下发实时 `planRevision`
+  - `WatchSyncService.setPlanRevision`，与 context 同一个 applicationContext
+  - AppShell 在启动与 `activePlan.revision` 变化时调用
+- [x] Watch 侧处理
+  - `WatchWorkoutView` 按校验结果切换：可续 / 已结束 / 计划已更新 / 已过期
+  - 计划改版显示「请回到 iPhone 完成或重新开始本次训练」
+  - `completeSet` 在非 `.resumable` 时直接拒绝，不产生日志
 
 **验收**：
-- [ ] 单测通过
-- [ ] 真机：iPhone 推送新计划 → Watch 侧收到告知
+- [x] 单测通过（9 条：可续、改版、已完成、已放弃、跨天、越界、空步骤、两条优先级）
+- [x] 模拟器：`DK_SEED_CHECKPOINT=1` 且 revision 一致时，今日页正常出现「上次训练没做完」
+- [ ] 真机：iPhone 推送新计划 → Watch 侧收到告知（需配对设备）
 
 ---
 

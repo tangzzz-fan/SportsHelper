@@ -85,9 +85,16 @@
 - **迁移修复**：SwiftData 默认 `groupContainer: .automatic` 会把整库搬进 App Group；
   已显式 `.none`，见 HANDOFF §6.33。
 
+### W2.5：计划更新冲突检测
+- `CheckpointValidator`：notInProgress > planChanged > expired > resumable；
+  iPhone 断点续练与 Watch 展示共用同一判断。
+- iPhone `WatchSyncService.setPlanRevision`：与 context 同发；AppShell 启动/改版时更新。
+- Watch：计划改版显示阻断页；`completeSet` 在非 resumable 时拒绝写日志。
+- 已结束/过期/改版三种状态不再显示可操作的训练页。
+
 ### 测试
-- 新增 38 条（W2.1/W2.2 16 + W1.2a 5 + W2.3 15 + W2.4 2），
-  `DongKeCoreTests` 全量 **953 条通过**（2026-11-24）。
+- 新增 47 条（W2.1/W2.2 16 + W1.2a 5 + W2.3 15 + W2.4 2 + W2.5 9），
+  `DongKeCoreTests` 全量 **962 条通过**（2026-11-24）。
 - 覆盖：快照往返、老格式兜底、无容器降级、来源设备保留、坏行跳过、
   条件删除、整份替换、20 路并发追加、跨设备同组只计一次、同设备重复丢弃。
 
@@ -117,7 +124,7 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
 | W2.3 | Watch 日志队列与指数退避重试 | ✓ Core + WCSession 交棒；后天刷新与真机验收待做 |
 | W2.4 | iPhone 侧日志合并写入门禁 | ✓ 写入门禁 + 模拟器端到端验证；真机两端一致待验 |
-| W2.5 | 计划更新冲突检测 | `matchesRevision` 已就绪；Watch UI 待 W1.3/W1.4 |
+| W2.5 | 计划更新冲突检测 | ✓ Core + iPhone 下发 + Watch 阻断 UI；真机待验 |
 | W2.6 | Watch 完成组 UI | ✓ 代码完成；真机验收待做 |
 | W2.7 | 真机验收 | 依赖 W2.3–W2.6 |
 
@@ -134,6 +141,7 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | W2.3 | PendingLogQueue / 退避调度 / WCSession 交棒 | 15 | 代码 ✓，真机待验 |
 | W2.4 | WatchLogInbox / 写入门禁 / 账本键去重 | 2（+已有合并用例） | ✓ 模拟器端到端 |
 | W2.6 | Watch 完成本组 | 0 | 代码 ✓，真机待验 |
+| W2.5 | CheckpointValidator / planRevision 下发 / Watch 阻断 | 9 | 代码 ✓，真机待验 |
 
-**全量单测**：953 / 953 通过  
+**全量单测**：962 / 962 通过  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 16 条；先覆盖已实现的风险点，剩余随 W2.3 的队列/重试一起补。

@@ -16,7 +16,11 @@ struct WatchRootView: View {
         NavigationStack(path: $path) {
             Group {
                 if let context = model.context {
-                    WatchWorkoutView(session: session, context: context)
+                    WatchWorkoutView(
+                        session: session,
+                        context: context,
+                        planRevision: model.planRevision
+                    )
                 } else {
                     WatchEmptyView()
                 }

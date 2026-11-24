@@ -9,6 +9,7 @@ final class WatchContextModel {
     static let shared = WatchContextModel()
 
     private(set) var context: WatchContext?
+    private(set) var planRevision: Int?
 
     func loadFromCache() {
         context = try? WatchContextStore.shared.load()
@@ -17,6 +18,10 @@ final class WatchContextModel {
     func update(_ context: WatchContext) {
         self.context = context
         try? WatchContextStore.shared.save(context)
+    }
+
+    func updatePlanRevision(_ revision: Int) {
+        planRevision = revision
     }
 }
 
@@ -50,13 +55,19 @@ final class WatchSyncService: NSObject, WCSessionDelegate, @unchecked Sendable {
     }
 
     private nonisolated func apply(_ payload: [String: Any]) {
-        guard let data = payload[WatchSyncKey.context] as? Data,
-              let context = try? JSONDecoder().decode(WatchContext.self, from: data)
-        else {
-            return
-        }
+        let context = (payload[WatchSyncKey.context] as? Data)
+            .flatMap { try? JSONDecoder().decode(WatchContext.self, from: $0) }
+        let revision = (payload[WatchSyncKey.planRevision] as? Int)
+            ?? (payload[WatchSyncKey.planRevision] as? NSNumber)?.intValue
+
+        guard context != nil || revision != nil else { return }
         Task { @MainActor in
-            WatchContextModel.shared.update(context)
+            if let context {
+                WatchContextModel.shared.update(context)
+            }
+            if let revision {
+                WatchContextModel.shared.updatePlanRevision(revision)
+            }
         }
     }
 }

@@ -187,10 +187,15 @@ struct AppShell: View {
             WatchLogInbox.shared.setLogStore = setLogs
             WatchLogInbox.shared.session = session
             WatchLogInbox.shared.drain()
+            WatchSyncService.shared.setPlanRevision(activePlan.revision)
         }
         .onChange(of: session?.id) { _, _ in
             WatchLogInbox.shared.session = session
             WatchLogInbox.shared.drain()
+        }
+        .onChange(of: activePlan.revision) { _, revision in
+            WatchSyncService.shared.setPlanRevision(revision)
+            refreshResumeCandidate()
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
@@ -313,7 +318,8 @@ struct AppShell: View {
                 stepIndex: min(3, max(0, flow.steps.count - 2)),
                 totalSteps: flow.steps.count,
                 startedAt: now.addingTimeInterval(-420),
-                updatedAt: now
+                updatedAt: now,
+                revision: plan.revision
             ))
         }
         #endif
@@ -322,11 +328,18 @@ struct AppShell: View {
             resumeCandidate = nil
             return
         }
-        guard WorkoutResumePolicy.canResume(stored, now: Date()) else {
-            // 过了窗口才回来：计一次，顺手清掉——不清的话每次进页面都会再加一次，
-            // 计数就没法用来判断「窗口是不是太短」。
-            LocalCounters.shared.increment(.checkpointExpired)
+        let validation = CheckpointValidator.validate(
+            stored,
+            currentPlanRevision: activePlan.revision,
+            now: Date()
+        )
+        guard validation == .resumable else {
+            // 过期才计一次窗口信号；计划改版不是「窗口太短」，不能污染这个计数。
+            if validation == .expired {
+                LocalCounters.shared.increment(.checkpointExpired)
+            }
             checkpoints.clear()
+            try? CheckpointStore.shared.remove(sessionId: stored.sessionId)
             resumeCandidate = nil
             return
         }
