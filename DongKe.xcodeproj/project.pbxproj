@@ -89,6 +89,7 @@
 		420BE75AFF6590654C238D44 /* NotificationCategories.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03AB2D8F8C3EF3CE765551A4 /* NotificationCategories.swift */; };
 		4254E55576388D6CE1385FCE /* PlanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 553F8184788876F060EC3C41 /* PlanStore.swift */; };
 		43114E866AA9650AAB176480 /* SwapCandidatesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91E1B47389A21E1EFA10778 /* SwapCandidatesTests.swift */; };
+		43E89289E29FC4DEB1BE44ED /* SessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3D90FB8A826743F297B53E6 /* SessionLaunch.swift */; };
 		43F7D40A7AA4C4EFAEA8F698 /* AIResponseMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6518F8FECC5988130F92E5FD /* AIResponseMapper.swift */; };
 		43FBC753212E70D942E3F350 /* PlanDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10C03153E678EA3723279271 /* PlanDiff.swift */; };
 		440B45C9706A2DFC7FA9F2A6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C99021BEC59DCE24315BB6C /* Theme.swift */; };
@@ -215,6 +216,7 @@
 		9829C307435EDC7E3AF52C3E /* PersonalRecords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DCE65FFDED3F6F0A6090A41 /* PersonalRecords.swift */; };
 		9837E4921DCAA38500D0CD8A /* MarkdownTableImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76F191DFE19C9507A4061A8 /* MarkdownTableImportTests.swift */; };
 		9861F0DAC2BF452A3F95A523 /* ReminderSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 486036365CFCCE2434F3C5B4 /* ReminderSettingsStore.swift */; };
+		98B1124A20BAAC1F667F57D1 /* SessionLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DA4DCF8A9E650F42053B04 /* SessionLaunchTests.swift */; };
 		98F8170382DC0D1A31325494 /* SetTimerStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370A86363E7929C0A9F92503 /* SetTimerStateMachine.swift */; };
 		9933CD7008AB3A2974329158 /* PlanJSONExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1547F50AF8C9C7FCB7A58D13 /* PlanJSONExtractorTests.swift */; };
 		9B1E1EDBED09EEA3BED8B964 /* ResumePromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1370BBFA4E13755BEA79200F /* ResumePromptTests.swift */; };
@@ -667,8 +669,10 @@
 		B0CD8141C98DF5434EAC9C39 /* SessionCompressorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCompressorTests.swift; sourceTree = "<group>"; };
 		B194D225B35FA36B46061085 /* VoiceInputCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInputCopyTests.swift; sourceTree = "<group>"; };
 		B1C2B7CF7245BF49C1982A0E /* WorkoutFlowModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFlowModel.swift; sourceTree = "<group>"; };
+		B1DA4DCF8A9E650F42053B04 /* SessionLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLaunchTests.swift; sourceTree = "<group>"; };
 		B2E447D37EBC97053D54AB21 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		B303A49CACE26CA34CC9B589 /* CheckpointValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckpointValidator.swift; sourceTree = "<group>"; };
+		B3D90FB8A826743F297B53E6 /* SessionLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLaunch.swift; sourceTree = "<group>"; };
 		B42E93308AEE36A30EA046E1 /* PlanDraftCompiler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDraftCompiler.swift; sourceTree = "<group>"; };
 		B44258EF3F495884B4A898CD /* PlanImportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanImportServiceTests.swift; sourceTree = "<group>"; };
 		B5F1CF129AD5B9E5958FB3BE /* WatchSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSyncService.swift; sourceTree = "<group>"; };
@@ -936,6 +940,7 @@
 				D10F246A23DB6C7CD5CBAB9B /* ProposalMemory.swift */,
 				8F501E3694D2DEA6102D3A99 /* RestTimerStateMachine.swift */,
 				E36180E16989FD59BB9EBEC5 /* ResumePrompt.swift */,
+				B3D90FB8A826743F297B53E6 /* SessionLaunch.swift */,
 				A2D396E65C8A5A2B13C78963 /* SessionLedger.swift */,
 				1423AD9052F37E9CB0E4B815 /* SessionLedgerMerge.swift */,
 				3A4AD0FE56C51F71738F3C39 /* SessionNarrative.swift */,
@@ -1364,6 +1369,7 @@
 				1D43D2CF4884DAE792BAAFD5 /* RestTimerStateMachineTests.swift */,
 				1370BBFA4E13755BEA79200F /* ResumePromptTests.swift */,
 				B0CD8141C98DF5434EAC9C39 /* SessionCompressorTests.swift */,
+				B1DA4DCF8A9E650F42053B04 /* SessionLaunchTests.swift */,
 				2D3A41242692F7159177DABB /* SessionLedgerMergeTests.swift */,
 				948CFD0F19BF0154FBA4E369 /* SessionLedgerTests.swift */,
 				72E36F3CBDCBA7AB6FED58F1 /* SessionNarrativeTests.swift */,
@@ -1671,6 +1677,7 @@
 				79DD3015D12FF454FA2FAB30 /* ResumePrompt.swift in Sources */,
 				830E65A0B5954106275D6B4A /* SecretStoring.swift in Sources */,
 				4712DEC7C79488F3793E0A15 /* SessionCompressor.swift in Sources */,
+				43E89289E29FC4DEB1BE44ED /* SessionLaunch.swift in Sources */,
 				71AA839481D8F298640A94BD /* SessionLedger.swift in Sources */,
 				71F4283155E40063A98D79BB /* SessionLedgerMerge.swift in Sources */,
 				A13E1F5C2A38031A677C05A4 /* SessionModels.swift in Sources */,
@@ -1774,6 +1781,7 @@
 				468DBB22E7F0F320E2D20A62 /* RestTimerStateMachineTests.swift in Sources */,
 				9B1E1EDBED09EEA3BED8B964 /* ResumePromptTests.swift in Sources */,
 				B629C721060C649035E12FC0 /* SessionCompressorTests.swift in Sources */,
+				98B1124A20BAAC1F667F57D1 /* SessionLaunchTests.swift in Sources */,
 				A967F19E5FAF295A21D3EB33 /* SessionLedgerMergeTests.swift in Sources */,
 				66D0AA97E04E8971FFB76630 /* SessionLedgerTests.swift in Sources */,
 				7B7E44EF306EA9652335F7AD /* SessionNarrativeTests.swift in Sources */,
