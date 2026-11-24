@@ -68,7 +68,8 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | Ticket | 内容 | 阻塞点 |
 |---|---|---|
 | W1.1 | Watch target + 入口 + 路由 | ✓ 已完成（2026-11-24） |
-| W1.2 | 通知处理与深链 | 待做；载荷里还没有 `sessionId`（iPhone 排程时会话尚未创建），需先定 payload |
+| W1.2a | WatchContext 传输与本地快照 | **新增前置票**；Watch 没有计划/档案，W1.2–W1.4 需要它提供数据；用 WCSession |
+| W1.2 | 通知处理与深链 | 等 W1.2a；载荷无 `sessionId`，改用 dayIndex + context revision |
 | W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
 | W2.3 | Watch 日志队列与指数退避重试 | 需要 WCSession 传输层；Watch target 已就绪 |
 | W2.4 | iPhone 侧日志合并写入门禁 | Core 合并已就绪；SwiftData 接线待 WCSession 有数据来源 |

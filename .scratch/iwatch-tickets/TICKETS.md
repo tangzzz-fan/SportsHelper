@@ -37,6 +37,41 @@ xcodebuild -scheme DongKeWatch -destination 'generic/platform=watchos' build
 
 ---
 
+### 📋 TICKET-W1.2a：WatchContext 传输与本地快照（前置）
+
+**优先级**：P0 | **工时**：1.5 人日 | **阶段**：Phase 1，W1.2 之前  
+**相关**：SPEC §2、§5；ADR-0004
+
+**为什么加这张票**：
+
+W1.2–W1.4 都假设 Watch 知道「当前第几组、目标多少、下一个动作是什么」，但 Watch 上没有计划、没有档案、没有 SwiftData。现有 tickets 没有任何一张负责把这份上下文送过去；`IWATCH.md` 的 App Group 方案又不能跨设备。**不先解决它，W1.2 的深链与 W1.4 的训练页都没有数据可显示。**
+
+另外，iPhone 的提醒是**提前排程**的，排程时本次训练会话还没创建——所以 `W1.2` 里写的 `userInfo["sessionId"]` 不存在。载荷只能带 `dayIndex` / weekday，或等会话开始后另发一次上下文。
+
+**交付物**：
+- [ ] `WatchContext: Codable, Sendable`（DongKeCore）
+  - 展示所需的最小快照：当天标题、动作名、当前组 / 总组数、目标文案、`stepIndex`、`revision`、`restEndsAt`
+  - 不含 SwiftData 模型；Watch 只读这份值
+- [ ] iPhone `WatchSyncService`（`DongKe/Services`）
+  - 持有 `WCSession`，`activate()` 于 App 启动 / 前台
+  - 训练开始、每次记组、休息开始/结束时 `updateApplicationContext`（或 `transferUserInfo`）
+  - 计划 `revision` 变化时重发；与会话快照共用 `plan.revision`
+- [ ] Watch `WatchContextStore`（DongKeCore，App Group）
+  - 收包后落本地缓存；冷启动先读缓存再等新包
+  - 与 `CheckpointStore` 同目录，但分开文件，避免互相覆盖
+- [ ] Watch 侧日志回传接口
+  - 只定义出口（`PendingSetLog` 交给 `WCSession.transferUserInfo`），实现归 W2.3
+
+**验收**：
+- [ ] 单测：`WatchContext` 往返、缓存读写、`revision` 比对
+- [ ] 两端编译通过
+- [ ] 真机（或装好 watchOS runtime 的模拟器）配对后，iPhone 开始训练 1 秒内 Watch 能读到上下文
+- [ ] 关掉 iPhone 后，Watch 仍能用缓存显示最后一组
+
+**已知环境**：本机未安装 watchOS simulator runtime，也没有开发证书；端到端验收只能等真机或下载 runtime。
+
+---
+
 ### 📋 TICKET-W1.2：通知处理与深链
 
 **优先级**：P0 | **工时**：1.5 人日 | **阶段**：Phase 1  
@@ -44,6 +79,8 @@ xcodebuild -scheme DongKeWatch -destination 'generic/platform=watchos' build
 
 **描述**：
 实现从 iPhone 侧到 Watch 侧的通知流，包括消息解析、Deep link 处理。
+
+> **前置修正（2026-11-24）**：先做 W1.2a。提醒是提前排程的，排程时没有 `sessionId`，`userInfo["sessionId"]` 这条不成立；改为 `dayIndex` + `WatchContext` 的 `revision`，会话内的 `sessionId` 由上下文快照携带。
 
 **交付物**：
 - [ ] `WatchNotificationHandler.swift`
