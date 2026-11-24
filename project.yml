@@ -90,7 +90,8 @@ targets:
       - target: DongKeCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.watch
+        # 必须是 iOS app bundle id 的子前缀，否则安装直接报错。
+        PRODUCT_BUNDLE_IDENTIFIER: app.dongke.ios.watchkitapp
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "4"
         INFOPLIST_KEY_WKApplication: YES

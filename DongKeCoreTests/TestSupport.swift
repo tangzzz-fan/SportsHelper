@@ -75,6 +75,29 @@ func makePlan(days: [PlanDay]) -> WorkoutPlan {
     )
 }
 
+struct TemporaryAppGroup {
+    let url: URL
+
+    init() throws {
+        url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("dk-appgroups-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+    }
+
+    var store: AppGroupsStore {
+        AppGroupsStore(containerURL: url)
+    }
+
+    var pendingLogsURL: URL {
+        url.appendingPathComponent(AppGroupsStore.workoutsDirectoryName, isDirectory: true)
+            .appendingPathComponent(AppGroupsStore.pendingLogsFileName)
+    }
+
+    func remove() {
+        try? FileManager.default.removeItem(at: url)
+    }
+}
+
 func validPlanJSON(schemaVersion: Int = 1, includeRest: Bool = true) -> String {
     let weekdayNames = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 

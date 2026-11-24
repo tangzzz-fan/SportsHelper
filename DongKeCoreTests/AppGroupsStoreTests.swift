@@ -23,35 +23,12 @@ private func storeLog(
     )
 }
 
-private struct TemporaryContainer {
-    let url: URL
-
-    init() throws {
-        url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("dk-appgroups-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    }
-
-    var store: AppGroupsStore {
-        AppGroupsStore(containerURL: url)
-    }
-
-    var pendingLogsURL: URL {
-        url.appendingPathComponent(AppGroupsStore.workoutsDirectoryName, isDirectory: true)
-            .appendingPathComponent(AppGroupsStore.pendingLogsFileName)
-    }
-
-    func remove() {
-        try? FileManager.default.removeItem(at: url)
-    }
-}
-
 @Suite("App Group 本地存储")
 struct AppGroupsStoreTests {
 
     @Test("checkpoint 保存后能原样读回，删除后返回 nil")
     func checkpointRoundTrip() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 
@@ -100,7 +77,7 @@ struct AppGroupsStoreTests {
 
     @Test("JSON Lines 追加保留来源设备与顺序")
     func pendingLogsKeepSourceDeviceAndOrder() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 
@@ -120,7 +97,7 @@ struct AppGroupsStoreTests {
 
     @Test("坏行只跳过自己，不影响后面的好行")
     func malformedLinesAreSkipped() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 
@@ -145,7 +122,7 @@ struct AppGroupsStoreTests {
 
     @Test("按条件删除只留下未同步项")
     func removeMatchingPendingLogs() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 
@@ -161,7 +138,7 @@ struct AppGroupsStoreTests {
 
     @Test("整份替换与清空")
     func replaceAndClearPendingLogs() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 
@@ -177,7 +154,7 @@ struct AppGroupsStoreTests {
 
     @Test("并发追加不丢行、不撕行")
     func concurrentAppendsAreSafe() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
         let sessionId = UUID()
@@ -197,7 +174,7 @@ struct AppGroupsStoreTests {
 
     @Test("clearAll 清掉整个 workouts 目录")
     func clearAllRemovesEverything() throws {
-        let container = try TemporaryContainer()
+        let container = try TemporaryAppGroup()
         defer { container.remove() }
         let store = container.store
 

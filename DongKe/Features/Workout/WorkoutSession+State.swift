@@ -31,15 +31,28 @@ extension WorkoutSession {
         guard finishedAt == nil else {
             checkpointStore.clear()
             try? CheckpointStore.shared.remove(sessionId: id)
+            broadcastWatchContext(makeCheckpoint(now: now, status: .completed))
             return
         }
+        let checkpoint = makeCheckpoint(now: now, status: .inProgress)
+        checkpointStore.save(checkpoint)
+        // App Group 里的副本给另一台设备续练用。没有 entitlement 或不在 App 进程里时
+        // 取不到容器，这里静默降级——本地断点续练不受影响。
+        try? CheckpointStore.shared.save(checkpoint)
+        broadcastWatchContext(checkpoint)
+    }
+
+    private func makeCheckpoint(
+        now: Date,
+        status: WorkoutCheckpoint.WorkoutStatus
+    ) -> WorkoutCheckpoint {
         var restEndsAt: Date?
         var restTotal = 0
         if case let .running(endAt, total) = rest {
             restEndsAt = endAt
             restTotal = total
         }
-        let checkpoint = WorkoutCheckpoint(
+        return WorkoutCheckpoint(
             sessionId: id,
             dayIndex: dayIndex,
             stepIndex: stepIndex,
@@ -50,12 +63,14 @@ extension WorkoutSession {
             restTotalSeconds: restTotal,
             logs: logs,
             steps: script,
-            revision: plan.revision
+            revision: plan.revision,
+            status: status
         )
-        checkpointStore.save(checkpoint)
-        // App Group 里的副本给另一台设备续练用。没有 entitlement 或不在 App 进程里时
-        // 取不到容器，这里静默降级——本地断点续练不受影响。
-        try? CheckpointStore.shared.save(checkpoint)
+    }
+
+    private func broadcastWatchContext(_ checkpoint: WorkoutCheckpoint) {
+        guard let context = WatchContext.make(checkpoint: checkpoint, plan: plan) else { return }
+        WatchSyncService.shared.send(context)
     }
 
     func persist(finishedAt: Date? = nil) {

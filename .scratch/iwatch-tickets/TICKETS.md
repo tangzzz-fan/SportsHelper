@@ -49,24 +49,30 @@ W1.2–W1.4 都假设 Watch 知道「当前第几组、目标多少、下一个�
 另外，iPhone 的提醒是**提前排程**的，排程时本次训练会话还没创建——所以 `W1.2` 里写的 `userInfo["sessionId"]` 不存在。载荷只能带 `dayIndex` / weekday，或等会话开始后另发一次上下文。
 
 **交付物**：
-- [ ] `WatchContext: Codable, Sendable`（DongKeCore）
-  - 展示所需的最小快照：当天标题、动作名、当前组 / 总组数、目标文案、`stepIndex`、`revision`、`restEndsAt`
-  - 不含 SwiftData 模型；Watch 只读这份值
-- [ ] iPhone `WatchSyncService`（`DongKe/Services`）
-  - 持有 `WCSession`，`activate()` 于 App 启动 / 前台
-  - 训练开始、每次记组、休息开始/结束时 `updateApplicationContext`（或 `transferUserInfo`）
-  - 计划 `revision` 变化时重发；与会话快照共用 `plan.revision`
-- [ ] Watch `WatchContextStore`（DongKeCore，App Group）
-  - 收包后落本地缓存；冷启动先读缓存再等新包
-  - 与 `CheckpointStore` 同目录，但分开文件，避免互相覆盖
-- [ ] Watch 侧日志回传接口
-  - 只定义出口（`PendingSetLog` 交给 `WCSession.transferUserInfo`），实现归 W2.3
+- [x] `WatchContext: Codable, Sendable`（`DongKeCore/Watch/WatchContext.swift`）
+  - `checkpoint`（步骤/日志/休息/版本）+ `dayTitle` + `[prescriptionId: WatchExerciseInfo]`
+  - `WatchExerciseInfo`：动作名、总组数、目标文案、休息秒数
+  - `WatchContext.make(checkpoint:plan:)` 从会话快照与计划派生
+- [x] iPhone `WatchSyncService`（`DongKe/Services`）
+  - 持有 `WCSession`，App 启动时 `activate()`；保留最后一份上下文，激活后补发
+  - `WorkoutSession.saveCheckpoint` 在训练开始（WorkoutView.onAppear）、每次记组、休息变化、结束时发送
+  - `WorkoutCheckpoint.status = .completed` 作为结束信号
+- [x] Watch `WatchContextStore`（`DongKeCore/Services`，App Group 文件 `watch-context.json`）
+  - 收包后落盘；`WatchRootView` 冷启动先 `loadFromCache`
+  - `WatchSyncService`（Watch target）在 `didReceiveApplicationContext` 解码并更新 `WatchContextModel`
+- [x] Watch 首页显示缓存内容（标题 / 动作 / 第 N 组 / 目标）
+- [ ] Watch 侧日志回传边界（`PendingSetLog` → `transferUserInfo`）留给 W2.3
 
 **验收**：
-- [ ] 单测：`WatchContext` 往返、缓存读写、`revision` 比对
-- [ ] 两端编译通过
+- [x] 单测：`WatchContext` 派生、当前步骤、往返编码、缓存读写（5 条）
+- [x] 两端编译通过（watchOS Simulator / 设备 SDK 免签；iOS build-for-testing）
+- [x] iOS 模拟器启动正常，WCSession 激活日志无崩溃（未配对时 `paired: NO` 属预期）
 - [ ] 真机（或装好 watchOS runtime 的模拟器）配对后，iPhone 开始训练 1 秒内 Watch 能读到上下文
 - [ ] 关掉 iPhone 后，Watch 仍能用缓存显示最后一组
+
+**落地时发现的坑**：
+- Watch app 的 bundle id 必须是 iOS app bundle id 的**子前缀**，否则安装直接报错；已改为 `app.dongke.ios.watchkitapp`。
+- 训练开始时原本没有 `saveCheckpoint` 调用，第一组记完前 Watch 收不到上下文；现在 `WorkoutView.onAppear` 会主动存一次。
 
 **已知环境**：本机未安装 watchOS simulator runtime，也没有开发证书；端到端验收只能等真机或下载 runtime。
 

@@ -9,6 +9,7 @@ public struct AppGroupsStore: Sendable {
     public static let containerID = "group.com.dongke.shared"
     public static let workoutsDirectoryName = "workouts"
     public static let pendingLogsFileName = "pending-logs.jsonl"
+    public static let watchContextFileName = "watch-context.json"
 
     /// 每个设备本地容器。取不到（没有 entitlement / 非 App 进程）时所有操作抛
     /// `AppGroupsError.containerNotAvailable`；调用方按「同步不可用」降级。
@@ -43,6 +44,27 @@ public struct AppGroupsStore: Sendable {
 
     public func removeCheckpoint(sessionId: UUID) throws {
         let url = try checkpointURL(sessionId: sessionId, createDirectory: false)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        try FileManager.default.removeItem(at: url)
+    }
+
+    // MARK: - WatchContext
+
+    public func saveWatchContext(_ context: WatchContext) throws {
+        let url = try watchContextURL(createDirectory: true)
+        let data = try JSONEncoder().encode(context)
+        try data.write(to: url, options: .atomic)
+    }
+
+    public func loadWatchContext() throws -> WatchContext? {
+        let url = try watchContextURL(createDirectory: false)
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(WatchContext.self, from: data)
+    }
+
+    public func removeWatchContext() throws {
+        let url = try watchContextURL(createDirectory: false)
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         try FileManager.default.removeItem(at: url)
     }
@@ -148,6 +170,11 @@ public struct AppGroupsStore: Sendable {
     private func pendingLogsURL(createDirectory: Bool) throws -> URL {
         try workoutsDirectory(create: createDirectory)
             .appendingPathComponent(Self.pendingLogsFileName)
+    }
+
+    private func watchContextURL(createDirectory: Bool) throws -> URL {
+        try workoutsDirectory(create: createDirectory)
+            .appendingPathComponent(Self.watchContextFileName)
     }
 
     // MARK: - POSIX 文件锁

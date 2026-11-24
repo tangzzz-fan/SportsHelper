@@ -48,6 +48,7 @@ struct DongKeApp: App {
             )
         }
         self.container = container
+        WatchSyncService.shared.activate()
         let sessions = SessionStore(context: container.mainContext)
         _store = State(initialValue: sessions)
         let setLogs = SetLogStore(context: container.mainContext)

@@ -1,7 +1,7 @@
 # Phase 2 进展 - 2026-11-24 检查点
 
 **Branch**: `feat/w2-appgroups-sync`  
-**阶段**：W2.1 / W2.2 的 Core 侧完成并通过测试；W1.1 Watch target 已创建并编译通过
+**阶段**：W2.1 / W2.2 Core 侧完成；W1.1 Watch target + W1.2a 上下文传输完成（端到端待配对设备）
 
 ## 先修正上一份检查点
 
@@ -44,8 +44,19 @@
   iOS 构建与 931 条单测不受影响。
 - **未过**：真机签名。本机无开发证书，且开发者后台未注册 App Group / Time Sensitive。
 
+### W1.2a：WatchContext 传输与本地快照
+- `DongKeCore/Watch/WatchContext.swift`：`checkpoint` + 当天标题 + 动作展示表
+  （名字 / 总组数 / 目标文案 / 休息），`make(checkpoint:plan:)` 从计划派生。
+- iPhone `WatchSyncService`：WCSession 激活、保留最后一份上下文、激活后补发；
+  `WorkoutSession.saveCheckpoint` 在训练开始 / 记组 / 休息变化 / 结束时发送。
+- Watch `WatchSyncService`：收 `applicationContext` → 解码 → `WatchContextStore`
+  落盘 → `WatchContextModel` 更新；冷启动先读缓存。
+- Watch 首页显示标题 / 动作 / 第 N 组 / 目标。
+- 坑一：Watch bundle id 必须是 iOS bundle id 的子前缀，已改为 `app.dongke.ios.watchkitapp`。
+- 坑二：训练开始时原本不存 checkpoint，第一组记完前 Watch 收不到；`WorkoutView.onAppear` 补一次。
+
 ### 测试
-- 新增 16 条，`DongKeCoreTests` 全量 **931 条通过**（2026-11-24）。
+- 新增 21 条（W2.1/W2.2 16 条 + W1.2a 5 条），`DongKeCoreTests` 全量 **936 条通过**（2026-11-24）。
 - 覆盖：快照往返、老格式兜底、无容器降级、来源设备保留、坏行跳过、
   条件删除、整份替换、20 路并发追加、跨设备同组只计一次、同设备重复丢弃。
 
@@ -68,8 +79,8 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | Ticket | 内容 | 阻塞点 |
 |---|---|---|
 | W1.1 | Watch target + 入口 + 路由 | ✓ 已完成（2026-11-24） |
-| W1.2a | WatchContext 传输与本地快照 | **新增前置票**；Watch 没有计划/档案，W1.2–W1.4 需要它提供数据；用 WCSession |
-| W1.2 | 通知处理与深链 | 等 W1.2a；载荷无 `sessionId`，改用 dayIndex + context revision |
+| W1.2a | WatchContext 传输与本地快照 | ✓ 代码完成；端到端待配对设备 |
+| W1.2 | 通知处理与深链 | 载荷无 `sessionId`，改用 dayIndex + context revision |
 | W1.3–W1.5 | 倒计时、执行页、真机清单 | 待做；真机签名需先注册 App Group 与 Time Sensitive 能力 |
 | W2.3 | Watch 日志队列与指数退避重试 | 需要 WCSession 传输层；Watch target 已就绪 |
 | W2.4 | iPhone 侧日志合并写入门禁 | Core 合并已就绪；SwiftData 接线待 WCSession 有数据来源 |
@@ -82,9 +93,10 @@ W2.3 的「同步与重试」必须在 WCSession 之上做，不能继续往 `Ap
 | Ticket | 代码 | 单测 | 状态 |
 |---|---|---|---|
 | W1.1 | DongKeWatch target + 路由 + entitlements | — | ✓ 编译通过 |
+| W1.2a | WatchContext + 两端 WCSession + 缓存 | 5 | 代码 ✓，端到端待配对 |
 | W2.1 | AppGroupsStore（本机存储） | 8 | Core ✓ |
 | W2.2 | WorkoutCheckpoint / CheckpointStore / 双写 | 8（3 + 5） | Core ✓ |
-| W2.3–W2.7 | — | — | 待 WCSession / W1.2–W1.5 |
+| W2.3–W2.7 | — | — | 待 W1.2–W1.5 / 日志回传 |
 
-**全量单测**：931 / 931 通过  
+**全量单测**：936 / 936 通过  
 **已知偏差**：W2.1 验收写「20+ 用例」，当前 16 条；先覆盖已实现的风险点，剩余随 W2.3 的队列/重试一起补。
