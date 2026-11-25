@@ -1,8 +1,8 @@
 # iWatch Phase 1–2 进展 - 2026-11-24 检查点
 
 **Branch**: `main`  
-**阶段**：代码可做的部分基本完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6，含传输失败回滚）；
-剩余是 `startedFrom: .watch`、会话放弃协议、真机验收。本机无 watchOS runtime / 开发证书。
+**阶段**：代码可做的部分全部完成（W1.1/W1.2a/W1.3/W1.4 + W2.1–W2.6，含传输失败回滚、
+会话裁决器与手表意图通道）；剩余只有真机验收。本机无 watchOS runtime / 开发证书。
 
 ## 先修正上一份检查点
 
@@ -148,9 +148,10 @@ W2.3 上线时 `flush` 写的是「send 没抛错就从 outbox 删」，等于�
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| W1.2 通知处理与深链 | ✅ 代码完成（2026-11-25） | 载荷带 `dayIndex` + `planRevision`，两端注册同一份通知分类。复查确认不需要新路由：有快照时 App 打开就是训练页。`startedFrom: .watch` 未做，单独一票。真机待验 |
+| W1.2 通知处理与深链 | ✅ 代码完成（2026-11-25） | 载荷带 `dayIndex` + `planRevision`，两端注册同一份通知分类。复查确认不需要新路由：有快照时 App 打开就是训练页。手表点「已开始」现在会发意图，见下一行。真机待验 |
 | W1.5 Phase 1 真机清单 | 阻塞 | 需开发证书 + 配对设备 |
-| W2.2 Watch 续练选择 UI | ✅ 完成（2026-11-25） | 「继续练 / 今天不练了」，判据在 `ResumePrompt`（练过一组 + 离开 ≥10 分钟 + 当天可续 + 非休息中）。「从头开始」拆出：`max()` 让本地归零被拉回，需要 abandon 协议 |
+| W2.2 Watch 续练选择 UI | ✅ 完成（2026-11-25） | 「继续练 / 重新开始 / 今天不练了」，判据在 `ResumePrompt`（练过一组 + 离开 ≥10 分钟 + 当天可续 + 非休息中）。「重新开始」由 iPhone 裁决，手表等新上下文，8 秒超时 |
+| 会话裁决器与手表意图通道 | ✅ 完成（2026-11-25） | `SessionLaunchResolver` 统一四个入口；`WatchIntent` 走 WCSession；点通知不再覆盖进度（实测第 4/13 步保住）。设计见 `docs/specs/2026-11-25-session-launch.md`。真机待验 |
 | W1.3 环形进度（可选） | 待定 | `IWATCH.md` 交付清单写「环形进度」，当前 Watch 是文本倒计时；草图本身没画环 |
 | W2.7 Phase 2 真机清单 | 阻塞 | 10 条场景，依赖 W1.5 的前置 |
 | 后台定时 flush | 按平台约束不做 | `transferUserInfo` 本身就是系统级后台传输，交给系统后 App 被挂起也会继续传，排定时器没有收益。真正补的是「冷启动激活时补发积压」：`activationDidCompleteWith` 里调一次 flush |
@@ -171,7 +172,6 @@ xcodegen generate
 xcodebuild -project DongKe.xcodeproj -scheme DongKeWatch \
   -destination 'generic/platform=watchOS' build
 # 无开发证书时先验编译：加 CODE_SIGNING_ALLOWED=NO
-scripts/ui-test.sh   # iOS 侧一条 UI 测试，发布前跑
 ```
 
 ## 📊 度量

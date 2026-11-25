@@ -1,6 +1,6 @@
 # 会话的发起与放弃：一个裁决器，一条意图通道
 
-状态：设计稿（未实现）
+状态：已实现（2026-11-25，五步全部落地；真机验收待 W1.5 / W2.7）
 上位依据：`docs/specs/IWATCH.md`、`.scratch/iwatch-tickets/TICKETS.md`（W1.2 遗留的 `startedFrom`、W2.2 遗留的「从头开始」）
 
 ---
@@ -389,10 +389,13 @@ Watch 侧的等待态在 Core 里也要可测：把「是否还在等」抽成 `
 
 ## 10. 实施顺序
 
-1. `SessionLaunch` + 单测（纯 Core，不动 UI）
-2. **§1 止血**：`openWorkout` 接裁决器 + `onAppear` 加 `persist` 判据。做完立刻重跑 §8 的模拟器回归，确认第 4/13 步不再归零。这一步独立可交付
-3. `WatchIntent` + 两端通道 + `WatchIntentInbox`（含后台唤起路径）
-4. Watch 的「重新开始」与等待态
-5. `SessionEntity.origin` + 历史页标签（唯一动 persistence 的一步，单独提交，装模拟器验）
+五步已全部落地，对应提交：
 
-第 2 步之后到第 5 步之前，`origin` 一律按 `.phone` 处理——裁决器已经带着这个参数，只是没有消费者。这样每一步都能单独提交、单独回滚。
+| 步 | 提交 | 内容 |
+|---|---|---|
+| 1 | `c240359` | `SessionLaunch` + 22 条单测（三条变异各只红一条） |
+| 2 | `ba9f670` | `openWorkout` 接裁决器 + `onAppear` 加 `persist` 判据（§1 止血） |
+| 3 4 | `45c3d1a` | `WatchIntent` 通道 + `WatchIntentInbox` + 手表「重新开始」与等待态 |
+| 5 | `ed7c5e9` | `SessionEntity.origin` + 记录页标签（worktree 实测迁移） |
+
+每一步都能单独回滚。第 2 步之后 `origin` 一直按 `.phone` 处理，直到第 5 步接上消费者——这样中间任何一次提交都不带没人读的字段。

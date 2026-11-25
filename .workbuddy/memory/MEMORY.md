@@ -16,7 +16,8 @@
 
 ## 环境
 
-- **Xcode 27.2 已在 `/Applications`**（2026-11-02 起本机能编能跑）。模拟器 UDID 会变，用 `xcrun simctl list devices available` 现查（iPhone 18 Pro 当前是 `1EBB60E3-3F86-4F2F-90D5-DB5884A26DD2`）。
+- **Xcode 27.2 已在 `/Applications`**（2026-11-02 起本机能编能跑）。模拟器 UDID 会变，用 `xcrun simctl list devices available` 现查（iPhone 18 Pro 当前是 `298A26A4-853E-40FD-A42C-08531FC1DF06`）。
+- **读模拟器里的 UserDefaults plist 必须先 `terminate`**：`set` 只写进程缓存，磁盘 plist 由 cfprefsd 异步刷，运行中读到的是上一次快照——会把「已落盘」误判成「没生效」。见 `.scratch/findings/2026-11-25-userdefaults-plist-lag.md`。
 - **构建前必须有 `DongKe/Resources/ai-defaults.json`**（gitignore，缺了直接资源错误）。手写一份 `{"baseURL":"https://api.deepseek.com/v1","model":"deepseek-flash","apiKey":""}` 即可编译，Key 留空。
 - 推 origin：2026-11-01 起**直接 `git push` 就通**（环境换成透明代理，7890/57455 都已关闭）。失败先试直连，别照抄旧的 `nc -X connect -x 127.0.0.1:7890`——那条现在会报 `Connection closed`。
 - BSD grep 不支持 `\|` 交替，会**静默返回空**——用 `grep -E` 或 rg。看到空结果先怀疑模式。
@@ -30,4 +31,6 @@
 - **App Group 不是跨设备共享盘**：iPhone ↔ Watch 只能走 WatchConnectivity；App Group 只放每台设备自己的快照 / 待发队列。详见 `docs/specs/IWATCH-APPGROUPS.md` §0。
 - **加 App Group 后 SwiftData 必须显式 `ModelConfiguration(groupContainer: .none)`**：默认 `.automatic` 会把整库搬进共享组，老用户升级后数据看起来全丢。详见 HANDOFF §6.33。
 - **Watch 伴生 App 已建**（`DongKeWatch`，bundle id 必须是 `app.dongke.ios.` 前缀）；入口、传输、调试钩子与真机前置见 HANDOFF §6.34。
+- **能「开始训练」的入口有四个**（今日页开始 / 短版 / 点通知 / 手表意图），全部过 `SessionLaunchResolver`。新加入口别自己 `new WorkoutSession`——那正是「点通知把进度清零」的成因。设计见 `docs/specs/2026-11-25-session-launch.md`。
+- **手表不能单方面重开或新建会话**：iPhone 是会话的唯一真相，`WatchLogInbox` 会把不认识的 `sessionId` 的日志写进库、留下孤儿记录。「重新开始」必须请 iPhone 裁决，8 秒等不到就报联系不上。
 - 界面里贴底面板的布局约束（不写死高度、`onCardHeightChange`/`restingInset`、别把超宽视图放进 ZStack、`clipped()` 会裁覆盖层）只在 `.workbuddy/memory/2026-10-25.md` 记过，改那块先读它。
