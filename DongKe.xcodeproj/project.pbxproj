@@ -295,6 +295,7 @@
 		D4D4708E7EAF81C790F4746A /* UserExerciseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72448B9F738D3A75E05F596 /* UserExerciseStore.swift */; };
 		D5DD766F377D1462B7361973 /* PlanBriefParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AD7D1A02E9336E21785472 /* PlanBriefParser.swift */; };
 		D7EEFDC65DEEDDED17412B78 /* AISettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF387A545E2EA53EC10AC76 /* AISettingsStore.swift */; };
+		D7F1476D1B000089D83D6ABD /* AppShellPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFD71681D8FDCB3BABD92339 /* AppShellPreview.swift */; };
 		D8A69C1D25DA37A6DC575B1E /* ReminderTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1235595513A4C67691C071 /* ReminderTrigger.swift */; };
 		D93CB35D56719849E33071F8 /* BodyPart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26172E76981DC48847101901 /* BodyPart.swift */; };
 		DA21761738A9A9130CB96A76 /* SetLogEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EE64634EB6C313DD4EDA9F /* SetLogEntity.swift */; };
@@ -723,6 +724,7 @@
 		CDB654FD70634F9346FB1659 /* AIPlanClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlanClient.swift; sourceTree = "<group>"; };
 		CE1DA3473F0087FCD78B6539 /* ScriptedSpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptedSpeechTranscriber.swift; sourceTree = "<group>"; };
 		CED96299F63D41D5B469BDFD /* WeekHighlights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekHighlights.swift; sourceTree = "<group>"; };
+		CFD71681D8FDCB3BABD92339 /* AppShellPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellPreview.swift; sourceTree = "<group>"; };
 		D05FB547DD9744A59C19ECD9 /* PendingLogSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingLogSyncTests.swift; sourceTree = "<group>"; };
 		D0A2A6F2248D26FE225F29EE /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		D0B21C4BC2ADAFA626F299FF /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
@@ -1051,6 +1053,7 @@
 			isa = PBXGroup;
 			children = (
 				6B5C42B631AEEA9DEE954410 /* AppShell.swift */,
+				CFD71681D8FDCB3BABD92339 /* AppShellPreview.swift */,
 			);
 			path = Shell;
 			sourceTree = "<group>";
@@ -1873,6 +1876,7 @@
 				65B064D54B26F8B02F2993AD /* ActivePlanProvider.swift in Sources */,
 				A7811DA285BF8E00EBA81E90 /* AliasMemoStore.swift in Sources */,
 				83034C0C6188573AE65AF0F5 /* AppShell.swift in Sources */,
+				D7F1476D1B000089D83D6ABD /* AppShellPreview.swift in Sources */,
 				56829F213D1334F106996678 /* AudioSessionArbiter.swift in Sources */,
 				27AD5959F261D8EF59D189BC /* BriefConfirmView+Sections.swift in Sources */,
 				5443E3AE27CB0B81D3A4913A /* BriefConfirmView.swift in Sources */,
