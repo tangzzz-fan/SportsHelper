@@ -395,9 +395,19 @@ struct HistoryView: View {
     private func historyRow(_ item: SessionSummary) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.title)
-                    .font(Typography.rowTitle)
-                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 6) {
+                    Text(item.title)
+                        .font(Typography.rowTitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if item.origin == .watch {
+                        Text("手表")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.primary.opacity(0.07), in: Capsule())
+                    }
+                }
                 Text(formatter.string(from: item.date))
                     .font(.caption)
                     .foregroundStyle(.secondary)

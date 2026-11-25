@@ -8,6 +8,8 @@ struct SessionSummary: Identifiable, Equatable {
     var completedSets: Int
     var plannedSets: Int
     var planDate: Date?
+    /// nil = 这个字段加上之前记的训练。
+    var origin: SessionOrigin?
 
     var completionRate: Double {
         HistoryStats.rate(completedSets, of: plannedSets) ?? 0

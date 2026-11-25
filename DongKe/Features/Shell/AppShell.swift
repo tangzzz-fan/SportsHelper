@@ -202,6 +202,19 @@ struct AppShell: View {
                     )
                 }
             }
+            // 记录页的「手表」标签：靠它验证 origin 落库与读取，模拟器配不了真表。
+            if ProcessInfo.processInfo.environment["DK_SEED_WATCH_SESSION"] == "1" {
+                let start = Date().addingTimeInterval(-1_800)
+                store.upsert(
+                    id: UUID(),
+                    title: "上肢与核心",
+                    plannedSets: 11,
+                    completedSets: 11,
+                    startedAt: start,
+                    finishedAt: start.addingTimeInterval(25 * 60),
+                    origin: .watch
+                )
+            }
             #endif
         }
         .fullScreenCover(item: $session) { active in
@@ -335,21 +348,23 @@ struct AppShell: View {
             break
         case let .resume(checkpoint):
             resumeInto(checkpoint)
-        case let .create(dayIndex, _):
+        case let .create(dayIndex, origin):
             let plan = activePlan
             let created = start(
                 dayIndex: dayIndex,
                 on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
-                in: plan
+                in: plan,
+                origin: origin
             )
             if persistNow { created.saveCheckpoint() }
-        case let .abandonAndCreate(abandoned, dayIndex, _):
+        case let .abandonAndCreate(abandoned, dayIndex, origin):
             discard(abandoned)
             let plan = activePlan
             let created = start(
                 dayIndex: dayIndex,
                 on: PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)?.date,
-                in: plan
+                in: plan,
+                origin: origin
             )
             if persistNow { created.saveCheckpoint() }
         case .blocked:
@@ -358,8 +373,20 @@ struct AppShell: View {
     }
 
     @discardableResult
-    private func start(dayIndex: Int, on planDate: Date?, in plan: WorkoutPlan, kind: SessionKind = .full) -> WorkoutSession {
-        let active = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: planDate, kind: kind)
+    private func start(
+        dayIndex: Int,
+        on planDate: Date?,
+        in plan: WorkoutPlan,
+        kind: SessionKind = .full,
+        origin: SessionOrigin = .phone
+    ) -> WorkoutSession {
+        let active = WorkoutSession(
+            plan: plan,
+            dayIndex: dayIndex,
+            planDate: planDate,
+            kind: kind,
+            origin: origin
+        )
         active.store = store
         active.setLogStore = setLogs
         active.checkpointStore = checkpoints
@@ -386,6 +413,7 @@ struct AppShell: View {
             plan: plan,
             dayIndex: checkpoint.dayIndex,
             planDate: occurrence?.date,
+            origin: nil,
             store: store,
             startedAt: checkpoint.startedAt,
             id: checkpoint.sessionId,

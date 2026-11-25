@@ -78,13 +78,13 @@ final class WatchIntentInbox {
         case let .resume(checkpoint):
             broadcast(checkpoint, plan: plan)
             return WatchIntentAck(outcome: .resumed)
-        case let .create(dayIndex, _):
-            create(dayIndex, plan: plan)
+        case let .create(dayIndex, origin):
+            create(dayIndex, plan: plan, origin: origin)
             return WatchIntentAck(outcome: .created)
-        case let .abandonAndCreate(abandoned, dayIndex, _):
+        case let .abandonAndCreate(abandoned, dayIndex, origin):
             checkpoints.clear()
             try? CheckpointStore.shared.remove(sessionId: abandoned)
-            create(dayIndex, plan: plan)
+            create(dayIndex, plan: plan, origin: origin)
             return WatchIntentAck(outcome: .restarted)
         case let .blocked(block):
             return WatchIntentAck(outcome: .blocked, block: block)
@@ -92,9 +92,14 @@ final class WatchIntentInbox {
     }
 
     /// 只写断点，不落 `SessionEntity`——一组都没做，记录页不该多一条空训练。
-    private func create(_ dayIndex: Int, plan: WorkoutPlan) {
+    private func create(_ dayIndex: Int, plan: WorkoutPlan, origin: SessionOrigin) {
         let occurrence = PlanCalendar.occurrence(of: dayIndex, anchoredAt: Date(), in: plan)
-        let session = WorkoutSession(plan: plan, dayIndex: dayIndex, planDate: occurrence?.date)
+        let session = WorkoutSession(
+            plan: plan,
+            dayIndex: dayIndex,
+            planDate: occurrence?.date,
+            origin: origin
+        )
         session.checkpointStore = checkpoints
         session.saveCheckpoint()
     }

@@ -11,6 +11,10 @@ final class WorkoutSession: Identifiable {
     let dayIndex: Int
     let planDate: Date?
     let kind: SessionKind
+    /// 谁发起的。只用于记录页的标注，不参与任何训练逻辑。
+    /// nil = 从断点续上的，原始来源已经不知道了——别用 `.phone` 顶替，
+    /// 那会把手表发起的那次记成手机发起。
+    let origin: SessionOrigin?
     let flow: WorkoutFlowModel
     var script: [FlowStep]
     let startedAt: Date
@@ -47,6 +51,7 @@ final class WorkoutSession: Identifiable {
         dayIndex: Int,
         planDate: Date? = nil,
         kind: SessionKind = .full,
+        origin: SessionOrigin? = .phone,
         store: SessionStore? = nil,
         startedAt: Date = Date(),
         id: UUID = UUID(),
@@ -58,6 +63,7 @@ final class WorkoutSession: Identifiable {
         self.dayIndex = dayIndex
         self.planDate = planDate
         self.kind = kind
+        self.origin = origin
         self.store = store
         self.startedAt = startedAt
         self.flow = WorkoutFlowModel(plan: plan, dayIndex: dayIndex)

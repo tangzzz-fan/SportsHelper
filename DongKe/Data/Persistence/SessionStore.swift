@@ -44,7 +44,8 @@ final class SessionStore {
                 title: $0.title,
                 completedSets: $0.completedSets,
                 plannedSets: $0.plannedSets,
-                planDate: $0.planDate
+                planDate: $0.planDate,
+                origin: $0.origin.flatMap(SessionOrigin.init(rawValue:))
             )
         }
     }
@@ -56,7 +57,8 @@ final class SessionStore {
         completedSets: Int,
         startedAt: Date,
         finishedAt: Date? = nil,
-        planDate: Date? = nil
+        planDate: Date? = nil,
+        origin: SessionOrigin? = nil
     ) {
         if let existing = entity(with: id) {
             existing.completedSets = completedSets
@@ -67,6 +69,10 @@ final class SessionStore {
             if let planDate {
                 existing.planDate = planDate
             }
+            // 续练时不知道原始来源，传 nil 就别把已有值冲掉。
+            if let origin {
+                existing.origin = origin.rawValue
+            }
         } else {
             context.insert(SessionEntity(
                 id: id,
@@ -75,7 +81,8 @@ final class SessionStore {
                 title: title,
                 plannedSets: plannedSets,
                 completedSets: completedSets,
-                planDate: planDate
+                planDate: planDate,
+                origin: origin?.rawValue
             ))
         }
         try? context.save()

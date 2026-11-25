@@ -102,7 +102,8 @@ extension WorkoutSession {
             completedSets: completedSets,
             startedAt: startedAt,
             finishedAt: finishedAt,
-            planDate: planDate
+            planDate: planDate,
+            origin: origin
         )
     }
 
